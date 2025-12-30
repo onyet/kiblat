@@ -22,5 +22,29 @@
   "north": "北",
   "south": "南",
   "east": "東",
-  "west": "西"
-}
+  "west": "西",
+
+  "configuration": "設定",
+  "location_access": "位置情報アクセス",
+  "location_access_desc": "正確なキブラの方位を許可します",
+  "compass_sensor": "コンパスセンサー",
+  "compass_sensor_desc": "デバイスの磁気センサーの状態",
+  "status_active": "有効",
+  "status_calibrated": "キャリブレーション済み",
+  "status_available": "使用可能",
+  "status_unavailable": "使用不可",
+
+  "general": "一般",
+  "about_qibla_compass": "Qibla Compassについて",
+  "version": "バージョン 2.4.0 (プレミアム)",
+  "contact_us": "お問い合わせ",
+  "contact_us_desc": "サポートとフィードバック",
+  "privacy_policy": "プライバシーポリシー",
+
+  "compass": "コンパス",
+  "prayers": "礼拝",
+  "mosques": "モスク",
+  "quran": "コーラン",
+
+  "calibrate": "キャリブレーション"
+} 

@@ -22,5 +22,29 @@
   "north": "N",
   "south": "S",
   "east": "L",
-  "west": "O"
-}
+  "west": "O",
+
+  "configuration": "Configuração",
+  "location_access": "Acesso à localização",
+  "location_access_desc": "Permite direção precisa da Qibla",
+  "compass_sensor": "Sensor de bússola",
+  "compass_sensor_desc": "Status do magnetômetro do dispositivo",
+  "status_active": "Ativo",
+  "status_calibrated": "Calibrado",
+  "status_available": "Disponível",
+  "status_unavailable": "Indisponível",
+
+  "general": "Geral",
+  "about_qibla_compass": "Sobre o Qibla Compass",
+  "version": "Versão 2.4.0 (Premium)",
+  "contact_us": "Fale conosco",
+  "contact_us_desc": "Suporte e feedback",
+  "privacy_policy": "Política de Privacidade",
+
+  "compass": "Bússola",
+  "prayers": "Orações",
+  "mosques": "Mesquitas",
+  "quran": "Alcorão",
+
+  "calibrate": "Calibrar"
+} 

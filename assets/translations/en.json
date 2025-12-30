@@ -22,5 +22,31 @@
   "north": "N",
   "south": "S",
   "east": "E",
-  "west": "W"
-}
+  "west": "W",
+
+  "configuration": "Configuration",
+  "location_access": "Location Access",
+  "location_access_desc": "Allows precise Qibla direction",
+  "compass_sensor": "Compass Sensor",
+  "compass_sensor_desc": "Device magnetometer status",
+  "status_active": "Active",
+  "status_calibrated": "Calibrated",
+
+  "general": "General",
+  "about_qibla_compass": "About Qibla Compass",
+  "version": "Version 2.4.0 (Premium)",
+  "contact_us": "Contact Us",
+  "contact_us_desc": "Support and feedback",
+  "privacy_policy": "Privacy Policy",
+
+  "inspired_by_kaaba": "Inspired by Kaaba",
+
+  "compass": "Compass",
+  "prayers": "Prayers",
+  "mosques": "Mosques",
+  "quran": "Quran",
+
+  "calibrate": "Calibrate",
+  "status_available": "Available",
+  "status_unavailable": "Not available"
+} 

@@ -22,5 +22,31 @@
   "north": "U",
   "south": "S",
   "east": "T",
-  "west": "B"
-}
+  "west": "B",
+
+  "configuration": "Konfigurasi",
+  "location_access": "Akses Lokasi",
+  "location_access_desc": "Memungkinkan arah Kiblat yang presisi",
+  "compass_sensor": "Sensor Kompas",
+  "compass_sensor_desc": "Status magnetometer perangkat",
+  "status_active": "Aktif",
+  "status_calibrated": "Terkalibrasi",
+
+  "general": "Umum",
+  "about_qibla_compass": "Tentang Kiblat",
+  "version": "Versi 2.4.0 (Premium)",
+  "contact_us": "Hubungi Kami",
+  "contact_us_desc": "Dukungan dan masukan",
+  "privacy_policy": "Kebijakan Privasi",
+
+  "inspired_by_kaaba": "Terinspirasi oleh Ka'bah",
+
+  "compass": "Kompas",
+  "prayers": "Sholat",
+  "mosques": "Masjid",
+  "quran": "Quran",
+
+  "calibrate": "Kalibrasi",
+  "status_available": "Tersedia",
+  "status_unavailable": "Tidak tersedia"
+} 

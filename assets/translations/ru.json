@@ -22,5 +22,29 @@
   "north": "С",
   "south": "Ю",
   "east": "В",
-  "west": "З"
-}
+  "west": "З",
+
+  "configuration": "Конфигурация",
+  "location_access": "Доступ к местоположению",
+  "location_access_desc": "Позволяет точно определить направление к Кибле",
+  "compass_sensor": "Датчик компаса",
+  "compass_sensor_desc": "Статус магнитометра устройства",
+  "status_active": "Активен",
+  "status_calibrated": "Откалиброван",
+  "status_available": "Доступен",
+  "status_unavailable": "Недоступен",
+
+  "general": "Общие",
+  "about_qibla_compass": "О приложении Qibla Compass",
+  "version": "Версия 2.4.0 (Premium)",
+  "contact_us": "Связаться",
+  "contact_us_desc": "Поддержка и отзывы",
+  "privacy_policy": "Политика конфиденциальности",
+
+  "compass": "Компас",
+  "prayers": "Молитвы",
+  "mosques": "Мечети",
+  "quran": "Коран",
+
+  "calibrate": "Калибровать"
+} 

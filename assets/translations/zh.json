@@ -22,5 +22,29 @@
   "north": "北",
   "south": "南",
   "east": "东",
-  "west": "西"
-}
+  "west": "西",
+
+  "configuration": "配置",
+  "location_access": "位置访问",
+  "location_access_desc": "允许精确的朝向计算",
+  "compass_sensor": "罗盘传感器",
+  "compass_sensor_desc": "设备磁力计状态",
+  "status_active": "已启用",
+  "status_calibrated": "已校准",
+  "status_available": "可用",
+  "status_unavailable": "不可用",
+
+  "general": "常规",
+  "about_qibla_compass": "关于 Qibla Compass",
+  "version": "版本 2.4.0 (Premium)",
+  "contact_us": "联系我们",
+  "contact_us_desc": "支持与反馈",
+  "privacy_policy": "隐私政策",
+
+  "compass": "指南针",
+  "prayers": "礼拜",
+  "mosques": "清真寺",
+  "quran": "古兰经",
+
+  "calibrate": "校准"
+} 

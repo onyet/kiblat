@@ -22,5 +22,29 @@
   "north": "ش",
   "south": "ج",
   "east": "ش.م",
-  "west": "غ"
-}
+  "west": "غ",
+
+  "configuration": "التكوين",
+  "location_access": "الوصول إلى الموقع",
+  "location_access_desc": "يسمح بالاتجاه الدقيق للقبلة",
+  "compass_sensor": "مستشعر البوصلة",
+  "compass_sensor_desc": "حالة مقياس المجال المغناطيسي في الجهاز",
+  "status_active": "نشط",
+  "status_calibrated": "مقاس",
+  "status_available": "متاح",
+  "status_unavailable": "غير متاح",
+
+  "general": "عام",
+  "about_qibla_compass": "حول التطبيق",
+  "version": "النسخة 2.4.0 (مدفوع)",
+  "contact_us": "اتصل بنا",
+  "contact_us_desc": "الدعم والتعليقات",
+  "privacy_policy": "سياسة الخصوصية",
+
+  "compass": "بوصلة",
+  "prayers": "الصلوات",
+  "mosques": "مساجد",
+  "quran": "القرآن",
+
+  "calibrate": "معايرة"
+} 

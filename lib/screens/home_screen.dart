@@ -183,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   IconButton(
                     icon: const Icon(Icons.settings, color: Colors.white70),
                     onPressed: () {
-                      // open settings (not implemented)
+                      Navigator.of(context).pushNamed('/settings');
                     },
                   )
                 ],
