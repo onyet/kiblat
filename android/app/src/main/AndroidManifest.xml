@@ -10,7 +10,7 @@
         <!-- Google Maps API Key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDHY1o10ybRp_9IptE66I63LLtj7pgRPFQ" />
+            android:value="{google_api_key}" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
