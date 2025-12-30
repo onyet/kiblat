@@ -3,5 +3,9 @@
   "welcome_title": "朝向",
   "welcome_description": "在世界任何地方优雅准确地找到朝拜方向（朝觐方向）。",
   "get_started": "开始",
-  "language": "语言"
+  "language": "语言",
+  "current_location": "当前位置",
+  "settings": "设置",
+  "degrees_label": "{deg}° {dir}",
+  "distance_to_mecca": "4,500 公里 到 麦加"
 }

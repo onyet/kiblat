@@ -3,5 +3,9 @@
   "welcome_title": "Kiblat",
   "welcome_description": "Finde die genaue Richtung der Qibla überall auf der Welt mit Eleganz und Genauigkeit.",
   "get_started": "STARTEN",
-  "language": "Sprache"
+  "language": "Sprache",
+  "current_location": "Aktueller Standort",
+  "settings": "Einstellungen",
+  "degrees_label": "{deg}° {dir}",
+  "distance_to_mecca": "4.500 km nach Mekka"
 }

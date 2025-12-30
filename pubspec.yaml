@@ -12,6 +12,10 @@ dependencies:
   easy_localization: ^3.0.1
   flutter_localizations:
     sdk: flutter
+  geolocator: ^9.0.2
+  geocoding: ^2.1.0
+  flutter_compass: ^0.8.1
+  google_maps_flutter: ^2.2.0
 
 dev_dependencies:
   flutter_test:

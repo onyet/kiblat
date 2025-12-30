@@ -3,5 +3,9 @@
   "welcome_title": "القبلة",
   "welcome_description": "اعثر على اتجاه القبلة بدقة في أي مكان بالعالم بأناقة ودقة.",
   "get_started": "ابدأ",
-  "language": "اللغة"
+  "language": "اللغة",
+  "current_location": "الموقع الحالي",
+  "settings": "الإعدادات",
+  "degrees_label": "{deg}° {dir}",
+  "distance_to_mecca": "4,500 كم إلى مكة"
 }

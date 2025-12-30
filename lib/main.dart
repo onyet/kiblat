@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'screens/welcome_screen.dart';
+import 'screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,7 +43,7 @@ class MainApp extends StatelessWidget {
       home: const SplashScreen(),
       routes: {
         '/welcome': (context) => const WelcomeScreen(),
-        '/home': (context) => const HomePage(),
+        '/home': (context) => const HomeScreen(),
       },
     );
   }
@@ -122,14 +123,3 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Kiblat')),
-      body: const Center(child: Text('Welcome to Kiblat')),
-    );
-  }
-}

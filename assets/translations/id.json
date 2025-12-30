@@ -3,5 +3,9 @@
   "welcome_title": "Kiblat",
   "welcome_description": "Temukan arah Kiblat secara akurat di mana saja di dunia dengan elegan dan tepat.",
   "get_started": "MULAI",
-  "language": "Bahasa"
+  "language": "Bahasa",
+  "current_location": "Lokasi Saat Ini",
+  "settings": "Pengaturan",
+  "degrees_label": "{deg}° {dir}",
+  "distance_to_mecca": "4.500 km ke Mekah"
 }

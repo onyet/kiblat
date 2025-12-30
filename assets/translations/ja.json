@@ -3,5 +3,9 @@
   "welcome_title": "キブラ",
   "welcome_description": "世界中どこでも優雅かつ正確にキブラ（メッカの方角）を見つけます。",
   "get_started": "始める",
-  "language": "言語"
+  "language": "言語",
+  "current_location": "現在地",
+  "settings": "設定",
+  "degrees_label": "{deg}° {dir}",
+  "distance_to_mecca": "4,500 km 到 メッカ"
 }
