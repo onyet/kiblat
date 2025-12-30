@@ -7,5 +7,20 @@
   "current_location": "Lokasi Saat Ini",
   "settings": "Pengaturan",
   "degrees_label": "{deg}° {dir}",
-  "distance_to_mecca": "4.500 km ke Mekah"
+  "distance_to_mecca": "4.500 km ke Mekah",
+  "compass_unavailable_title": "Kompas tidak tersedia",
+  "compass_unavailable_msg": "Perangkat ini sepertinya tidak memiliki sensor magnet/kompas. Fitur kompas untuk menentukan arah Kiblat tidak akan tersedia.",
+  "location_permission_title": "Izin lokasi diperlukan",
+  "location_permission_msg": "Izin lokasi diperlukan untuk menentukan posisi Anda dan menghitung arah Kiblat.",
+  "open_settings": "Buka Pengaturan",
+  "open_location_settings": "Buka Pengaturan Lokasi",
+  "dismiss": "Tutup",
+  "location_unavailable_title": "Lokasi tidak tersedia",
+  "location_unavailable_msg": "Tidak dapat mendapatkan lokasi Anda. Pastikan layanan lokasi diaktifkan.",
+  "ok": "OK",
+  "distance_to_mecca_fmt": "{dist} km ke Mekah",
+  "north": "U",
+  "south": "S",
+  "east": "T",
+  "west": "B"
 }

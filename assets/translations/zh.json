@@ -7,5 +7,20 @@
   "current_location": "当前位置",
   "settings": "设置",
   "degrees_label": "{deg}° {dir}",
-  "distance_to_mecca": "4,500 公里 到 麦加"
+  "distance_to_mecca": "4,500 公里 到 麦加",
+  "compass_unavailable_title": "无法使用指南针",
+  "compass_unavailable_msg": "该设备似乎没有磁传感器/指南针。基于指南针的朝向功能将不可用。",
+  "location_permission_title": "需要位置权限",
+  "location_permission_msg": "需要位置权限以确定您当前的位置并计算朝向。",
+  "open_settings": "打开设置",
+  "open_location_settings": "打开位置设置",
+  "dismiss": "关闭",
+  "location_unavailable_title": "无法获取位置",
+  "location_unavailable_msg": "无法获取您的位置。请确保已启用位置服务。",
+  "ok": "确定",
+  "distance_to_mecca_fmt": "{dist} 公里 到 麦加",
+  "north": "北",
+  "south": "南",
+  "east": "东",
+  "west": "西"
 }

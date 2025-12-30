@@ -7,5 +7,20 @@
   "current_location": "Aktueller Standort",
   "settings": "Einstellungen",
   "degrees_label": "{deg}° {dir}",
-  "distance_to_mecca": "4.500 km nach Mekka"
+  "distance_to_mecca": "4.500 km nach Mekka",
+  "compass_unavailable_title": "Kompass nicht verfügbar",
+  "compass_unavailable_msg": "Dieses Gerät scheint keinen Magnet-/Kompasssensor zu haben. Die kompassbasierte Qibla-Richtung ist nicht verfügbar.",
+  "location_permission_title": "Standortberechtigung erforderlich",
+  "location_permission_msg": "Für die Berechnung der Qibla-Richtung wird der Zugriff auf Ihren Standort benötigt.",
+  "open_settings": "Einstellungen öffnen",
+  "open_location_settings": "Standorteinstellungen öffnen",
+  "dismiss": "Schließen",
+  "location_unavailable_title": "Standort nicht verfügbar",
+  "location_unavailable_msg": "Ihr Standort kann nicht ermittelt werden. Bitte stellen Sie sicher, dass die Standortdienste aktiviert sind.",
+  "ok": "OK",
+  "distance_to_mecca_fmt": "{dist} km nach Mekka",
+  "north": "N",
+  "south": "S",
+  "east": "O",
+  "west": "W"
 }

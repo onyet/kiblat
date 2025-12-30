@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -36,9 +37,58 @@ class LocationService {
     }
   }
 
+  /// Calculate bearing (degrees from true north) from (lat, lon) to the Kaaba
+  /// Uses great-circle navigation formula for initial bearing.
+  static double qiblaBearing(double latDeg, double lonDeg) {
+    const kaabaLat = 21.422487; // degrees
+    const kaabaLon = 39.826206; // degrees
+    final lat1 = _degToRad(latDeg);
+    final lat2 = _degToRad(kaabaLat);
+    final dLon = _degToRad(kaabaLon - lonDeg);
+
+    final x = math.sin(dLon) * math.cos(lat2);
+    final y = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
+    var bearing = math.atan2(x, y) * (180 / math.pi);
+    bearing = (bearing + 360) % 360;
+    return bearing;
+  }
+
+  /// Returns distance in kilometers using haversine formula
+  static double distanceToKaabaKm(double latDeg, double lonDeg) {
+    const kaabaLat = 21.422487;
+    const kaabaLon = 39.826206;
+    final lat1 = _degToRad(latDeg);
+    final lat2 = _degToRad(kaabaLat);
+    final dLat = _degToRad(lat2 - lat1);
+    final dLon = _degToRad(kaabaLon - lonDeg);
+
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(lat1) * math.cos(lat2) * math.sin(dLon / 2) * math.sin(dLon / 2);
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    const earthRadiusKm = 6371.0;
+    return earthRadiusKm * c;
+  }
+
+  static double _degToRad(double deg) => deg * math.pi / 180.0;
+
   static Stream<double?> headingStream() {
     final events = FlutterCompass.events;
     if (events == null) return Stream<double?>.empty();
     return events.map<double?>((CompassEvent e) => e.heading);
+  }
+
+  /// Whether the device provides compass readings through flutter_compass.
+  static bool hasCompass() {
+    return FlutterCompass.events != null;
+  }
+
+  /// Open app settings to let user grant permissions
+  static Future<bool> openAppSettings() async {
+    return await Geolocator.openAppSettings();
+  }
+
+  /// Open location settings (device-level)
+  static Future<bool> openLocationSettings() async {
+    return await Geolocator.openLocationSettings();
   }
 }

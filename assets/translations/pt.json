@@ -7,5 +7,20 @@
   "current_location": "Localização atual",
   "settings": "Configurações",
   "degrees_label": "{deg}° {dir}",
-  "distance_to_mecca": "4.500 km até Meca"
+  "distance_to_mecca": "4.500 km até Meca",
+  "compass_unavailable_title": "Bússola não disponível",
+  "compass_unavailable_msg": "Este dispositivo parece não ter um sensor magnético/bússola. A função de bússola para a direção da Qibla não estará disponível.",
+  "location_permission_title": "Permissão de localização necessária",
+  "location_permission_msg": "A permissão de localização é necessária para determinar sua posição atual e calcular a direção da Qibla.",
+  "open_settings": "Abrir configurações",
+  "open_location_settings": "Abrir configurações de localização",
+  "dismiss": "Fechar",
+  "location_unavailable_title": "Localização indisponível",
+  "location_unavailable_msg": "Não foi possível obter sua localização. Verifique se os serviços de localização estão ativados.",
+  "ok": "OK",
+  "distance_to_mecca_fmt": "{dist} km até Meca",
+  "north": "N",
+  "south": "S",
+  "east": "L",
+  "west": "O"
 }

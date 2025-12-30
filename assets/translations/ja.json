@@ -7,5 +7,20 @@
   "current_location": "現在地",
   "settings": "設定",
   "degrees_label": "{deg}° {dir}",
-  "distance_to_mecca": "4,500 km 到 メッカ"
+  "distance_to_mecca": "4,500 km 到 メッカ",
+  "compass_unavailable_title": "コンパスが利用できません",
+  "compass_unavailable_msg": "このデバイスには磁気センサー/コンパスがないようです。コンパスに基づくキブラ方向は利用できません。",
+  "location_permission_title": "位置情報の許可が必要です",
+  "location_permission_msg": "キブラの計算に現在の位置情報が必要なため、位置情報の許可が必要です。",
+  "open_settings": "設定を開く",
+  "open_location_settings": "位置設定を開く",
+  "dismiss": "閉じる",
+  "location_unavailable_title": "位置情報を取得できません",
+  "location_unavailable_msg": "位置情報を取得できません。位置情報サービスが有効になっていることを確認してください。",
+  "ok": "OK",
+  "distance_to_mecca_fmt": "{dist} km 到 メッカ",
+  "north": "北",
+  "south": "南",
+  "east": "東",
+  "west": "西"
 }

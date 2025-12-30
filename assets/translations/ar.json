@@ -7,5 +7,20 @@
   "current_location": "الموقع الحالي",
   "settings": "الإعدادات",
   "degrees_label": "{deg}° {dir}",
-  "distance_to_mecca": "4,500 كم إلى مكة"
+  "distance_to_mecca": "4,500 كم إلى مكة",
+  "compass_unavailable_title": "البوصلة غير متاحة",
+  "compass_unavailable_msg": "هذا الجهاز يبدو أنه لا يحتوي على حساس مغناطيسي/بوصلة. لن تتوفر خاصية البوصلة لحساب اتجاه القبلة.",
+  "location_permission_title": "مطلوب إذن الموقع",
+  "location_permission_msg": "يتطلب تحديد موقعك إذن الوصول إلى الموقع لحساب اتجاه القبلة.",
+  "open_settings": "فتح الإعدادات",
+  "open_location_settings": "فتح إعدادات الموقع",
+  "dismiss": "إلغاء",
+  "location_unavailable_title": "لا يمكن الحصول على الموقع",
+  "location_unavailable_msg": "يتعذر الحصول على موقعك. يرجى التأكد من تمكين خدمات الموقع.",
+  "ok": "حسناً",
+  "distance_to_mecca_fmt": "{dist} كم إلى مكة",
+  "north": "ش",
+  "south": "ج",
+  "east": "ش.م",
+  "west": "غ"
 }
