@@ -19,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   double headingDeg = 125.0;
   double qiblaDeg = 0.0; // absolute bearing to Kaaba
   double distanceKm = 0.0;
+  bool _isLocationReady = false; // true when qibla bearing and distance are calculated
 
   StreamSubscription<double?>? _headingSub;
   String _locationLabel = 'London, UK';
@@ -96,9 +97,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         _locationLabel = label.isNotEmpty ? label : '${pos.latitude.toStringAsFixed(3)}, ${pos.longitude.toStringAsFixed(3)}';
         // compute precise qibla bearing
         qiblaDeg = LocationService.qiblaBearing(pos.latitude, pos.longitude);
+        // compute distance and mark ready so arrow is shown
+        distanceKm = LocationService.distanceToKaabaKm(pos.latitude, pos.longitude);
+        _isLocationReady = true;
       });
     } catch (e) {
       if (!mounted) return;
+      // ensure we hide arrow while failing
+      setState(() { _isLocationReady = false; });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         _showErrorAlert(
@@ -142,6 +148,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final dir = _dirFromDegree(qiblaDeg);
+
+    // Format distance according to current locale when ready
+    final NumberFormat distFmt = NumberFormat.decimalPattern(context.locale.toString())
+      ..minimumFractionDigits = 1
+      ..maximumFractionDigits = 1;
+    final String formattedDistance = distFmt.format(distanceKm);
+
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
       body: SafeArea(
@@ -251,61 +264,75 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           ),
                         ),
 
-                        // Kaaba at center, rotated to face the Qibla direction (drawn before arrow so arrow is visible on top)
-                        AnimatedRotation(
-                          turns: ((qiblaDeg - headingDeg) / 360.0),
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.easeOut,
-                          child: Container(
-                            width: 56,
-                            height: 64,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(6),
-                              gradient: const LinearGradient(colors: [Color(0xFF1A1A1A), Colors.black]),
-                              border: Border.all(color: Colors.white10),
-                            ),
-                            child: Stack(
+                        // Show loader while location/qibla are being calculated
+                        if (!_isLocationReady)
+                          Positioned(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Positioned(top: 8, left: 0, right: 0, child: Container(height: 6, decoration: BoxDecoration(gradient: LinearGradient(colors: [const Color(0xFFBF953F), const Color(0xFFFFF6BA), const Color(0xFFBF953F)])) )),
-                                Positioned(bottom: 8, right: 8, child: Container(width: 8, height: 12, decoration: BoxDecoration(border: Border.all(color: Colors.white12), color: const Color(0x66F4C025), borderRadius: BorderRadius.circular(2))))
+                                const SizedBox(width: 48, height: 48, child: CircularProgressIndicator(strokeWidth: 3, color: Color(0xFFF4C025))),
+                                const SizedBox(height: 8),
+                                Text(tr('calculating'), style: const TextStyle(color: Colors.white70)),
                               ],
                             ),
-                          ),
-                        ),
-
-                        // Qibla arrow on top - rotate relative to device heading for screen alignment
-                        // pointerAngle = qiblaDeg - headingDeg
-                        AnimatedRotation(
-                          turns: ((qiblaDeg - headingDeg) / 360.0),
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.easeOut,
-                          child: SizedBox(
-                            width: 300,
-                            height: 300,
-                            child: Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
+                          )
+                        else ...[
+                          // Kaaba at center, rotated to face the Qibla direction (drawn before arrow so arrow is visible on top)
+                          AnimatedRotation(
+                            turns: ((qiblaDeg - headingDeg) / 360.0),
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeOut,
+                            child: Container(
+                              width: 56,
+                              height: 64,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(6),
+                                gradient: const LinearGradient(colors: [Color(0xFF1A1A1A), Colors.black]),
+                                border: Border.all(color: Colors.white10),
+                              ),
+                              child: Stack(
                                 children: [
-                                  // Arrow head (larger)
-                                  CustomPaint(
-                                    size: const Size(28, 34),
-                                    painter: ArrowPainter(color: const Color(0xFFF4C025)),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  // Shaft
-                                  Container(
-                                    width: 6,
-                                    height: 120,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(colors: [const Color(0xFFF4C025), Colors.transparent]),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                  ),
+                                  Positioned(top: 8, left: 0, right: 0, child: Container(height: 6, decoration: BoxDecoration(gradient: LinearGradient(colors: [const Color(0xFFBF953F), const Color(0xFFFFF6BA), const Color(0xFFBF953F)])) )),
+                                  Positioned(bottom: 8, right: 8, child: Container(width: 8, height: 12, decoration: BoxDecoration(border: Border.all(color: Colors.white12), color: const Color(0x66F4C025), borderRadius: BorderRadius.circular(2))))
                                 ],
                               ),
                             ),
                           ),
-                        ),
+
+                          // Qibla arrow on top - rotate relative to device heading for screen alignment
+                          // pointerAngle = qiblaDeg - headingDeg
+                          AnimatedRotation(
+                            turns: ((qiblaDeg - headingDeg) / 360.0),
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeOut,
+                            child: SizedBox(
+                              width: 300,
+                              height: 300,
+                              child: Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Arrow head (larger)
+                                    CustomPaint(
+                                      size: const Size(28, 34),
+                                      painter: ArrowPainter(color: const Color(0xFFF4C025)),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    // Shaft
+                                    Container(
+                                      width: 6,
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(colors: [const Color(0xFFF4C025), Colors.transparent]),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
 
@@ -321,8 +348,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         children: [
                           const Icon(Icons.straight, color: Color(0xFFF4C025), size: 18),
                           const SizedBox(width: 8),
-                          Text(tr('distance_to_mecca'), style: const TextStyle(color: Color(0xFFCBCB90), fontSize: 14)),
-                          if (qiblaDeg == 0.0) ...[
+                          // show formatted distance when location is ready, otherwise show label + spinner
+                          if (_isLocationReady) ...[
+                            Text(tr('distance_to_mecca_fmt', namedArgs: {'dist': formattedDistance}), style: const TextStyle(color: Color(0xFFCBCB90), fontSize: 14)),
+                          ] else ...[
+                            Text(tr('distance_to_mecca'), style: const TextStyle(color: Color(0xFFCBCB90), fontSize: 14)),
                             const SizedBox(width: 8),
                             const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2))
                           ]

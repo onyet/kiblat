@@ -53,20 +53,23 @@ class LocationService {
     return bearing;
   }
 
-  /// Returns distance in kilometers using haversine formula
+  /// Returns distance in kilometers using the great-circle (spherical law of cosines) formula.
+  /// This computes the central angle between two points on a sphere and multiplies by Earth's radius.
   static double distanceToKaabaKm(double latDeg, double lonDeg) {
     const kaabaLat = 21.422487;
     const kaabaLon = 39.826206;
     final lat1 = _degToRad(latDeg);
     final lat2 = _degToRad(kaabaLat);
-    final dLat = _degToRad(lat2 - lat1);
     final dLon = _degToRad(kaabaLon - lonDeg);
 
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
-        math.cos(lat1) * math.cos(lat2) * math.sin(dLon / 2) * math.sin(dLon / 2);
-    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    // spherical law of cosines: central_angle = acos(sinφ1 sinφ2 + cosφ1 cosφ2 cosΔλ)
+    final cosCentral = (math.sin(lat1) * math.sin(lat2)) +
+        (math.cos(lat1) * math.cos(lat2) * math.cos(dLon));
+    // Clamp due to floating point errors
+    final clamped = math.max(-1.0, math.min(1.0, cosCentral));
+    final centralAngle = math.acos(clamped);
     const earthRadiusKm = 6371.0;
-    return earthRadiusKm * c;
+    return earthRadiusKm * centralAngle;
   }
 
   static double _degToRad(double deg) => deg * math.pi / 180.0;
