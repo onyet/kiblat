@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../services/location_service.dart';
+import '../services/ad_service.dart';
 import 'arrow_painter.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -155,17 +157,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ..maximumFractionDigits = 1;
     final String formattedDistance = distFmt.format(distanceKm);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF050505),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top bar with location + settings
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _handleAppClose();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF050505),
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Top bar with location + settings
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
                   const SizedBox(width: 36), // spacer
                   Column(
                     children: [
@@ -368,7 +376,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ],
         ),
       ),
+      ),
     );
+  }
+
+  /// Handle app close - tampilkan iklan interstitial kemudian keluar
+  Future<void> _handleAppClose() async {
+    // Tampilkan iklan interstitial sebelum keluar
+    final adShown = await AdService.instance.showInterstitialAd();
+    
+    // Tunggu sebentar jika iklan ditampilkan
+    if (adShown) {
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+    
+    // Keluar dari aplikasi
+    SystemNavigator.pop();
   }
 }
 
