@@ -7,10 +7,10 @@
         android:label="Kiblat"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
-        <!-- Google Maps API Key -->
+        <!-- Google Maps API Key (from .env via manifestPlaceholders) -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="{google_api_key}" />
+            android:value="${googleApiKey}" />
         <!-- AdMob App ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"

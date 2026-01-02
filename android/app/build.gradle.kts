@@ -5,6 +5,24 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Read .env file from project root
+fun loadEnvFile(): Map<String, String> {
+    val envFile = file("../../.env")
+    val envMap = mutableMapOf<String, String>()
+    if (envFile.exists()) {
+        envFile.readLines().forEach { line ->
+            if (line.isNotBlank() && !line.startsWith("#") && line.contains("=")) {
+                val (key, value) = line.split("=", limit = 2)
+                envMap[key.trim()] = value.trim()
+            }
+        }
+    }
+    return envMap
+}
+
+val envVars = loadEnvFile()
+val googleApiKey = envVars["GOOGLE_API_KEY"] ?: ""
+
 android {
     namespace = "id.onyet.app.kiblat"
     compileSdk = flutter.compileSdkVersion
@@ -28,6 +46,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // Manifest placeholders for API keys from .env
+        manifestPlaceholders["googleApiKey"] = googleApiKey
     }
 
     buildTypes {
