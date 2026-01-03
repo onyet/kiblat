@@ -42,7 +42,9 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
 
     // Only load persisted test-mode in debug builds (QA). Production should not expose or load this.
-    if (kDebugMode) _loadTestMode();
+    if (kDebugMode) {
+      _loadTestMode();
+    }
   }
 
   Future<void> _refreshStatus() async {
@@ -224,11 +226,12 @@ class _SettingsScreenState extends State<SettingsScreen>
                     onTap: () async {
                       // Request permission when tapped
                       await _requestPermission();
-                      if (!_locationActive)
+                      if (!_locationActive) {
                         _showInfoDialog(
                           tr('location_permission_title'),
                           tr('location_permission_msg'),
                         );
+                      }
                     },
                   ),
 
