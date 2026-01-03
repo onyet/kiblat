@@ -17,6 +17,7 @@ dependencies:
   flutter_compass: ^0.8.1
   google_maps_flutter: ^2.2.0
   google_mobile_ads: ^5.3.0
+  url_launcher: ^6.1.14
 
 dev_dependencies:
   flutter_test:

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/location_service.dart';
 
@@ -11,14 +12,23 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProviderStateMixin {
   bool _locationActive = false;
   bool _compassAvailable = false;
+
+  late final AnimationController _animController;
+  late final Animation<double> _scaleAnim;
+  late final Animation<double> _opacityAnim; 
 
   @override
   void initState() {
     super.initState();
     _refreshStatus();
+
+    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
+      ..repeat(reverse: true);
+    _scaleAnim = Tween<double>(begin: 0.96, end: 1.08).animate(CurvedAnimation(parent: _animController, curve: Curves.easeInOut));
+    _opacityAnim = Tween<double>(begin: 0.12, end: 0.32).animate(CurvedAnimation(parent: _animController, curve: Curves.easeInOut));
   }
 
   Future<void> _refreshStatus() async {
@@ -57,6 +67,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF050505),
@@ -87,8 +103,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                 children: [
-                  // Ambient glow
-                  Align(alignment: Alignment.topRight, child: Container(width: 160, height: 160, decoration: BoxDecoration(color: const Color(0x0FF4C025), borderRadius: BorderRadius.circular(999)))) ,
+                  // Decorative pulsing mosque icon
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: SizedBox(
+                      width: 88,
+                      height: 88,
+                      child: AnimatedBuilder(
+                        animation: _animController,
+                        builder: (context, child) => Transform.scale(
+                          scale: _scaleAnim.value,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Color(0xFFF4C025).withOpacity(_opacityAnim.value),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Center(child: Icon(Icons.mosque, color: Colors.white70, size: 36)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
 
                   const SizedBox(height: 6),
                   Text(tr('configuration'), style: const TextStyle(color: Color(0xFFF4C025), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
@@ -129,11 +164,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Text(tr('general'), style: const TextStyle(color: Color(0xFFF4C025), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                   const SizedBox(height: 10),
 
-                  _buildActionButton(title: tr('about_qibla_compass'), subtitle: tr('version'), icon: Icons.info, onTap: () => _showInfoDialog(tr('about_qibla_compass'), tr('version'))),
+                  // Language selection
+                  _buildActionButton(
+                    title: tr('language'),
+                    subtitle: _localeLabel(EasyLocalization.of(context)!.locale),
+                    icon: Icons.language,
+                    onTap: _showLanguageDialog,
+                  ),
                   const SizedBox(height: 8),
-                  _buildActionButton(title: tr('contact_us'), subtitle: tr('contact_us_desc'), icon: Icons.mail, onTap: () => _showInfoDialog(tr('contact_us'), tr('contact_us_desc'))),
+
+                  _buildActionButton(title: tr('about_qibla_compass'), subtitle: tr('version'), icon: Icons.info, onTap: () => _showInfoDialog(tr('about_qibla_compass'), tr('about_qibla_desc'))),
                   const SizedBox(height: 8),
-                  _buildActionButton(title: tr('privacy_policy'), subtitle: tr('privacy_policy'), icon: Icons.verified_user, onTap: () => _showInfoDialog(tr('privacy_policy'), tr('privacy_policy'))),
+                  _buildActionButton(title: tr('contact_us'), subtitle: tr('contact_us_desc'), icon: Icons.mail, onTap: _showContactDialog),
+                  const SizedBox(height: 8),
+                  _buildActionButton(title: tr('privacy_policy'), subtitle: tr('privacy_policy'), icon: Icons.verified_user, onTap: _showPrivacyPolicyDialog),
 
                 ],
               ),
@@ -190,5 +234,139 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Future<void> _showLanguageDialog() async {
+    final locales = EasyLocalization.of(context)!.supportedLocales;
+    final current = EasyLocalization.of(context)!.locale;
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('choose_language') == 'choose_language' ? tr('language') : tr('choose_language')),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: locales
+                .map((loc) => ListTile(
+                      title: Text(_localeLabel(loc)),
+                      trailing: loc == current ? const Icon(Icons.check, color: Color(0xFFF4C025)) : null,
+                      onTap: () async {
+                        final el = EasyLocalization.of(context);
+                        // close dialog first to avoid using dialog context after awaiting
+                        Navigator.of(ctx, rootNavigator: true).pop();
+                        await el!.setLocale(loc);
+                        if (!mounted) return;
+                        setState(() {});
+                      },
+
+                    ))
+                .toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showPrivacyPolicyDialog() async {
+    final url = Uri.parse('https://onyet.github.io/privacy-police.html');
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('privacy_policy')),
+        content: Text(url.toString()),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(), child: Text(tr('dismiss'))),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx, rootNavigator: true).pop();
+              await _openUrl(url);
+            },
+            child: Text(tr('open')),
+          )
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showContactDialog() async {
+    const whatsapp = 'https://wa.me/6282221874400';
+    const email = 'mailto:onyetcorp@gmail.com';
+    const phone = 'tel:+6282221874400';
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('contact_us')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.chat, color: Color(0xFF25D366)),
+              title: Text(tr('contact_whatsapp')),
+              subtitle: const Text('+62 822-2187-4400'),
+              onTap: () async {
+                Navigator.of(ctx, rootNavigator: true).pop();
+                await _openUrl(Uri.parse(whatsapp));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.email),
+              title: Text(tr('contact_email')),
+              subtitle: const Text('onyetcorp@gmail.com'),
+              onTap: () async {
+                Navigator.of(ctx, rootNavigator: true).pop();
+                await _openUrl(Uri.parse(email));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.phone),
+              title: Text(tr('contact_phone')),
+              subtitle: const Text('+62 822-2187-4400'),
+              onTap: () async {
+                Navigator.of(ctx, rootNavigator: true).pop();
+                await _openUrl(Uri.parse(phone));
+              },
+            ),
+          ],
+        ),
+        actions: [TextButton(onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(), child: Text(tr('dismiss')))],
+      ),
+    );
+  }
+
+  Future<void> _openUrl(Uri url) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final errMsg = tr('could_not_open');
+    try {
+      final opened = await launchUrl(url, mode: LaunchMode.externalApplication);
+      if (!opened) {
+        messenger.showSnackBar(SnackBar(content: Text(errMsg)));
+      }
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(errMsg)));
+    }
+  }
+
+  String _localeLabel(Locale locale) {
+    switch (locale.languageCode) {
+      case 'id':
+        return 'Bahasa Indonesia';
+      case 'en':
+        return 'English';
+      case 'ar':
+        return 'العربية';
+      case 'ja':
+        return '日本語';
+      case 'pt':
+        return 'Português';
+      case 'ru':
+        return 'Русский';
+      case 'zh':
+        return '中文';
+      case 'de':
+        return 'Deutsch';
+      default:
+        return locale.languageCode.toUpperCase();
+    }
+  }
 
 }
