@@ -46,5 +46,19 @@
   "mosques": "Moscheen",
   "quran": "Koran",
 
-  "calibrate": "Kalibrieren"
-} 
+  "calibrate": "Kalibrieren",
+  "about_qibla_desc": "Kiblat wurde von einem unabhängigen Entwickler erstellt, der bei Reisen Schwierigkeiten hatte, die Richtung zur Qibla zu bestimmen. Mit einer einfachen Benutzeroberfläche, einem präzisen Kompass und genauen Berechnungen hilft diese App, die korrekte Richtung überall zu finden — schnell, zuverlässig und als Begleiter auf spirituellen Reisen.",
+  "ad_test_mode": "Testmodus für Anzeigen",
+  "ad_test_mode_desc": "Verwende Googles Test-Anzeigen-Einheiten für QA (keine echten Anzeigen).",
+  "ad_test_mode_on": "Testmodus für Anzeigen aktiviert",
+  "ad_test_mode_off": "Testmodus für Anzeigen deaktiviert",
+  "choose_language": "Sprache wählen",
+  "contact_whatsapp": "WhatsApp",
+  "contact_email": "E-Mail",
+  "contact_phone": "Telefon",
+  "could_not_open": "Link konnte nicht geöffnet werden",
+  "inspired_by_kaaba": "Inspiriert von der Kaaba",
+  "open": "Öffnen",
+  "open_source": "Open Source – auf GitHub verfügbar",
+  "view_on_github": "Auf GitHub ansehen"
+}  

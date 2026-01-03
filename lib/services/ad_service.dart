@@ -55,7 +55,9 @@ class AdService {
       return;
     }
 
-    debugPrint('[AdService] Loading interstitial ad (unit: $interstitialAdUnitId)');
+    debugPrint(
+      '[AdService] Loading interstitial ad (unit: $interstitialAdUnitId)',
+    );
 
     InterstitialAd.load(
       adUnitId: interstitialAdUnitId,
@@ -67,25 +69,28 @@ class AdService {
           _isInterstitialAdReady = true;
 
           // Keep a safe default fullScreenContentCallback; it will be overridden when showing
-          _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-            onAdDismissedFullScreenContent: (ad) {
-              debugPrint('[AdService] Interstitial dismissed (default callback)');
-              try {
-                ad.dispose();
-              } catch (_) {}
-              _isInterstitialAdReady = false;
-              // Muat ulang iklan untuk penggunaan berikutnya
-              loadInterstitialAd();
-            },
-            onAdFailedToShowFullScreenContent: (ad, error) {
-              debugPrint('[AdService] Interstitial failed to show: $error');
-              try {
-                ad.dispose();
-              } catch (_) {}
-              _isInterstitialAdReady = false;
-              loadInterstitialAd();
-            },
-          );
+          _interstitialAd!.fullScreenContentCallback =
+              FullScreenContentCallback(
+                onAdDismissedFullScreenContent: (ad) {
+                  debugPrint(
+                    '[AdService] Interstitial dismissed (default callback)',
+                  );
+                  try {
+                    ad.dispose();
+                  } catch (_) {}
+                  _isInterstitialAdReady = false;
+                  // Muat ulang iklan untuk penggunaan berikutnya
+                  loadInterstitialAd();
+                },
+                onAdFailedToShowFullScreenContent: (ad, error) {
+                  debugPrint('[AdService] Interstitial failed to show: $error');
+                  try {
+                    ad.dispose();
+                  } catch (_) {}
+                  _isInterstitialAdReady = false;
+                  loadInterstitialAd();
+                },
+              );
         },
         onAdFailedToLoad: (error) {
           debugPrint('[AdService] Interstitial failed to load: $error');
@@ -104,7 +109,9 @@ class AdService {
   /// Attempts to show interstitial ad and waits until it's dismissed or fails.
   /// Returns true if an ad was shown and dismissed, false otherwise.
   /// A [timeout] is applied to avoid blocking the caller if the ad doesn't fire callbacks.
-  Future<bool> showInterstitialAd({Duration timeout = const Duration(seconds: 4)}) async {
+  Future<bool> showInterstitialAd({
+    Duration timeout = const Duration(seconds: 4),
+  }) async {
     if (!_isInterstitialAdReady || _interstitialAd == null) return false;
     if (_isShowing) return false; // avoid re-entrance
 
@@ -154,12 +161,15 @@ class AdService {
     }
 
     try {
-      return await completer.future.timeout(timeout, onTimeout: () {
-        // If callbacks don't arrive, reset and try to recover
-        _isShowing = false;
-        loadInterstitialAd();
-        return false;
-      });
+      return await completer.future.timeout(
+        timeout,
+        onTimeout: () {
+          // If callbacks don't arrive, reset and try to recover
+          _isShowing = false;
+          loadInterstitialAd();
+          return false;
+        },
+      );
     } catch (_) {
       _isShowing = false;
       loadInterstitialAd();
@@ -170,7 +180,9 @@ class AdService {
   /// Convenience helper: show an interstitial and then exit the app.
   /// Tries to show an interstitial with [timeout] and then calls SystemNavigator.pop().
   /// The method will still exit even if an ad isn't available or fails.
-  Future<void> showInterstitialThenExit({Duration timeout = const Duration(seconds: 3)}) async {
+  Future<void> showInterstitialThenExit({
+    Duration timeout = const Duration(seconds: 3),
+  }) async {
     try {
       // Attempt to show ad; this returns true if shown and dismissed, false otherwise
       await showInterstitialAd(timeout: timeout);

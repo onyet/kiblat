@@ -46,5 +46,19 @@
   "mosques": "Mesquitas",
   "quran": "Alcorão",
 
-  "calibrate": "Calibrar"
-} 
+  "calibrate": "Calibrar",
+  "about_qibla_desc": "Kiblat foi criado por um desenvolvedor independente que, em viagens, teve dificuldade em determinar a direção da Qibla. Com uma interface simples, bússola precisa e cálculos exatos, este aplicativo ajuda você a encontrar a direção correta em qualquer lugar — rápido, confiável e pronto para acompanhar suas jornadas espirituais.",
+  "ad_test_mode": "Modo de teste de anúncios",
+  "ad_test_mode_desc": "Use as unidades de anúncio de teste do Google para QA (sem anúncios reais).",
+  "ad_test_mode_on": "Modo de teste de anúncios ativado",
+  "ad_test_mode_off": "Modo de teste de anúncios desativado",
+  "choose_language": "Escolha o idioma",
+  "contact_whatsapp": "WhatsApp",
+  "contact_email": "Email",
+  "contact_phone": "Telefone",
+  "could_not_open": "Não foi possível abrir o link",
+  "inspired_by_kaaba": "Inspirado pela Kaaba",
+  "open": "Abrir",
+  "open_source": "Código-fonte aberto — disponível no GitHub",
+  "view_on_github": "Ver no GitHub"
+}  

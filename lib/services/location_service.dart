@@ -11,7 +11,8 @@ class LocationService {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
-    return permission == LocationPermission.always || permission == LocationPermission.whileInUse;
+    return permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
   }
 
   static Future<Position> getCurrentPosition() async {
@@ -21,7 +22,9 @@ class LocationService {
     }
     final granted = await checkAndRequestPermission();
     if (!granted) throw Exception('Location permission not granted');
-    return await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+    return await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.best,
+    );
   }
 
   static Future<String> reverseGeocode(double lat, double lon) async {
@@ -47,7 +50,9 @@ class LocationService {
     final dLon = _degToRad(kaabaLon - lonDeg);
 
     final x = math.sin(dLon) * math.cos(lat2);
-    final y = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
+    final y =
+        math.cos(lat1) * math.sin(lat2) -
+        math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
     var bearing = math.atan2(x, y) * (180 / math.pi);
     bearing = (bearing + 360) % 360;
     return bearing;
@@ -63,7 +68,8 @@ class LocationService {
     final dLon = _degToRad(kaabaLon - lonDeg);
 
     // spherical law of cosines: central_angle = acos(sinφ1 sinφ2 + cosφ1 cosφ2 cosΔλ)
-    final cosCentral = (math.sin(lat1) * math.sin(lat2)) +
+    final cosCentral =
+        (math.sin(lat1) * math.sin(lat2)) +
         (math.cos(lat1) * math.cos(lat2) * math.cos(dLon));
     // Clamp due to floating point errors
     final clamped = math.max(-1.0, math.min(1.0, cosCentral));

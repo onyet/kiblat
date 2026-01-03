@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
-  
+
   // Enable test mode in debug for easier ad testing
   if (kDebugMode) {
     AdService.setTestMode(true);
@@ -75,9 +75,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: tr('app_title'),
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue),
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
@@ -112,13 +110,15 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 900),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.05).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.05,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
     _controller.forward();
 
@@ -143,10 +143,7 @@ class _SplashScreenState extends State<SplashScreen>
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: _buildLogo(),
-          ),
+          child: ScaleTransition(scale: _scaleAnimation, child: _buildLogo()),
         ),
       ),
     );
@@ -158,8 +155,10 @@ class _SplashScreenState extends State<SplashScreen>
       children: [
         Image.asset('assets/images/logo.png', width: 120, height: 120),
         const SizedBox(height: 12),
-        const Text('Kiblat',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+        const Text(
+          'Kiblat',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+        ),
       ],
     );
   }
@@ -191,5 +190,3 @@ class _SplashScreenState extends State<SplashScreen>
     }
   }
 }
-
-

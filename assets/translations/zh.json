@@ -46,5 +46,19 @@
   "mosques": "清真寺",
   "quran": "古兰经",
 
-  "calibrate": "校准"
-} 
+  "calibrate": "校准",
+  "about_qibla_desc": "Kiblat 由一位独立开发者创建，他曾在旅行中难以确定朝向。结合简洁的界面、精确的指南针和准确的计算，本应用可帮助您在任何地方快速、可靠地找到正确方向，伴随您的心灵之旅。",
+  "ad_test_mode": "广告测试模式",
+  "ad_test_mode_desc": "使用 Google 的测试广告单元进行 QA（不展示真实广告）。",
+  "ad_test_mode_on": "已启用广告测试模式",
+  "ad_test_mode_off": "已禁用广告测试模式",
+  "choose_language": "选择语言",
+  "contact_whatsapp": "WhatsApp",
+  "contact_email": "电子邮件",
+  "contact_phone": "电话",
+  "could_not_open": "无法打开链接",
+  "inspired_by_kaaba": "受卡巴启发",
+  "open": "打开",
+  "open_source": "开源 — 可在 GitHub 获取",
+  "view_on_github": "在 GitHub 查看"
+}  

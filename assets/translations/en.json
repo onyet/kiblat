@@ -50,6 +50,8 @@
   "ad_test_mode_desc": "Use Google's test ad units for QA (no real ads).",
   "ad_test_mode_on": "Test ad mode enabled",
   "ad_test_mode_off": "Test ad mode disabled",
+  "open_source": "Open source – available on GitHub",
+  "view_on_github": "View on GitHub",
 
   "inspired_by_kaaba": "Inspired by Kaaba",
 

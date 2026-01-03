@@ -46,5 +46,19 @@
   "mosques": "モスク",
   "quran": "コーラン",
 
-  "calibrate": "キャリブレーション"
-} 
+  "calibrate": "キャリブレーション",
+  "about_qibla_desc": "Kiblat は、旅行中にキブラの方角を特定するのに苦労した経験のある個人開発者によって作られました。シンプルなインターフェース、正確なコンパスと計算により、このアプリはどこでも正確な方角を素早く、信頼して見つけられるようサポートします。",
+  "ad_test_mode": "広告テストモード",
+  "ad_test_mode_desc": "QA のために Google のテスト広告ユニットを使用してください（実際の広告は表示されません）。",
+  "ad_test_mode_on": "広告テストモード有効",
+  "ad_test_mode_off": "広告テストモード無効",
+  "choose_language": "言語を選択",
+  "contact_whatsapp": "WhatsApp",
+  "contact_email": "メール",
+  "contact_phone": "電話",
+  "could_not_open": "リンクを開くことができませんでした",
+  "inspired_by_kaaba": "カーバから着想を得た",
+  "open": "開く",
+  "open_source": "オープンソース — GitHub で利用可能",
+  "view_on_github": "GitHub で見る"
+}  
