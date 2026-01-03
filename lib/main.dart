@@ -4,11 +4,18 @@ import 'screens/welcome_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
 import 'services/ad_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   
+  // Enable test mode in debug for easier ad testing
+  if (kDebugMode) {
+    AdService.setTestMode(true);
+  }
+
   // Inisialisasi AdMob
   await AdService.initialize();
 
@@ -31,8 +38,37 @@ Future<void> main() async {
   );
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends StatefulWidget {
   const MainApp({super.key});
+
+  @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Ensure an ad is loaded at app start
+    AdService.instance.loadInterstitialAd();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // When app resumes, refresh/load interstitial so it's ready when user closes later
+    if (state == AppLifecycleState.resumed) {
+      AdService.instance.reloadInterstitialAd();
+    }
+    // Optionally, when app becomes inactive/paused we could reload as well
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,10 +122,10 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    // After animation completes and a small delay, navigate to Welcome screen
+    // After animation completes and a small delay, navigate depending on build and first-run
     Future.delayed(const Duration(milliseconds: 1400), () {
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/welcome');
+        _navigateAfterSplash();
       }
     });
   }
@@ -127,5 +163,33 @@ class _SplashScreenState extends State<SplashScreen>
       ],
     );
   }
+
+  Future<void> _navigateAfterSplash() async {
+    // In debug builds, always show the welcome screen for testing
+    if (kDebugMode) {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/welcome');
+      return;
+    }
+
+    // In production, show Welcome only on first run
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final seen = prefs.getBool('seen_welcome') ?? false;
+      if (!seen) {
+        await prefs.setBool('seen_welcome', true);
+        if (!mounted) return;
+        Navigator.of(context).pushReplacementNamed('/welcome');
+      } else {
+        if (!mounted) return;
+        Navigator.of(context).pushReplacementNamed('/home');
+      }
+    } catch (e) {
+      // On error, fallback to welcome screen
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/welcome');
+    }
+  }
 }
+
 

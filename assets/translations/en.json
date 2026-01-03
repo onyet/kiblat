@@ -46,6 +46,11 @@
   "contact_phone": "Phone",
   "about_qibla_desc": "Kiblat was created by an independent developer who once struggled to determine the Qibla while traveling. Combined with a simple interface, precise compass and calculations, this app helps you find the correct direction anywhere — fast, reliable, and ready to accompany your spiritual journeys.",
 
+  "ad_test_mode": "Test Ad Mode",
+  "ad_test_mode_desc": "Use Google's test ad units for QA (no real ads).",
+  "ad_test_mode_on": "Test ad mode enabled",
+  "ad_test_mode_off": "Test ad mode disabled",
+
   "inspired_by_kaaba": "Inspired by Kaaba",
 
   "compass": "Compass",

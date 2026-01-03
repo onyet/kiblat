@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import '../services/ad_service.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -19,7 +20,13 @@ class WelcomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentCode = context.locale.languageCode;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await AdService.instance.showInterstitialThenExit(timeout: const Duration(seconds: 3));
+      },
+      child: Scaffold(
       backgroundColor: const Color(0xFF050505), // kaaba-black
       body: SafeArea(
         child: Padding(
@@ -150,6 +157,7 @@ class WelcomeScreen extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

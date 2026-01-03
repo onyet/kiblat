@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../services/ad_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 import '../services/location_service.dart';
 
@@ -15,6 +18,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProviderStateMixin {
   bool _locationActive = false;
   bool _compassAvailable = false;
+  bool _testAdMode = false;
 
   late final AnimationController _animController;
   late final Animation<double> _scaleAnim;
@@ -29,6 +33,9 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
       ..repeat(reverse: true);
     _scaleAnim = Tween<double>(begin: 0.96, end: 1.08).animate(CurvedAnimation(parent: _animController, curve: Curves.easeInOut));
     _opacityAnim = Tween<double>(begin: 0.12, end: 0.32).animate(CurvedAnimation(parent: _animController, curve: Curves.easeInOut));
+
+    // Only load persisted test-mode in debug builds (QA). Production should not expose or load this.
+    if (kDebugMode) _loadTestMode();
   }
 
   Future<void> _refreshStatus() async {
@@ -70,6 +77,29 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
   void dispose() {
     _animController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadTestMode() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final val = prefs.getBool('ad_test_mode') ?? AdService.testMode;
+      if (!mounted) return;
+      setState(() { _testAdMode = val; });
+      AdService.setTestMode(val);
+      AdService.instance.reloadInterstitialAd();
+    } catch (_) {}
+  }
+
+  Future<void> _toggleTestMode(bool value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('ad_test_mode', value);
+      AdService.setTestMode(value);
+      AdService.instance.reloadInterstitialAd();
+      if (!mounted) return;
+      setState(() { _testAdMode = value; });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value ? tr('ad_test_mode_on') : tr('ad_test_mode_off'))));
+    } catch (_) {}
   }
 
   @override
@@ -115,7 +145,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                           scale: _scaleAnim.value,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Color(0xFFF4C025).withOpacity(_opacityAnim.value),
+                              color: Color.fromRGBO(244, 192, 37, _opacityAnim.value),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: const Center(child: Icon(Icons.mosque, color: Colors.white70, size: 36)),
@@ -172,6 +202,18 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                     onTap: _showLanguageDialog,
                   ),
                   const SizedBox(height: 8),
+
+                  // Test Ad Mode toggle (QA) - only visible in debug builds
+                  if (kDebugMode) ...[
+                    _buildStatusTile(
+                      icon: Icons.ad_units,
+                      title: tr('ad_test_mode'),
+                      subtitle: tr('ad_test_mode_desc'),
+                      trailing: Switch(value: _testAdMode, activeThumbColor: Color(0xFFF4C025), onChanged: _toggleTestMode),
+                      onTap: () => _toggleTestMode(!_testAdMode),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
 
                   _buildActionButton(title: tr('about_qibla_compass'), subtitle: tr('version'), icon: Icons.info, onTap: () => _showInfoDialog(tr('about_qibla_compass'), tr('about_qibla_desc'))),
                   const SizedBox(height: 8),

@@ -22,9 +22,9 @@ A lightweight Flutter app that shows the precise Qibla direction (towards the Ka
 
 | Screen | Screenshot |
 |---|---|
-| Home / Compass | ![Home screen](assets/screenshots/home.png) |
-| Welcome / Language Selector | ![Welcome screen](assets/screenshots/welcome.png) |
-| Permission dialog | ![Permissions](assets/screenshots/permissions.png) |
+| Home / Compass | ![Home screen](assets/screenshots/home.jpeg) |
+| Welcome / Language Selector | ![Welcome screen](assets/screenshots/welcome.jpeg) |
+| Permission dialog | ![Permissions](assets/screenshots/permissions.jpeg) |
 
 
 ---
@@ -91,6 +91,43 @@ Note: On Android you need location permission; on iOS add the required Info.plis
 
 - Feel free to add real screenshots to `assets/screenshots/` and update the README accordingly.
 - For more precise geodesy (ellipsoidal calculations) consider using a geodesy library (e.g., vincenty or geographiclib) — current implementation is sufficient for most practical uses.
+
+---
+
+## QA & Test Ad Mode 🧪
+
+This project includes a runtime "Test Ad Mode" useful for QA and debugging ad behavior.
+
+- **Debug builds**: Test mode is automatically enabled to make testing easier.
+- **Production builds**: Toggle Test Ad Mode at runtime in the app from **Settings → Test Ad Mode**; the setting is persisted (`SharedPreferences` key: `ad_test_mode`).
+- When test mode is enabled the app uses Google's **test interstitial ad unit IDs** and immediately reloads the interstitial so it is ready to show.
+- You can also enable test mode programmatically before initialization by calling `AdService.setTestMode(true)` (useful in automated tests).
+
+Helpful tips for QA:
+
+- Watch logs for `[AdService]` messages (load/show/dismiss/failure) to diagnose ad behavior.
+- Use the exit/back flow to verify an interstitial shows reliably (the app awaits a short timeout while attempting to show the ad before exiting).
+
+---
+
+## Contact & Privacy 🔐
+
+- **Privacy Policy:** https://onyet.github.io/privacy-police.html
+- **Author / Support:**
+  - WhatsApp: +62 822-2187-4400 — https://wa.me/6282221874400
+  - Email: onyetcorp@gmail.com
+  - Phone: +62 822-2187-4400
+
+If you need faster support or want to report an issue, please use WhatsApp or email.
+
+---
+
+## Testing checklist ✔️
+
+- Enable **Test Ad Mode** in **Settings** (or run in debug mode) and confirm the interstitial uses Google's test ad unit IDs.
+- Confirm the interstitial is preloaded by resuming or opening the app (ads are refreshed on resume/start).
+- Test the exit flow: press back / attempt to close the app and verify the interstitial shows (or the app exits after the short timeout).
+- To re-test welcome flow in a released build, clear the app storage or use the "Reset welcome" action from Settings (or unset the `seen_welcome` SharedPreferences key).
 
 ---
 

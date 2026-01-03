@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../services/location_service.dart';
 import '../services/ad_service.dart';
@@ -382,16 +381,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   /// Handle app close - tampilkan iklan interstitial kemudian keluar
   Future<void> _handleAppClose() async {
-    // Tampilkan iklan interstitial sebelum keluar
-    final adShown = await AdService.instance.showInterstitialAd();
-    
-    // Tunggu sebentar jika iklan ditampilkan
-    if (adShown) {
-      await Future.delayed(const Duration(milliseconds: 500));
-    }
-    
-    // Keluar dari aplikasi
-    SystemNavigator.pop();
+    // Use helper that shows interstitial (with short timeout) then exits the app.
+    await AdService.instance.showInterstitialThenExit(timeout: const Duration(seconds: 3));
   }
 }
 
