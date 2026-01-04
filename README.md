@@ -78,6 +78,31 @@ Note: On Android you need location permission; on iOS add the required Info.plis
 
 ---
 
+## Building release (Android AAB) 🔧
+
+1. Place your release keystore (for example `keystore.jks`) in the `android/` folder and create `android/key.properties` with the following *local-only* values (do NOT commit this file):
+
+```
+storePassword=YOUR_STORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=YOUR_KEY_ALIAS
+storeFile=keystore.jks
+```
+
+A sample file `android/key.properties.example` is included in the repository to guide the format.
+
+2. Build the Android App Bundle (AAB):
+
+```
+flutter build appbundle --release
+```
+
+3. Upload the produced AAB (`build/app/outputs/bundle/release/app-release.aab`) to the Google Play Console.
+
+> Note: `android/key.properties` is listed in `.gitignore` by default — keep it out of source control and store secrets in CI (e.g., GitHub Actions/Secrets) for automated builds.
+
+---
+
 ## Where to look in code 🧭
 
 - `lib/screens/home_screen.dart` — main compass UI, loader behavior, and localized distance readout

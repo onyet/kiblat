@@ -1,0 +1,5 @@
+# Example key.properties (DO NOT COMMIT real secrets)
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=upload
+storeFile=keystore.jks

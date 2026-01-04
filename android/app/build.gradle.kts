@@ -5,6 +5,8 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+import java.util.Properties
+
 // Read .env file from project root
 fun loadEnvFile(): Map<String, String> {
     val envFile = file("../../.env")
@@ -22,6 +24,13 @@ fun loadEnvFile(): Map<String, String> {
 
 val envVars = loadEnvFile()
 val googleApiKey = envVars["GOOGLE_API_KEY"] ?: ""
+
+// Load keystore properties for release signing (optional). Place `keystore.jks` in `android/`.
+val keystorePropertiesFile = file("../key.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(keystorePropertiesFile.inputStream())
+} 
 
 android {
     namespace = "id.onyet.app.kiblat"
@@ -51,11 +60,27 @@ android {
         manifestPlaceholders["googleApiKey"] = googleApiKey
     }
 
+    // Create release signing config only if key.properties is present (keystore should be in `android/`)
+    if (keystorePropertiesFile.exists()) {
+        signingConfigs {
+            create("release") {
+                keyAlias = keystoreProperties.getProperty("keyAlias", "")
+                keyPassword = keystoreProperties.getProperty("keyPassword", "")
+                storeFile = file(keystoreProperties.getProperty("storeFile", "keystore.jks"))
+                storePassword = keystoreProperties.getProperty("storePassword", "")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Use the release keystore when available.
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+            // Enable minification and add proguard rules if desired.
+            // isMinifyEnabled = true
+            // proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }
