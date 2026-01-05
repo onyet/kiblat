@@ -1,5 +1,7 @@
 # Kiblat 📍
 
+[![Get it on Google Play](https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png)](https://play.google.com/store/apps/details?id=id.onyet.app.kiblat)
+
 A lightweight Flutter app that shows the precise Qibla direction (towards the Kaaba in Mecca) using the device compass and the device's current location. The app is localized and includes a welcome/splash screen, a compass-style dial with animated Qibla arrow, and helpful permission/error dialogs.
 
 ---
