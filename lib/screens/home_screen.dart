@@ -1,16 +1,22 @@
 import 'dart:async';
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/location_service.dart';
 import '../widgets/exit_helper.dart';
 import '../services/telemetry_service.dart';
-import 'arrow_painter.dart';
+import 'home_topbar.dart';
+import 'home_compass_widget.dart';
+import 'home_compass_controller.dart';
+import 'home_location_controller.dart';
+import 'home_dialogs.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final bool skipPermissionCheck; // useful for tests
+  final dynamic locationController; // accepts HomeLocationController or similar for injection
+  final dynamic compassController; // optional injection for tests (CompassHeadingController)
+
+  const HomeScreen({super.key, this.locationController, this.compassController, this.skipPermissionCheck = false});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -27,8 +33,8 @@ class _HomeScreenState extends State<HomeScreen>
       false; // true when qibla bearing and distance are calculated
 
   StreamSubscription<double?>? _headingSub;
+  CompassHeadingController? _compassController;
   String _locationLabel = 'London, UK';
-  double? _lastHeading; // for smoothing
 
   @override
   void initState() {
@@ -44,115 +50,111 @@ class _HomeScreenState extends State<HomeScreen>
     if (!LocationService.hasCompass()) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _showErrorAlert(
+        showErrorAlert(
+          context,
           title: tr('compass_unavailable_title'),
           message: tr('compass_unavailable_msg'),
         );
       });
     } else {
-      // Start listening to compass updates (smoothed)
-      _headingSub = LocationService.headingStream().listen((val) {
-        if (val != null) {
-          // basic low-pass smoothing to reduce jitter
-          final smoothed = _lastHeading == null
-              ? val
-              : (_lastHeading! * 0.8 + val * 0.2);
-          _lastHeading = smoothed;
-          setState(() {
-            headingDeg = smoothed;
-          });
-        }
+      // Start compass controller and listen to smoothed heading stream
+      _compassController = (widget.compassController as CompassHeadingController?) ?? CompassHeadingController();
+      _headingSub = _compassController!.smoothedStream.listen((val) {
+        setState(() {
+          headingDeg = val;
+        });
       });
     }
 
-    // Check and request location permission first
-    LocationService.checkAndRequestPermission().then((granted) {
-      if (!granted) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          _showErrorAlert(
-            title: tr('location_permission_title'),
-            message: tr('location_permission_msg'),
-            actions: [
-              DialogAction(tr('open_settings'), (ctx) async {
-                Navigator.of(ctx, rootNavigator: true).pop();
-                await LocationService.openAppSettings();
-              }),
-              DialogAction(
-                tr('dismiss'),
-                (ctx) => Navigator.of(ctx, rootNavigator: true).pop(),
-              ),
-            ],
-          );
-        });
-        return;
-      }
-
-      // Permissions granted - fetch location on a background async method
+    // Check and request location permission first (skippable for tests)
+    if (widget.skipPermissionCheck) {
       _fetchAndSetLocation();
-    });
+    } else {
+      LocationService.checkAndRequestPermission().then((granted) {
+        if (!granted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            showErrorAlert(
+              context,
+              title: tr('location_permission_title'),
+              message: tr('location_permission_msg'),
+              actions: [
+                DialogAction(tr('open_settings'), (ctx) async {
+                  Navigator.of(ctx, rootNavigator: true).pop();
+                  await LocationService.openAppSettings();
+                }),
+                DialogAction(
+                  tr('dismiss'),
+                  (ctx) => Navigator.of(ctx, rootNavigator: true).pop(),
+                ),
+              ],
+            );
+          });
+          return;
+        }
+
+        // Permissions granted - fetch location on a background async method
+        _fetchAndSetLocation();
+      });
+    }
   }
 
   @override
   void dispose() {
     _headingSub?.cancel();
+    _compassController?.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   Future<void> _fetchAndSetLocation() async {
+    final controller = widget.locationController ?? HomeLocationController();
     try {
-      final pos = await LocationService.getCurrentPosition();
-
-      // Try reverse geocode with cache fallback
-      final label = await LocationService.reverseGeocodeWithCache(
-        pos.latitude,
-        pos.longitude,
-      );
-
+      final res = await (controller as dynamic).fetchLocation();
       if (!mounted) return;
 
-      // If no label (and no cache), still compute using coordinates, then show options
-      if (label.isEmpty) {
+      if (res.label.isEmpty) {
         setState(() {
-          _locationLabel = '${pos.latitude.toStringAsFixed(3)}, ${pos.longitude.toStringAsFixed(3)}';
-          // compute precise qibla bearing
-          qiblaDeg = LocationService.qiblaBearing(pos.latitude, pos.longitude);
-          // compute distance and mark ready so arrow is shown
-          distanceKm = LocationService.distanceToKaabaKm(
-            pos.latitude,
-            pos.longitude,
-          );
+          _locationLabel = '${res.lat.toStringAsFixed(3)}, ${res.lon.toStringAsFixed(3)}';
+          qiblaDeg = res.qiblaDeg;
+          distanceKm = res.distanceKm;
           _isLocationReady = true;
         });
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          _showGeocodeFailureOptions(pos);
+          _showGeocodeFailureOptions(Position(
+            latitude: res.lat,
+            longitude: res.lon,
+            timestamp: DateTime.now(),
+            accuracy: 1.0,
+            altitude: 0.0,
+            altitudeAccuracy: 0.0,
+            heading: 0.0,
+            headingAccuracy: 0.0,
+            speed: 0.0,
+            speedAccuracy: 0.0,
+          ));
         });
         return;
       }
 
-      // Normal success (could be from cache or fresh)
       setState(() {
-        _locationLabel = label;
-        qiblaDeg = LocationService.qiblaBearing(pos.latitude, pos.longitude);
-        distanceKm = LocationService.distanceToKaabaKm(
-          pos.latitude,
-          pos.longitude,
-        );
+        _locationLabel = res.label;
+        qiblaDeg = res.qiblaDeg;
+        distanceKm = res.distanceKm;
         _isLocationReady = true;
       });
     } catch (e) {
       if (!mounted) return;
-      // ensure we hide arrow while failing
       setState(() {
         _isLocationReady = false;
       });
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _showErrorAlert(
+        showErrorAlert(
+          context,
           title: tr('location_unavailable_title'),
           message: tr('location_unavailable_msg'),
           actions: [
@@ -170,177 +172,26 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  String _dirFromDegree(double deg) {
-    // convert degree to cardinal abbreviation
-    final dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-    final index = ((deg + 22.5) ~/ 45) % 8;
-    return dirs[index];
-  }
 
-  // -- Error dialog helper --
-  void _showErrorAlert({
-    required String title,
-    required String message,
-    List<DialogAction>? actions,
-  }) {
-    final dialogActions =
-        actions ??
-        [
-          DialogAction(
-            tr('ok'),
-            (ctx) => Navigator.of(ctx, rootNavigator: true).pop(),
-          ),
-        ];
-    showDialog<void>(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: dialogActions
-            .map(
-              (a) => TextButton(
-                onPressed: () => a.onPressed(ctx),
-                child: Text(a.label),
-              ),
-            )
-            .toList(),
-      ),
-    );
-  }
-
-  // Show options when reverse geocoding failed (no network or API error)
+  // -- Error dialog helpers replaced by `home_dialogs` module --
   void _showGeocodeFailureOptions(Position pos) async {
-    final cached = await LocationService.getLastLocation();
-
-    final actions = <DialogAction>[];
-
-    actions.add(DialogAction(tr('retry'), (ctx) async {
-      Navigator.of(ctx, rootNavigator: true).pop();
-      await _fetchAndSetLocation();
-    }));
-
-    if (cached != null) {
-      actions.add(DialogAction(tr('use_cached'), (ctx) {
-        Navigator.of(ctx, rootNavigator: true).pop();
-        setState(() {
-          _locationLabel = '${cached['label']} (cached)';
-          qiblaDeg = LocationService.qiblaBearing(cached['lat'], cached['lon']);
-          distanceKm = LocationService.distanceToKaabaKm(cached['lat'], cached['lon']);
-          _isLocationReady = true;
-        });
-        TelemetryService.instance.logEvent('used_cached_location');
-      }));
-    }
-
-    actions.add(DialogAction(tr('enter_coordinates'), (ctx) async {
-      Navigator.of(ctx, rootNavigator: true).pop();
-      await _showEnterCoordinatesDialog();
-    }));
-
-    actions.add(DialogAction(tr('open_location_settings'), (ctx) async {
-      Navigator.of(ctx, rootNavigator: true).pop();
-      await LocationService.openLocationSettings();
-    }));
-
-    actions.add(DialogAction(
-      tr('dismiss'),
-      (ctx) => Navigator.of(ctx, rootNavigator: true).pop(),
-    ));
-
-    _showErrorAlert(
-      title: tr('location_unavailable_title'),
-      message: tr('geocode_failed_msg'),
-      actions: actions,
-    );
+    await showGeocodeFailureOptions(context, pos, onUseCached: (label, lat, lon) {
+      setState(() {
+        _locationLabel = '$label (cached)';
+        qiblaDeg = LocationService.qiblaBearing(lat, lon);
+        distanceKm = LocationService.distanceToKaabaKm(lat, lon);
+        _isLocationReady = true;
+      });
+      TelemetryService.instance.logEvent('used_cached_location');
+    });
   }
 
-  Future<void> _showEnterCoordinatesDialog() async {
-    final latCtl = TextEditingController();
-    final lonCtl = TextEditingController();
-    final formKey = GlobalKey<FormState>();
 
-    final res = await showDialog<bool>(
-      context: context,
-      barrierDismissible: true,
-      builder: (ctx) => AlertDialog(
-        title: Text(tr('enter_coordinates_title')),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                key: const ValueKey('lat'),
-                controller: latCtl,
-                decoration: InputDecoration(labelText: tr('latitude')),
-                keyboardType: const TextInputType.numberWithOptions(signed: true, decimal: true),
-                validator: (v) {
-                  final val = double.tryParse(v ?? '');
-                  if (val == null) return tr('invalid_lat');
-                  if (val < -90 || val > 90) return tr('invalid_lat_range');
-                  return null;
-                },
-              ),
-              TextFormField(
-                key: const ValueKey('lon'),
-                controller: lonCtl,
-                decoration: InputDecoration(labelText: tr('longitude')),
-                keyboardType: const TextInputType.numberWithOptions(signed: true, decimal: true),
-                validator: (v) {
-                  final val = double.tryParse(v ?? '');
-                  if (val == null) return tr('invalid_lon');
-                  if (val < -180 || val > 180) return tr('invalid_lon_range');
-                  return null;
-                },
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(false), child: Text(tr('dismiss'))),
-          TextButton(
-            onPressed: () async {
-              if (formKey.currentState?.validate() != true) return;
-              final lat = double.parse(latCtl.text.trim());
-              final lon = double.parse(lonCtl.text.trim());
-
-              // Apply manual coordinates
-              setState(() {
-                _locationLabel = '${lat.toStringAsFixed(3)}, ${lon.toStringAsFixed(3)} (manual)';
-                qiblaDeg = LocationService.qiblaBearing(lat, lon);
-                distanceKm = LocationService.distanceToKaabaKm(lat, lon);
-                _isLocationReady = true;
-              });
-
-              // Close dialog first to avoid using dialog BuildContext after awaits
-              Navigator.of(ctx, rootNavigator: true).pop(true);
-
-              // Save as last known (do not rely on dialog context)
-              await LocationService.saveLastLocation('Manual: ${lat.toStringAsFixed(3)}, ${lon.toStringAsFixed(3)}', lat, lon);
-              TelemetryService.instance.logEvent('manual_coords_saved', {'lat': lat, 'lon': lon});
-            },
-            child: Text(tr('apply')),
-          ),
-        ],
-      ),
-    );
-
-    if (res == true) {
-      // done
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    final dir = _dirFromDegree(qiblaDeg);
-
-    // Format distance according to current locale when ready
-    final NumberFormat distFmt =
-        NumberFormat.decimalPattern(context.locale.toString())
-          ..minimumFractionDigits = 1
-          ..maximumFractionDigits = 1;
-    final String formattedDistance = distFmt.format(distanceKm);
+    // Format distance according to current locale when ready (handled by HomeCompass)
+    // `dir` and `formattedDistance` are computed inside `HomeCompass`.
 
     return PopScope(
       canPop: false,
@@ -353,369 +204,22 @@ class _HomeScreenState extends State<HomeScreen>
         body: SafeArea(
           child: Column(
             children: [
-              // Top bar with location + settings
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const SizedBox(width: 36), // spacer
-                    Column(
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.location_on,
-                              color: Colors.white70,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              tr('current_location'),
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          _locationLabel,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.settings, color: Colors.white70),
-                      onPressed: () {
-                        Navigator.of(context).pushNamed('/settings');
-                      },
-                    ),
-                  ],
-                ),
+              // Top bar (extracted to HomeTopBar)
+              HomeTopBar(
+                locationLabel: _locationLabel,
+                onSettingsTap: () => Navigator.of(context).pushNamed('/settings'),
               ),
 
               const SizedBox(height: 12),
 
-              // Compass
+              // Compass (extracted to HomeCompass)
               Expanded(
                 child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Ambient glow + circular compass
-                      Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            width: 320,
-                            height: 320,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color.fromARGB(16, 244, 192, 37),
-                                  blurRadius: 40,
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            width: 300,
-                            height: 300,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white12,
-                                style: BorderStyle.solid,
-                              ),
-                            ),
-                          ),
-
-                          // Rotating dial: rotate the dial opposite to device heading so that cardinal labels indicate true directions
-                          Transform.rotate(
-                            angle: (-headingDeg) * math.pi / 180,
-                            child: SizedBox(
-                              width: 300,
-                              height: 300,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  // Needle/dial decorations (the dial rotates)
-                                  // decorative ring
-                                  Container(
-                                    width: 240,
-                                    height: 240,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white10),
-                                    ),
-                                  ),
-
-                                  // cardinal labels (now move with the rotating dial)
-                                  Positioned(
-                                    top: 16,
-                                    child: Text(
-                                      tr('north'),
-                                      style: TextStyle(
-                                        color: const Color(0xFFF4C025),
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    bottom: 16,
-                                    child: Text(
-                                      tr('south'),
-                                      style: TextStyle(
-                                        color: Colors.white24,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    left: 16,
-                                    child: Text(
-                                      tr('west'),
-                                      style: TextStyle(
-                                        color: Colors.white24,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    right: 16,
-                                    child: Text(
-                                      tr('east'),
-                                      style: TextStyle(
-                                        color: Colors.white24,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                      ),
-                                    ),
-                                  ),
-
-                                  // center marker
-                                  Positioned(
-                                    child: Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          // Show loader while location/qibla are being calculated
-                          if (!_isLocationReady)
-                            Positioned(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const SizedBox(
-                                    width: 48,
-                                    height: 48,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 3,
-                                      color: Color(0xFFF4C025),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    tr('calculating'),
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          else ...[
-                            // Kaaba at center, rotated to face the Qibla direction (drawn before arrow so arrow is visible on top)
-                            AnimatedRotation(
-                              turns: ((qiblaDeg - headingDeg) / 360.0),
-                              duration: const Duration(milliseconds: 250),
-                              curve: Curves.easeOut,
-                              child: Container(
-                                width: 56,
-                                height: 64,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(6),
-                                  gradient: const LinearGradient(
-                                    colors: [Color(0xFF1A1A1A), Colors.black],
-                                  ),
-                                  border: Border.all(color: Colors.white10),
-                                ),
-                                child: Stack(
-                                  children: [
-                                    Positioned(
-                                      top: 8,
-                                      left: 0,
-                                      right: 0,
-                                      child: Container(
-                                        height: 6,
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              const Color(0xFFBF953F),
-                                              const Color(0xFFFFF6BA),
-                                              const Color(0xFFBF953F),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      bottom: 8,
-                                      right: 8,
-                                      child: Container(
-                                        width: 8,
-                                        height: 12,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                            color: Colors.white12,
-                                          ),
-                                          color: const Color(0x66F4C025),
-                                          borderRadius: BorderRadius.circular(
-                                            2,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-
-                            // Qibla arrow on top - rotate relative to device heading for screen alignment
-                            // pointerAngle = qiblaDeg - headingDeg
-                            AnimatedRotation(
-                              turns: ((qiblaDeg - headingDeg) / 360.0),
-                              duration: const Duration(milliseconds: 250),
-                              curve: Curves.easeOut,
-                              child: SizedBox(
-                                width: 300,
-                                height: 300,
-                                child: Center(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      // Arrow head (larger)
-                                      CustomPaint(
-                                        size: const Size(28, 34),
-                                        painter: ArrowPainter(
-                                          color: const Color(0xFFF4C025),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      // Shaft
-                                      Container(
-                                        width: 6,
-                                        height: 120,
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              const Color(0xFFF4C025),
-                                              Colors.transparent,
-                                            ],
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-
-                      const SizedBox(height: 20),
-                      // Degrees readout (show Qibla bearing and direction)
-                      Text(
-                        tr(
-                          'degrees_label',
-                          namedArgs: {
-                            'deg': qiblaDeg.toStringAsFixed(0),
-                            'dir': dir,
-                          },
-                        ),
-                        style: const TextStyle(
-                          color: Color(0xFFF4C025),
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF121008),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: Colors.white10),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.straight,
-                              color: Color(0xFFF4C025),
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            // show formatted distance when location is ready, otherwise show label + spinner
-                            if (_isLocationReady) ...[
-                              Text(
-                                tr(
-                                  'distance_to_mecca_fmt',
-                                  namedArgs: {'dist': formattedDistance},
-                                ),
-                                style: const TextStyle(
-                                  color: Color(0xFFCBCB90),
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ] else ...[
-                              Text(
-                                tr('distance_to_mecca'),
-                                style: const TextStyle(
-                                  color: Color(0xFFCBCB90),
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const SizedBox(
-                                width: 12,
-                                height: 12,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
+                  child: HomeCompass(
+                    headingDeg: headingDeg,
+                    qiblaDeg: qiblaDeg,
+                    distanceKm: distanceKm,
+                    isLocationReady: _isLocationReady,
                   ),
                 ),
               ),
@@ -735,8 +239,3 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-class DialogAction {
-  final String label;
-  final FutureOr<void> Function(BuildContext) onPressed;
-  DialogAction(this.label, this.onPressed);
-}

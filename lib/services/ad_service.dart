@@ -14,6 +14,8 @@ class AdService {
   InterstitialAd? _interstitialAd;
   bool _isInterstitialAdReady = false;
   bool _isShowing = false;
+  bool _isDisposed = false;
+
 
   /// AdMob App ID: ca-app-pub-7967860040352202~1740407670
   /// Interstitial Ad Unit ID untuk close app
@@ -49,6 +51,11 @@ class AdService {
 
   /// Memuat iklan interstitial
   void loadInterstitialAd() {
+    // If disposed, don't attempt to load or schedule future work.
+    if (_isDisposed) {
+      debugPrint('[AdService] Service disposed, not loading interstitial.');
+      return;
+    }
     // If an ad already exists, don't overwrite it.
     if (_interstitialAd != null) {
       debugPrint('[AdService] Interstitial already loaded, skipping load.');
@@ -79,8 +86,12 @@ class AdService {
                     ad.dispose();
                   } catch (_) {}
                   _isInterstitialAdReady = false;
-                  // Muat ulang iklan untuk penggunaan berikutnya
-                  loadInterstitialAd();
+                  // Muat ulang iklan untuk penggunaan berikutnya, kecuali sudah dispose
+                  if (!_isDisposed) {
+                    loadInterstitialAd();
+                  } else {
+                    debugPrint('[AdService] Service disposed, skipping reload after dismiss.');
+                  }
                 },
                 onAdFailedToShowFullScreenContent: (ad, error) {
                   debugPrint('[AdService] Interstitial failed to show: $error');
@@ -88,7 +99,11 @@ class AdService {
                     ad.dispose();
                   } catch (_) {}
                   _isInterstitialAdReady = false;
-                  loadInterstitialAd();
+                  if (!_isDisposed) {
+                    loadInterstitialAd();
+                  } else {
+                    debugPrint('[AdService] Service disposed, skipping reload after failure to show.');
+                  }
                 },
               );
         },
@@ -97,7 +112,7 @@ class AdService {
           _isInterstitialAdReady = false;
           // Coba muat ulang setelah beberapa detik (backoff could be improved)
           Future.delayed(const Duration(seconds: 30), () {
-            loadInterstitialAd();
+            if (!_isDisposed) loadInterstitialAd();
           });
         },
       ),
@@ -110,7 +125,7 @@ class AdService {
   /// Returns true if an ad was shown and dismissed, false otherwise.
   /// A [timeout] is applied to avoid blocking the caller if the ad doesn't fire callbacks.
   Future<bool> showInterstitialAd({
-    Duration timeout = const Duration(seconds: 4),
+    Duration timeout = const Duration(seconds: 7),
   }) async {
     if (!_isInterstitialAdReady || _interstitialAd == null) return false;
     if (_isShowing) return false; // avoid re-entrance
@@ -135,8 +150,12 @@ class AdService {
           ad.dispose();
         } catch (_) {}
         _isShowing = false;
-        // Start loading next ad
-        loadInterstitialAd();
+        // Start loading next ad if not disposed
+        if (!_isDisposed) {
+          loadInterstitialAd();
+        } else {
+          debugPrint('[AdService] Service disposed, skipping reload after show callback.');
+        }
         if (!completer.isCompleted) completer.complete(true);
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
@@ -145,7 +164,11 @@ class AdService {
           ad.dispose();
         } catch (_) {}
         _isShowing = false;
-        loadInterstitialAd();
+        if (!_isDisposed) {
+          loadInterstitialAd();
+        } else {
+          debugPrint('[AdService] Service disposed, skipping reload after failure to show.');
+        }
         if (!completer.isCompleted) completer.complete(false);
       },
     );
@@ -156,7 +179,7 @@ class AdService {
     } catch (e) {
       debugPrint('[AdService] Error while calling show(): $e');
       _isShowing = false;
-      loadInterstitialAd();
+      if (!_isDisposed) loadInterstitialAd();
       if (!completer.isCompleted) completer.complete(false);
     }
 
@@ -164,15 +187,15 @@ class AdService {
       return await completer.future.timeout(
         timeout,
         onTimeout: () {
-          // If callbacks don't arrive, reset and try to recover
+          // If callbacks don't arrive within timeout, reset and try to recover
           _isShowing = false;
-          loadInterstitialAd();
+          if (!_isDisposed) loadInterstitialAd();
           return false;
         },
       );
     } catch (_) {
       _isShowing = false;
-      loadInterstitialAd();
+      if (!_isDisposed) loadInterstitialAd();
       return false;
     }
   }
@@ -181,7 +204,7 @@ class AdService {
   /// Tries to show an interstitial with [timeout] and then calls SystemNavigator.pop().
   /// The method will still exit even if an ad isn't available or fails.
   Future<void> showInterstitialThenExit({
-    Duration timeout = const Duration(seconds: 3),
+    Duration timeout = const Duration(seconds: 7),
   }) async {
     try {
       // Attempt to show ad; this returns true if shown and dismissed, false otherwise
@@ -207,6 +230,10 @@ class AdService {
 
   /// Force reload interstitial ad. Disposes current ad (if any) and starts a fresh load.
   void reloadInterstitialAd() {
+    if (_isDisposed) {
+      debugPrint('[AdService] reload requested but service is disposed, ignoring.');
+      return;
+    }
     debugPrint('[AdService] Reloading interstitial ad (force)');
     try {
       _interstitialAd?.dispose();
@@ -220,6 +247,7 @@ class AdService {
   /// Dispose resources
   void dispose() {
     debugPrint('[AdService] Disposing interstitial ad');
+    _isDisposed = true;
     _interstitialAd?.dispose();
     _interstitialAd = null;
     _isInterstitialAdReady = false;

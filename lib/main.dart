@@ -16,8 +16,8 @@ Future<void> main() async {
     AdService.setTestMode(true);
   }
 
-  // Inisialisasi AdMob
-  await AdService.initialize();
+  // AdMob initialization moved to `MainApp.initState` to avoid blocking startup
+  // (initialization now happens when the app's UI is ready)
 
   runApp(
     EasyLocalization(
@@ -50,13 +50,18 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Ensure an ad is loaded at app start
-    AdService.instance.loadInterstitialAd();
+    // Initialize AdMob when UI is ready (runs in background)
+    // We don't await so the UI isn't blocked
+    AdService.initialize();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    // Dispose AdService to avoid background callbacks trying to speak to a detached engine
+    try {
+      AdService.instance.dispose();
+    } catch (_) {}
     super.dispose();
   }
 
