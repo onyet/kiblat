@@ -17,6 +17,14 @@
   "dismiss": "Tutup",
   "location_unavailable_title": "Lokasi tidak tersedia",
   "location_unavailable_msg": "Tidak dapat mendapatkan lokasi Anda. Pastikan layanan lokasi diaktifkan.",
+
+  "exit_confirm_title": "Keluar aplikasi?",
+  "exit_confirm_msg": "Apakah Anda yakin ingin keluar dari aplikasi?",
+  "exit": "Keluar",
+  "stay": "Tetap",
+
+  "exit_showing_ad": "Menampilkan iklan…",
+
   "ok": "OK",
   "distance_to_mecca_fmt": "{dist} km ke Mekah",
   "north": "U",

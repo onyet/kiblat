@@ -17,6 +17,14 @@
   "dismiss": "إلغاء",
   "location_unavailable_title": "لا يمكن الحصول على الموقع",
   "location_unavailable_msg": "يتعذر الحصول على موقعك. يرجى التأكد من تمكين خدمات الموقع.",
+
+  "exit_confirm_title": "الخروج من التطبيق؟",
+  "exit_confirm_msg": "هل أنت متأكد أنك تريد الخروج من التطبيق؟",
+  "exit": "خروج",
+  "stay": "إلغاء",
+
+  "exit_showing_ad": "جاري عرض الإعلان…",
+
   "ok": "حسناً",
   "distance_to_mecca_fmt": "{dist} كم إلى مكة",
   "north": "ش",

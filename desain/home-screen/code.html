@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Qibla Compass with Next Prayer</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f4c025",
+                        "background-light": "#f8f8f5",
+                        "background-dark": "#221e10", 
+                        "kaaba-black": "#050505",
+                        "kaaba-gold": "#D4AF37",
+                        "kaaba-gold-muted": "rgba(212, 175, 55, 0.4)",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                    boxShadow: {
+                        'glow': '0 0 40px -10px rgba(244, 192, 37, 0.3)',
+                        'gold-glow': '0 4px 20px -2px rgba(212, 175, 55, 0.3)',
+                    }
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .gold-gradient-text {
+                @apply bg-clip-text text-transparent bg-gradient-to-r from-[#bf953f] via-[#fcf6ba] to-[#bf953f];
+            }
+            .gold-button {
+                @apply bg-gradient-to-r from-[#bf953f] via-[#fcf6ba] to-[#bf953f] text-black font-bold;
+            }
+        }
+    </style>
+<style>
+        body {
+            min-height: 100dvh;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display antialiased bg-kaaba-black">
+<div class="relative flex h-full min-h-screen w-full flex-col bg-kaaba-black text-white overflow-hidden selection:bg-primary/30">
+<div class="flex items-center px-6 pt-12 pb-2 justify-between z-10">
+<div class="w-12"></div>
+<div class="flex flex-col items-center">
+<div class="flex items-center gap-1.5 opacity-60">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span class="text-[10px] font-bold tracking-widest uppercase">Current Location</span>
+</div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-tight mt-0.5">London, UK</h2>
+</div>
+<div class="flex w-12 items-center justify-end">
+<button class="flex items-center justify-center rounded-full w-10 h-10 bg-white/5 hover:bg-white/10 transition-colors text-white">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+</div>
+</div>
+<div class="flex-1 flex flex-col items-center justify-center relative w-full overflow-hidden py-4">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+<div class="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] flex items-center justify-center">
+<div class="absolute inset-0 rounded-full border border-white/10 shadow-glow"></div>
+<div class="absolute inset-2 rounded-full border border-dashed border-white/5 opacity-50"></div>
+<div class="absolute inset-0 flex flex-col justify-between items-center py-4 pointer-events-none">
+<span class="text-primary font-bold text-lg">N</span>
+<span class="text-white/20 font-bold text-lg">S</span>
+</div>
+<div class="absolute inset-0 flex flex-row justify-between items-center px-4 pointer-events-none">
+<span class="text-white/20 font-bold text-lg">W</span>
+<span class="text-white/20 font-bold text-lg">E</span>
+</div>
+<div class="absolute inset-0 flex items-center justify-center" style="transform: rotate(125deg);">
+<div class="absolute top-0 w-full h-full flex justify-center pt-2">
+<div class="relative flex flex-col items-center gap-1">
+<div class="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[24px] border-b-primary filter drop-shadow-[0_0_8px_rgba(244,192,37,0.8)]"></div>
+<div class="w-1 h-12 bg-gradient-to-b from-primary to-transparent rounded-full opacity-80"></div>
+</div>
+</div>
+<div class="absolute w-[80%] h-[80%] border border-primary/20 rounded-full"></div>
+</div>
+<div class="relative z-20 flex items-center justify-center">
+<div class="relative w-12 h-14 bg-gradient-to-br from-[#1a1a1a] to-black rounded-[2px] border border-white/10 shadow-2xl flex flex-col items-center overflow-hidden">
+<div class="w-full h-2.5 bg-gradient-to-r from-[#bf953f] via-[#fcf6ba] to-[#bf953f] mt-3 shadow-sm"></div>
+<div class="absolute bottom-2 right-2.5 w-2.5 h-4 border border-primary/30 bg-primary/10 rounded-t-[1px]"></div>
+</div>
+<div class="absolute w-2 h-2 bg-primary rounded-full shadow-[0_0_10px_rgba(244,192,37,1)]"></div>
+</div>
+</div>
+<div class="mt-8 flex flex-col items-center z-10">
+<h1 class="text-primary text-5xl font-bold tracking-tight drop-shadow-lg">125° <span class="text-2xl font-medium text-primary/60 align-top mt-2 inline-block">SE</span></h1>
+<div class="flex items-center gap-2 mt-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/5 backdrop-blur-sm">
+<span class="material-symbols-outlined text-primary text-sm">straight</span>
+<p class="text-[#cbbc90] text-sm font-medium leading-normal">4,500 km to Mecca</p>
+</div>
+</div>
+</div>
+<div class="bg-[#0a0a0a] border-t border-kaaba-gold/20 pt-2 pb-12 px-6 rounded-t-xl relative">
+<div class="flex flex-col items-center mb-6">
+<div class="w-10 h-1 bg-kaaba-gold/30 rounded-full mb-1"></div>
+<span class="material-symbols-outlined text-kaaba-gold text-lg leading-none">keyboard_arrow_up</span>
+</div>
+<div class="flex flex-col gap-6">
+<div class="flex flex-col items-center">
+<div class="text-kaaba-gold/60 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Next Prayer</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-kaaba-gold text-2xl fill-1">wb_twilight</span>
+<h3 class="text-3xl font-bold text-white tracking-tight">Maghrib</h3>
+<span class="text-xl font-medium text-white/40">05:51 PM</span>
+</div>
+<div class="mt-2 px-3 py-1 bg-kaaba-gold/10 border border-kaaba-gold/20 rounded-full">
+<p class="text-kaaba-gold text-sm font-semibold tracking-wide">1h 20m to Maghrib</p>
+</div>
+</div>
+<button class="gold-button w-full py-4 rounded-xl flex items-center justify-center gap-2 shadow-gold-glow active:scale-[0.98] transition-transform">
+<span class="text-sm font-extrabold uppercase tracking-widest">View Full Schedule</span>
+<span class="material-symbols-outlined text-lg">calendar_today</span>
+</button>
+</div>
+</div>
+</div>
+
+</body></html>

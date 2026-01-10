@@ -4,7 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../services/location_service.dart';
-import '../services/ad_service.dart';
+import '../widgets/exit_helper.dart';
 import 'arrow_painter.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -581,12 +581,10 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  /// Handle app close - tampilkan iklan interstitial kemudian keluar
+  /// Handle app close - use centralized helper (confirmation + loading + ad + exit)
+  // ignore: use_build_context_synchronously
   Future<void> _handleAppClose() async {
-    // Use helper that shows interstitial (with short timeout) then exits the app.
-    await AdService.instance.showInterstitialThenExit(
-      timeout: const Duration(seconds: 3),
-    );
+    await showExitAndMaybeShowAd(context);
   }
 }
 

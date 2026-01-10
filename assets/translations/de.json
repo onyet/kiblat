@@ -17,6 +17,12 @@
   "dismiss": "Schließen",
   "location_unavailable_title": "Standort nicht verfügbar",
   "location_unavailable_msg": "Ihr Standort kann nicht ermittelt werden. Bitte stellen Sie sicher, dass die Standortdienste aktiviert sind.",
+  "exit_confirm_title": "App beenden?",
+  "exit_confirm_msg": "Möchten Sie die App wirklich beenden?",
+  "exit": "Beenden",
+  "stay": "Abbrechen",
+
+  "exit_showing_ad": "Anzeige wird angezeigt…",
   "ok": "OK",
   "distance_to_mecca_fmt": "{dist} km nach Mekka",
   "north": "N",

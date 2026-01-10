@@ -17,6 +17,14 @@
   "dismiss": "Dismiss",
   "location_unavailable_title": "Location unavailable",
   "location_unavailable_msg": "Unable to get your location. Please ensure location services are enabled.",
+
+  "exit_confirm_title": "Exit app?",
+  "exit_confirm_msg": "Are you sure you want to exit the app?",
+  "exit": "Exit",
+  "stay": "Stay",
+
+  "exit_showing_ad": "Showing ad…",
+
   "ok": "OK",
   "distance_to_mecca_fmt": "{dist} km to Mecca",
   "north": "N",

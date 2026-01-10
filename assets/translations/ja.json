@@ -17,6 +17,14 @@
   "dismiss": "閉じる",
   "location_unavailable_title": "位置情報を取得できません",
   "location_unavailable_msg": "位置情報を取得できません。位置情報サービスが有効になっていることを確認してください。",
+
+  "exit_confirm_title": "アプリを終了しますか？",
+  "exit_confirm_msg": "アプリを終了してもよろしいですか？",
+  "exit": "終了",
+  "stay": "キャンセル",
+
+  "exit_showing_ad": "広告を表示しています…",
+
   "ok": "OK",
   "distance_to_mecca_fmt": "{dist} km 到 メッカ",
   "north": "北",

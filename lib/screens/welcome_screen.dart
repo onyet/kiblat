@@ -1,6 +1,9 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import '../services/ad_service.dart';
+import '../services/location_service.dart';
+import '../widgets/exit_helper.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -24,9 +27,7 @@ class WelcomeScreen extends StatelessWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        await AdService.instance.showInterstitialThenExit(
-          timeout: const Duration(seconds: 3),
-        );
+        await showExitAndMaybeShowAd(context);
       },
       child: Scaffold(
         backgroundColor: const Color(0xFF050505), // kaaba-black
@@ -156,8 +157,45 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(16),
-                        onTap: () {
-                          Navigator.of(context).pushReplacementNamed('/home');
+                        onTap: () async {
+                          final granted =
+                              await LocationService.checkAndRequestPermission();
+                          if (granted) {
+                            Navigator.of(context).pushReplacementNamed('/home');
+                            return;
+                          }
+
+                          final res = await showDialog<bool>(
+                            context: context,
+                            barrierDismissible: true,
+                            builder: (ctx) => AlertDialog(
+                              title: Text(tr('location_permission_title')),
+                              content: Text(tr('location_permission_msg')),
+                              actions: [
+                                TextButton(
+                                  onPressed: () async {
+                                    Navigator.of(
+                                      ctx,
+                                      rootNavigator: true,
+                                    ).pop(false);
+                                    await LocationService.openAppSettings();
+                                  },
+                                  child: Text(tr('open_settings')),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.of(
+                                    ctx,
+                                    rootNavigator: true,
+                                  ).pop(true),
+                                  child: Text(tr('dismiss')),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (res == true) {
+                            Navigator.of(context).pushReplacementNamed('/home');
+                          }
                         },
                         child: Container(
                           alignment: Alignment.center,

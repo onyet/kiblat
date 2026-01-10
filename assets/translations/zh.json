@@ -17,6 +17,14 @@
   "dismiss": "关闭",
   "location_unavailable_title": "无法获取位置",
   "location_unavailable_msg": "无法获取您的位置。请确保已启用位置服务。",
+
+  "exit_confirm_title": "退出应用？",
+  "exit_confirm_msg": "您确定要退出应用吗？",
+  "exit": "退出",
+  "stay": "取消",
+
+  "exit_showing_ad": "正在显示广告…",
+
   "ok": "确定",
   "distance_to_mecca_fmt": "{dist} 公里 到 麦加",
   "north": "北",
