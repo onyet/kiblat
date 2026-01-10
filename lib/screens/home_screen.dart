@@ -3,8 +3,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:geolocator/geolocator.dart';
 import '../services/location_service.dart';
 import '../widgets/exit_helper.dart';
+import '../services/telemetry_service.dart';
 import 'arrow_painter.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -101,18 +103,40 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _fetchAndSetLocation() async {
     try {
       final pos = await LocationService.getCurrentPosition();
-      final label = await LocationService.reverseGeocode(
+
+      // Try reverse geocode with cache fallback
+      final label = await LocationService.reverseGeocodeWithCache(
         pos.latitude,
         pos.longitude,
       );
+
       if (!mounted) return;
+
+      // If no label (and no cache), still compute using coordinates, then show options
+      if (label.isEmpty) {
+        setState(() {
+          _locationLabel = '${pos.latitude.toStringAsFixed(3)}, ${pos.longitude.toStringAsFixed(3)}';
+          // compute precise qibla bearing
+          qiblaDeg = LocationService.qiblaBearing(pos.latitude, pos.longitude);
+          // compute distance and mark ready so arrow is shown
+          distanceKm = LocationService.distanceToKaabaKm(
+            pos.latitude,
+            pos.longitude,
+          );
+          _isLocationReady = true;
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _showGeocodeFailureOptions(pos);
+        });
+        return;
+      }
+
+      // Normal success (could be from cache or fresh)
       setState(() {
-        _locationLabel = label.isNotEmpty
-            ? label
-            : '${pos.latitude.toStringAsFixed(3)}, ${pos.longitude.toStringAsFixed(3)}';
-        // compute precise qibla bearing
+        _locationLabel = label;
         qiblaDeg = LocationService.qiblaBearing(pos.latitude, pos.longitude);
-        // compute distance and mark ready so arrow is shown
         distanceKm = LocationService.distanceToKaabaKm(
           pos.latitude,
           pos.longitude,
@@ -125,6 +149,7 @@ class _HomeScreenState extends State<HomeScreen>
       setState(() {
         _isLocationReady = false;
       });
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         _showErrorAlert(
@@ -182,6 +207,128 @@ class _HomeScreenState extends State<HomeScreen>
             .toList(),
       ),
     );
+  }
+
+  // Show options when reverse geocoding failed (no network or API error)
+  void _showGeocodeFailureOptions(Position pos) async {
+    final cached = await LocationService.getLastLocation();
+
+    final actions = <DialogAction>[];
+
+    actions.add(DialogAction(tr('retry'), (ctx) async {
+      Navigator.of(ctx, rootNavigator: true).pop();
+      await _fetchAndSetLocation();
+    }));
+
+    if (cached != null) {
+      actions.add(DialogAction(tr('use_cached'), (ctx) {
+        Navigator.of(ctx, rootNavigator: true).pop();
+        setState(() {
+          _locationLabel = '${cached['label']} (cached)';
+          qiblaDeg = LocationService.qiblaBearing(cached['lat'], cached['lon']);
+          distanceKm = LocationService.distanceToKaabaKm(cached['lat'], cached['lon']);
+          _isLocationReady = true;
+        });
+        TelemetryService.instance.logEvent('used_cached_location');
+      }));
+    }
+
+    actions.add(DialogAction(tr('enter_coordinates'), (ctx) async {
+      Navigator.of(ctx, rootNavigator: true).pop();
+      await _showEnterCoordinatesDialog();
+    }));
+
+    actions.add(DialogAction(tr('open_location_settings'), (ctx) async {
+      Navigator.of(ctx, rootNavigator: true).pop();
+      await LocationService.openLocationSettings();
+    }));
+
+    actions.add(DialogAction(
+      tr('dismiss'),
+      (ctx) => Navigator.of(ctx, rootNavigator: true).pop(),
+    ));
+
+    _showErrorAlert(
+      title: tr('location_unavailable_title'),
+      message: tr('geocode_failed_msg'),
+      actions: actions,
+    );
+  }
+
+  Future<void> _showEnterCoordinatesDialog() async {
+    final latCtl = TextEditingController();
+    final lonCtl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    final res = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('enter_coordinates_title')),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                key: const ValueKey('lat'),
+                controller: latCtl,
+                decoration: InputDecoration(labelText: tr('latitude')),
+                keyboardType: const TextInputType.numberWithOptions(signed: true, decimal: true),
+                validator: (v) {
+                  final val = double.tryParse(v ?? '');
+                  if (val == null) return tr('invalid_lat');
+                  if (val < -90 || val > 90) return tr('invalid_lat_range');
+                  return null;
+                },
+              ),
+              TextFormField(
+                key: const ValueKey('lon'),
+                controller: lonCtl,
+                decoration: InputDecoration(labelText: tr('longitude')),
+                keyboardType: const TextInputType.numberWithOptions(signed: true, decimal: true),
+                validator: (v) {
+                  final val = double.tryParse(v ?? '');
+                  if (val == null) return tr('invalid_lon');
+                  if (val < -180 || val > 180) return tr('invalid_lon_range');
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(false), child: Text(tr('dismiss'))),
+          TextButton(
+            onPressed: () async {
+              if (formKey.currentState?.validate() != true) return;
+              final lat = double.parse(latCtl.text.trim());
+              final lon = double.parse(lonCtl.text.trim());
+
+              // Apply manual coordinates
+              setState(() {
+                _locationLabel = '${lat.toStringAsFixed(3)}, ${lon.toStringAsFixed(3)} (manual)';
+                qiblaDeg = LocationService.qiblaBearing(lat, lon);
+                distanceKm = LocationService.distanceToKaabaKm(lat, lon);
+                _isLocationReady = true;
+              });
+
+              // Close dialog first to avoid using dialog BuildContext after awaits
+              Navigator.of(ctx, rootNavigator: true).pop(true);
+
+              // Save as last known (do not rely on dialog context)
+              await LocationService.saveLastLocation('Manual: ${lat.toStringAsFixed(3)}, ${lon.toStringAsFixed(3)}', lat, lon);
+              TelemetryService.instance.logEvent('manual_coords_saved', {'lat': lat, 'lon': lon});
+            },
+            child: Text(tr('apply')),
+          ),
+        ],
+      ),
+    );
+
+    if (res == true) {
+      // done
+    }
   }
 
   @override
