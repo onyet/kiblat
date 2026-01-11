@@ -76,6 +76,23 @@
   "contact_phone": "電話",
   "could_not_open": "リンクを開くことができませんでした",
   "inspired_by_kaaba": "カーバから着想を得た",
+
+  "compass": "コンパス",
+  "prayers": "礼拝",
+  "next_prayer": "次の礼拝時間",
+  "view_full_schedule": "完全なスケジュールを見る",
+  "time_to_prayer_fmt": "{dur} で {prayer}",
+  "fajr": "ファジル",
+  "dhuhr": "ズフル",
+  "asr": "アスル",
+  "maghrib": "マグリブ",
+  "isha": "イシャ",
+  "mosques": "モスク",
+  "quran": "クルアーン",
+
+  "calibrate": "キャリブレート",
+  "status_available": "利用可能",
+  "status_unavailable": "利用不可",
   "open": "開く",
   "open_source": "オープンソース — GitHub で利用可能",
   "view_on_github": "GitHub で見る"

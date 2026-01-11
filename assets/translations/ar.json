@@ -78,6 +78,23 @@
   "contact_phone": "الهاتف",
   "could_not_open": "تعذر فتح الرابط",
   "inspired_by_kaaba": "مستوحى من الكعبة",
+
+  "compass": "البوصلة",
+  "prayers": "الصلوات",
+  "next_prayer": "الصلاة التالية",
+  "view_full_schedule": "عرض الجدول الكامل",
+  "time_to_prayer_fmt": "{dur} إلى {prayer}",
+  "fajr": "الفجر",
+  "dhuhr": "الظهر",
+  "asr": "العصر",
+  "maghrib": "المغرب",
+  "isha": "العشاء",
+  "mosques": "المساجد",
+  "quran": "القرآن",
+
+  "calibrate": "المعايرة",
+  "status_available": "متاح",
+  "status_unavailable": "غير متاح",
   "open": "فتح",
   "open_source": "مفتوح المصدر — متاح على GitHub",
   "view_on_github": "عرض على GitHub"

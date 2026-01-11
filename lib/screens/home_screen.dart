@@ -10,6 +10,7 @@ import 'home_compass_widget.dart';
 import 'home_compass_controller.dart';
 import 'home_location_controller.dart';
 import 'home_dialogs.dart';
+import 'home_prayer_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool skipPermissionCheck; // useful for tests
@@ -35,6 +36,8 @@ class _HomeScreenState extends State<HomeScreen>
   StreamSubscription<double?>? _headingSub;
   CompassHeadingController? _compassController;
   String _locationLabel = 'London, UK';
+
+
 
   @override
   void initState() {
@@ -225,6 +228,14 @@ class _HomeScreenState extends State<HomeScreen>
               ),
 
               const SizedBox(height: 18),
+
+              // Prayer schedule card
+              HomePrayerSheet(
+                prayerKey: 'maghrib',
+                prayerTime: '05:51 PM',
+                countdownDur: '1h 20m',
+              ),
+
             ],
           ),
         ),

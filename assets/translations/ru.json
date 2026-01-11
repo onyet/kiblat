@@ -78,6 +78,23 @@
   "contact_phone": "Телефон",
   "could_not_open": "Не удалось открыть ссылку",
   "inspired_by_kaaba": "Вдохновлено Каабой",
+
+  "compass": "Компас",
+  "prayers": "Молитвы",
+  "next_prayer": "Следующая молитва",
+  "view_full_schedule": "Просмотреть полное расписание",
+  "time_to_prayer_fmt": "{dur} до {prayer}",
+  "fajr": "Фаджр",
+  "dhuhr": "Зухр",
+  "asr": "Аср",
+  "maghrib": "Магриб",
+  "isha": "Иша",
+  "mosques": "Мечети",
+  "quran": "Коран",
+
+  "calibrate": "Калибровка",
+  "status_available": "Доступна",
+  "status_unavailable": "Недоступна",
   "open": "Открыть",
   "open_source": "Открытый исходный код — доступно на GitHub",
   "view_on_github": "Посмотреть на GitHub"

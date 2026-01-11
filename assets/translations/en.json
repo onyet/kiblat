@@ -77,6 +77,14 @@
 
   "compass": "Compass",
   "prayers": "Prayers",
+  "next_prayer": "Next Prayer",
+  "view_full_schedule": "VIEW FULL SCHEDULE",
+  "time_to_prayer_fmt": "{dur} to {prayer}",
+  "fajr": "Fajr",
+  "dhuhr": "Dhuhr",
+  "asr": "Asr",
+  "maghrib": "Maghrib",
+  "isha": "Isha",
   "mosques": "Mosques",
   "quran": "Quran",
 

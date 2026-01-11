@@ -77,6 +77,14 @@
 
   "compass": "Kompas",
   "prayers": "Sholat",
+  "next_prayer": "Jadwal Selanjutnya",
+  "view_full_schedule": "LIHAT JADWAL PENUH",
+  "time_to_prayer_fmt": "{dur} sampai {prayer}",
+  "fajr": "Subuh",
+  "dhuhr": "Dzuhur",
+  "asr": "Ashar",
+  "maghrib": "Maghrib",
+  "isha": "Isya",
   "mosques": "Masjid",
   "quran": "Quran",
 

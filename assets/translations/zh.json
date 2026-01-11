@@ -76,6 +76,23 @@
   "contact_phone": "电话",
   "could_not_open": "无法打开链接",
   "inspired_by_kaaba": "受卡巴启发",
+
+  "compass": "指南针",
+  "prayers": "祈祷",
+  "next_prayer": "下一次祈祷",
+  "view_full_schedule": "查看完整日程",
+  "time_to_prayer_fmt": "{dur} 至 {prayer}",
+  "fajr": "晨礼",
+  "dhuhr": "晌礼",
+  "asr": "晡礼",
+  "maghrib": "晓礼",
+  "isha": "宵礼",
+  "mosques": "清真寺",
+  "quran": "古兰经",
+
+  "calibrate": "校准",
+  "status_available": "可用",
+  "status_unavailable": "不可用",
   "open": "打开",
   "open_source": "开源 — 可在 GitHub 获取",
   "view_on_github": "在 GitHub 查看"
