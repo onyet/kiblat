@@ -39,6 +39,7 @@
 
   "ok": "OK",
   "distance_to_mecca_fmt": "{dist} км до Мекки",
+  "calculating": "Вычисление...",
   "north": "С",
   "south": "Ю",
   "east": "В",

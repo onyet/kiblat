@@ -38,6 +38,7 @@
   "exit_showing_ad": "Anzeige wird angezeigt…",
   "ok": "OK",
   "distance_to_mecca_fmt": "{dist} km nach Mekka",
+  "calculating": "Wird berechnet...",
   "north": "N",
   "south": "S",
   "east": "O",

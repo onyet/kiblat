@@ -39,6 +39,7 @@
 
   "ok": "OK",
   "distance_to_mecca_fmt": "{dist} km até Meca",
+  "calculating": "Calculando...",
   "north": "N",
   "south": "S",
   "east": "L",

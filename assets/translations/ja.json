@@ -37,6 +37,7 @@
 
   "ok": "OK",
   "distance_to_mecca_fmt": "{dist} km 到 メッカ",
+  "calculating": "計算中...",
   "north": "北",
   "south": "南",
   "east": "東",

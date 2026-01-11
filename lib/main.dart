@@ -3,6 +3,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/prayer_times_screen.dart';
+import 'navigation/page_transitions.dart';
 import 'services/ad_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
@@ -80,15 +82,50 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: tr('app_title'),
-      theme: ThemeData(primarySwatch: Colors.blue),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        // Optimize animations
+        useMaterial3: false,
+      ),
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
       home: const SplashScreen(),
-      routes: {
-        '/welcome': (context) => const WelcomeScreen(),
-        '/home': (context) => const HomeScreen(),
-        '/settings': (context) => const SettingsScreen(),
+      onGenerateRoute: (settings) {
+        // Build the appropriate screen based on route name
+        final Widget page;
+        switch (settings.name) {
+          case '/welcome':
+            page = const WelcomeScreen();
+            break;
+          case '/home':
+            page = const HomeScreen();
+            break;
+          case '/settings':
+            page = const SettingsScreen();
+            break;
+          case '/prayer_times':
+            final args = settings.arguments as Map<String, dynamic>?;
+            page = PrayerTimesScreen(
+              locationLabel: args?['locationLabel'] ?? 'Unknown',
+              qiblaDeg: args?['qiblaDeg'] ?? 0.0,
+            );
+            break;
+          default:
+            return null;
+        }
+
+        // Apply smooth transitions based on route
+        if (settings.name == '/welcome') {
+          return PageTransitions.fadeSlideTransition((_) => page);
+        } else if (settings.name == '/home') {
+          return PageTransitions.fadeSlideTransition((_) => page);
+        } else if (settings.name == '/settings' || settings.name == '/prayer_times') {
+          return PageTransitions.slideInRightTransition((_) => page);
+        }
+
+        // Default transition
+        return PageTransitions.fadeSlideTransition((_) => page);
       },
     );
   }
@@ -127,12 +164,25 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
+    // Pre-warm the animation curves to avoid first-frame lag
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _warmUpAnimations();
+    });
+
     // After animation completes and a small delay, navigate depending on build and first-run
     Future.delayed(const Duration(milliseconds: 1400), () {
       if (mounted) {
         _navigateAfterSplash();
       }
     });
+  }
+
+  /// Pre-compile animation curves to reduce first-transition lag
+  void _warmUpAnimations() {
+    // Pre-warm easeOutCubic curve used in transitions
+    Curves.easeOutCubic.transform(0.5);
+    // Pre-warm linear curve
+    Curves.linear.transform(0.5);
   }
 
   @override

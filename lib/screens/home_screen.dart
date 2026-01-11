@@ -234,6 +234,15 @@ class _HomeScreenState extends State<HomeScreen>
                 prayerKey: 'maghrib',
                 prayerTime: '05:51 PM',
                 countdownDur: '1h 20m',
+                onViewFullSchedule: () {
+                  Navigator.of(context).pushNamed(
+                    '/prayer_times',
+                    arguments: {
+                      'locationLabel': _locationLabel,
+                      'qiblaDeg': qiblaDeg,
+                    },
+                  );
+                },
               ),
 
             ],

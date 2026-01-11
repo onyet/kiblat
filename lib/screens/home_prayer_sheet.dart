@@ -5,12 +5,14 @@ class HomePrayerSheet extends StatelessWidget {
   final String prayerKey; // localization key e.g. 'maghrib'
   final String prayerTime;
   final String countdownDur; // e.g. '1h 20m'
+  final VoidCallback? onViewFullSchedule;
 
   const HomePrayerSheet({
     super.key,
     required this.prayerKey,
     required this.prayerTime,
     required this.countdownDur,
+    this.onViewFullSchedule,
   });
 
   @override
@@ -129,7 +131,7 @@ class HomePrayerSheet extends StatelessWidget {
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: () {},
+                  onTap: onViewFullSchedule,
                   borderRadius: BorderRadius.circular(14),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,

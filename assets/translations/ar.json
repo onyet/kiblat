@@ -39,6 +39,7 @@
 
   "ok": "حسناً",
   "distance_to_mecca_fmt": "{dist} كم إلى مكة",
+  "calculating": "جاري الحساب...",
   "north": "ش",
   "south": "ج",
   "east": "ش.م",

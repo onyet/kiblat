@@ -138,17 +138,26 @@ class _SettingsScreenState extends State<SettingsScreen>
           children: [
             // Top bar
             Container(
-              padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0x1AFFFFFF))),
-                color: Color(0xFF121008),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: const Color.fromRGBO(255, 255, 255, 0.05))),
+                color: const Color(0xFF050505),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.of(context).pop(),
+                  SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Material(
+                      color: const Color.fromRGBO(255, 255, 255, 0.05),
+                      borderRadius: BorderRadius.circular(8),
+                      child: InkWell(
+                        onTap: () => Navigator.of(context).pop(),
+                        borderRadius: BorderRadius.circular(8),
+                        child: const Icon(Icons.chevron_left, color: Colors.white, size: 24),
+                      ),
+                    ),
                   ),
                   Text(
                     tr('settings'),
@@ -158,7 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(width: 48),
+                  const SizedBox(width: 40),
                 ],
               ),
             ),
