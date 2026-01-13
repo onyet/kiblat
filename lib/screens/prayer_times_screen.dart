@@ -566,8 +566,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
         children: [
           card,
           Positioned(
-            right: 8,
-            top: 8,
+            right: 0,
+            top: 0,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(

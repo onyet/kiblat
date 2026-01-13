@@ -8,6 +8,7 @@ import 'navigation/page_transitions.dart';
 import 'services/ad_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +21,12 @@ Future<void> main() async {
 
   // AdMob initialization moved to `MainApp.initState` to avoid blocking startup
   // (initialization now happens when the app's UI is ready)
+
+  // Lock orientation to portrait only (phone-focused UX)
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
   runApp(
     EasyLocalization(
