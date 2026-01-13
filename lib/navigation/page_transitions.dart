@@ -3,14 +3,13 @@ import 'package:flutter/material.dart';
 /// Custom page transition animations for smooth, modern navigation
 class PageTransitions {
   /// Smooth fade transition (best for modal-like navigation)
-  static PageRouteBuilder fadeTransition(Widget Function(BuildContext) builder) {
+  static PageRouteBuilder fadeTransition(
+    Widget Function(BuildContext) builder,
+  ) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => builder(context),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return FadeTransition(
-          opacity: animation,
-          child: child,
-        );
+        return FadeTransition(opacity: animation, child: child);
       },
       transitionDuration: const Duration(milliseconds: 400),
       reverseTransitionDuration: const Duration(milliseconds: 300),
@@ -29,14 +28,12 @@ class PageTransitions {
         const end = Offset.zero;
         const curve = Curves.easeOutCubic;
 
-        var tween = Tween(begin: begin, end: end).chain(
-          CurveTween(curve: curve),
-        );
+        var tween = Tween(
+          begin: begin,
+          end: end,
+        ).chain(CurveTween(curve: curve));
 
-        return SlideTransition(
-          position: animation.drive(tween),
-          child: child,
-        );
+        return SlideTransition(position: animation.drive(tween), child: child);
       },
       transitionDuration: const Duration(milliseconds: 500),
       reverseTransitionDuration: const Duration(milliseconds: 400),
@@ -55,14 +52,12 @@ class PageTransitions {
         const end = Offset.zero;
         const curve = Curves.easeOutCubic;
 
-        var tween = Tween(begin: begin, end: end).chain(
-          CurveTween(curve: curve),
-        );
+        var tween = Tween(
+          begin: begin,
+          end: end,
+        ).chain(CurveTween(curve: curve));
 
-        return SlideTransition(
-          position: animation.drive(tween),
-          child: child,
-        );
+        return SlideTransition(position: animation.drive(tween), child: child);
       },
       transitionDuration: const Duration(milliseconds: 500),
       reverseTransitionDuration: const Duration(milliseconds: 400),
@@ -81,13 +76,15 @@ class PageTransitions {
         const end = Offset.zero;
         const curve = Curves.easeOutCubic;
 
-        var slideTween = Tween(begin: begin, end: end).chain(
-          CurveTween(curve: curve),
-        );
+        var slideTween = Tween(
+          begin: begin,
+          end: end,
+        ).chain(CurveTween(curve: curve));
 
-        var fadeTween = Tween<double>(begin: 0.0, end: 1.0).chain(
-          CurveTween(curve: curve),
-        );
+        var fadeTween = Tween<double>(
+          begin: 0.0,
+          end: 1.0,
+        ).chain(CurveTween(curve: curve));
 
         return FadeTransition(
           opacity: animation.drive(fadeTween),
@@ -112,13 +109,15 @@ class PageTransitions {
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         const curve = Curves.easeOutCubic;
 
-        var scaleTween = Tween<double>(begin: 0.95, end: 1.0).chain(
-          CurveTween(curve: curve),
-        );
+        var scaleTween = Tween<double>(
+          begin: 0.95,
+          end: 1.0,
+        ).chain(CurveTween(curve: curve));
 
-        var fadeTween = Tween<double>(begin: 0.0, end: 1.0).chain(
-          CurveTween(curve: curve),
-        );
+        var fadeTween = Tween<double>(
+          begin: 0.0,
+          end: 1.0,
+        ).chain(CurveTween(curve: curve));
 
         return FadeTransition(
           opacity: animation.drive(fadeTween),
@@ -174,13 +173,7 @@ extension NavigationWithTransition on BuildContext {
 }
 
 /// Types of available transitions
-enum TransitionType {
-  fade,
-  slideInRight,
-  slideInUp,
-  fadeSlide,
-  scale,
-}
+enum TransitionType { fade, slideInRight, slideInUp, fadeSlide, scale }
 
 /// Helper function to build the appropriate transition
 PageRoute<T> _buildTransition<T>(

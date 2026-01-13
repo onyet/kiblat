@@ -27,6 +27,9 @@ class PrayerSettings {
   /// If null, uses device timezone
   final String? timezoneId;
 
+  /// Whether to display prayer times in 24-hour format (e.g., 16:21). Default: true.
+  final bool use24Hour;
+
   PrayerSettings({
     this.madhab = Madhab.shafi,
     this.calculationMethod = CalculationMethod.muslim_world_league,
@@ -36,6 +39,7 @@ class PrayerSettings {
     this.showDhuha = true,
     this.showTahajjud = true,
     this.timezoneId,
+    this.use24Hour = true,
   });
 
   /// Create a copy of this settings with optional modifications
@@ -48,6 +52,7 @@ class PrayerSettings {
     bool? showDhuha,
     bool? showTahajjud,
     String? timezoneId,
+    bool? use24Hour,
   }) {
     return PrayerSettings(
       madhab: madhab ?? this.madhab,
@@ -58,6 +63,7 @@ class PrayerSettings {
       showDhuha: showDhuha ?? this.showDhuha,
       showTahajjud: showTahajjud ?? this.showTahajjud,
       timezoneId: timezoneId ?? this.timezoneId,
+      use24Hour: use24Hour ?? this.use24Hour,
     );
   }
 
@@ -76,6 +82,7 @@ class PrayerSettings {
     } else {
       await prefs.remove('timezoneId');
     }
+    await prefs.setBool('use24Hour', use24Hour);
   }
 
   /// Load settings from SharedPreferences
@@ -102,6 +109,7 @@ class PrayerSettings {
     final showDhuha = prefs.getBool('showDhuha') ?? true;
     final showTahajjud = prefs.getBool('showTahajjud') ?? true;
     final timezoneId = prefs.getString('timezoneId');
+    final use24Hour = prefs.getBool('use24Hour') ?? true;
 
     return PrayerSettings(
       madhab: madhab,
@@ -112,6 +120,7 @@ class PrayerSettings {
       showDhuha: showDhuha,
       showTahajjud: showTahajjud,
       timezoneId: timezoneId,
+      use24Hour: use24Hour,
     );
   }
 
@@ -171,5 +180,6 @@ class PrayerSettings {
 
   /// Human readable names for per-sunnah toggles
   static String showDhuhaDisplay(bool enabled) => enabled ? 'Shown' : 'Hidden';
-  static String showTahajjudDisplay(bool enabled) => enabled ? 'Shown' : 'Hidden';
+  static String showTahajjudDisplay(bool enabled) =>
+      enabled ? 'Shown' : 'Hidden';
 }

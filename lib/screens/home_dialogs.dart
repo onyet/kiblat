@@ -22,9 +22,14 @@ Future<void> showErrorAlert(
   required String message,
   List<DialogAction>? actions,
 }) async {
-  final dialogActions = actions ?? [
-    DialogAction(tr('ok'), (ctx) => Navigator.of(ctx, rootNavigator: true).pop()),
-  ];
+  final dialogActions =
+      actions ??
+      [
+        DialogAction(
+          tr('ok'),
+          (ctx) => Navigator.of(ctx, rootNavigator: true).pop(),
+        ),
+      ];
 
   showDialog<void>(
     context: context,
@@ -33,7 +38,12 @@ Future<void> showErrorAlert(
       title: Text(title),
       content: Text(message),
       actions: dialogActions
-          .map((a) => TextButton(onPressed: () => a.onPressed(ctx), child: Text(a.label)))
+          .map(
+            (a) => TextButton(
+              onPressed: () => a.onPressed(ctx),
+              child: Text(a.label),
+            ),
+          )
           .toList(),
     ),
   );
@@ -59,7 +69,10 @@ Future<bool> showEnterCoordinatesDialog(BuildContext context) async {
               key: const ValueKey('lat'),
               controller: latCtl,
               decoration: InputDecoration(labelText: tr('latitude')),
-              keyboardType: const TextInputType.numberWithOptions(signed: true, decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                signed: true,
+                decimal: true,
+              ),
               validator: (v) {
                 final val = double.tryParse(v ?? '');
                 if (val == null) return tr('invalid_lat');
@@ -71,7 +84,10 @@ Future<bool> showEnterCoordinatesDialog(BuildContext context) async {
               key: const ValueKey('lon'),
               controller: lonCtl,
               decoration: InputDecoration(labelText: tr('longitude')),
-              keyboardType: const TextInputType.numberWithOptions(signed: true, decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                signed: true,
+                decimal: true,
+              ),
               validator: (v) {
                 final val = double.tryParse(v ?? '');
                 if (val == null) return tr('invalid_lon');
@@ -83,7 +99,10 @@ Future<bool> showEnterCoordinatesDialog(BuildContext context) async {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(false), child: Text(tr('dismiss'))),
+        TextButton(
+          onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(false),
+          child: Text(tr('dismiss')),
+        ),
         TextButton(
           onPressed: () async {
             if (formKey.currentState?.validate() != true) return;
@@ -94,8 +113,15 @@ Future<bool> showEnterCoordinatesDialog(BuildContext context) async {
             Navigator.of(ctx, rootNavigator: true).pop(true);
 
             // Apply manual coordinates (save in background)
-            await LocationService.saveLastLocation('Manual: ${lat.toStringAsFixed(3)}, ${lon.toStringAsFixed(3)}', lat, lon);
-            TelemetryService.instance.logEvent('manual_coords_saved', {'lat': lat, 'lon': lon});
+            await LocationService.saveLastLocation(
+              'Manual: ${lat.toStringAsFixed(3)}, ${lon.toStringAsFixed(3)}',
+              lat,
+              lon,
+            );
+            TelemetryService.instance.logEvent('manual_coords_saved', {
+              'lat': lat,
+              'lon': lon,
+            });
           },
           child: Text(tr('apply')),
         ),
@@ -116,42 +142,57 @@ Future<void> showGeocodeFailureOptions(
 
   final actions = <DialogAction>[];
 
-  actions.add(DialogAction(tr('retry'), (ctx) async {
-    Navigator.of(ctx, rootNavigator: true).pop();
-    // caller will handle retry by calling the location controller
-  }));
+  actions.add(
+    DialogAction(tr('retry'), (ctx) async {
+      Navigator.of(ctx, rootNavigator: true).pop();
+      // caller will handle retry by calling the location controller
+    }),
+  );
 
   if (cached != null) {
-    actions.add(DialogAction(tr('use_cached'), (ctx) {
-      Navigator.of(ctx, rootNavigator: true).pop();
-      onUseCached(cached['label'], cached['lat'], cached['lon']);
-    }));
+    actions.add(
+      DialogAction(tr('use_cached'), (ctx) {
+        Navigator.of(ctx, rootNavigator: true).pop();
+        onUseCached(cached['label'], cached['lat'], cached['lon']);
+      }),
+    );
   }
 
-  actions.add(DialogAction(tr('enter_coordinates'), (ctx) async {
-    Navigator.of(ctx, rootNavigator: true).pop();
-    // Schedule follow-up to avoid using dialog BuildContext across async gaps
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!context.mounted) return;
-      showEnterCoordinatesDialog(context).then((applied) async {
-        if (!applied) return;
-        final last = await LocationService.getLastLocation();
-        if (last != null) {
-          onUseCached(last['label'], last['lat'], last['lon']);
-        }
+  actions.add(
+    DialogAction(tr('enter_coordinates'), (ctx) async {
+      Navigator.of(ctx, rootNavigator: true).pop();
+      // Schedule follow-up to avoid using dialog BuildContext across async gaps
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) return;
+        showEnterCoordinatesDialog(context).then((applied) async {
+          if (!applied) return;
+          final last = await LocationService.getLastLocation();
+          if (last != null) {
+            onUseCached(last['label'], last['lat'], last['lon']);
+          }
+        });
       });
-    });
-  }));
+    }),
+  );
 
-  actions.add(DialogAction(tr('open_location_settings'), (ctx) async {
-    Navigator.of(ctx, rootNavigator: true).pop();
-    await LocationService.openLocationSettings();
-  }));
+  actions.add(
+    DialogAction(tr('open_location_settings'), (ctx) async {
+      Navigator.of(ctx, rootNavigator: true).pop();
+      await LocationService.openLocationSettings();
+    }),
+  );
 
-  actions.add(DialogAction(
-    tr('dismiss'),
-    (ctx) => Navigator.of(ctx, rootNavigator: true).pop(),
-  ));
+  actions.add(
+    DialogAction(
+      tr('dismiss'),
+      (ctx) => Navigator.of(ctx, rootNavigator: true).pop(),
+    ),
+  );
 
-  await showErrorAlert(context, title: tr('location_unavailable_title'), message: tr('geocode_failed_msg'), actions: actions);
+  await showErrorAlert(
+    context,
+    title: tr('location_unavailable_title'),
+    message: tr('geocode_failed_msg'),
+    actions: actions,
+  );
 }

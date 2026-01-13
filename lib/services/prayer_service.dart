@@ -23,7 +23,8 @@ class PrayerTime {
   /// Check if this prayer is currently active (within its time window)
   /// Returns true if current time is between this prayer and next prayer
   bool isActive(DateTime now) {
-    return time.isBefore(now) && time.add(const Duration(minutes: 30)).isAfter(now);
+    return time.isBefore(now) &&
+        time.add(const Duration(minutes: 30)).isAfter(now);
   }
 
   /// Check if this is the next upcoming prayer
@@ -41,10 +42,7 @@ class DailyPrayerTimes {
   final DateTime date;
   final List<PrayerTime> prayers;
 
-  DailyPrayerTimes({
-    required this.date,
-    required this.prayers,
-  });
+  DailyPrayerTimes({required this.date, required this.prayers});
 
   /// Get the current active prayer, or null if no prayer is active
   PrayerTime? getActivePrayer() {
@@ -58,7 +56,9 @@ class DailyPrayerTimes {
   /// Get the next upcoming prayer
   PrayerTime? getNextPrayer() {
     try {
-      final upcoming = prayers.where((p) => p.time.isAfter(DateTime.now())).toList();
+      final upcoming = prayers
+          .where((p) => p.time.isAfter(DateTime.now()))
+          .toList();
       if (upcoming.isEmpty) return null;
       upcoming.sort((a, b) => a.time.compareTo(b.time));
       return upcoming.first;
@@ -83,10 +83,10 @@ class PrayerService {
 
       // Get calculation parameters for the selected method
       final params = settings.calculationMethod.getParameters();
-      
+
       // Set the madhab
       params.madhab = settings.madhab;
-      
+
       // Set the high latitude rule
       params.highLatitudeRule = settings.highLatitudeRule;
 
@@ -144,9 +144,27 @@ class PrayerService {
           useFallback = true;
           final tzDate = DateTime(date.year, date.month, date.day);
           fajrFallback = DateTime(tzDate.year, tzDate.month, tzDate.day, 5, 0);
-          dhuhrFallback = DateTime(tzDate.year, tzDate.month, tzDate.day, 12, 0);
-          maghribFallback = DateTime(tzDate.year, tzDate.month, tzDate.day, 18, 0);
-          ishaFallback = DateTime(tzDate.year, tzDate.month, tzDate.day, 19, 30);
+          dhuhrFallback = DateTime(
+            tzDate.year,
+            tzDate.month,
+            tzDate.day,
+            12,
+            0,
+          );
+          maghribFallback = DateTime(
+            tzDate.year,
+            tzDate.month,
+            tzDate.day,
+            18,
+            0,
+          );
+          ishaFallback = DateTime(
+            tzDate.year,
+            tzDate.month,
+            tzDate.day,
+            19,
+            30,
+          );
         } else {
           prayerTimes = tmp;
         }
@@ -156,15 +174,54 @@ class PrayerService {
       final List<PrayerTime> prayers = [];
 
       // Helper: convert DateTime returned by Adhan to a local wall-clock DateTime
-      DateTime toLocalWallClock(DateTime d) => DateTime(d.year, d.month, d.day, d.hour, d.minute, d.second, d.millisecond, d.microsecond);
+      DateTime toLocalWallClock(DateTime d) => DateTime(
+        d.year,
+        d.month,
+        d.day,
+        d.hour,
+        d.minute,
+        d.second,
+        d.millisecond,
+        d.microsecond,
+      );
 
       // If we had to fall back, construct times from fallback values; otherwise use prayerTimes from adhan
-      final fajrTime = useFallback ? fajrFallback! : _applyAdjustment(toLocalWallClock(prayerTimes!.fajr), settings.adjustmentMinutes);
-      final sunriseTime = useFallback ? fajrFallback!.add(const Duration(hours: 3)) : _applyAdjustment(toLocalWallClock(prayerTimes!.sunrise), settings.adjustmentMinutes);
-      final dhuhrTime = useFallback ? dhuhrFallback! : _applyAdjustment(toLocalWallClock(prayerTimes!.dhuhr), settings.adjustmentMinutes);
-      final asrTime = useFallback ? dhuhrFallback!.add(const Duration(hours: 4)) : _applyAdjustment(toLocalWallClock(prayerTimes!.asr), settings.adjustmentMinutes);
-      final maghribTime = useFallback ? maghribFallback! : _applyAdjustment(toLocalWallClock(prayerTimes!.maghrib), settings.adjustmentMinutes);
-      final ishaTime = useFallback ? ishaFallback! : _applyAdjustment(toLocalWallClock(prayerTimes!.isha), settings.adjustmentMinutes);
+      final fajrTime = useFallback
+          ? fajrFallback!
+          : _applyAdjustment(
+              toLocalWallClock(prayerTimes!.fajr),
+              settings.adjustmentMinutes,
+            );
+      final sunriseTime = useFallback
+          ? fajrFallback!.add(const Duration(hours: 3))
+          : _applyAdjustment(
+              toLocalWallClock(prayerTimes!.sunrise),
+              settings.adjustmentMinutes,
+            );
+      final dhuhrTime = useFallback
+          ? dhuhrFallback!
+          : _applyAdjustment(
+              toLocalWallClock(prayerTimes!.dhuhr),
+              settings.adjustmentMinutes,
+            );
+      final asrTime = useFallback
+          ? dhuhrFallback!.add(const Duration(hours: 4))
+          : _applyAdjustment(
+              toLocalWallClock(prayerTimes!.asr),
+              settings.adjustmentMinutes,
+            );
+      final maghribTime = useFallback
+          ? maghribFallback!
+          : _applyAdjustment(
+              toLocalWallClock(prayerTimes!.maghrib),
+              settings.adjustmentMinutes,
+            );
+      final ishaTime = useFallback
+          ? ishaFallback!
+          : _applyAdjustment(
+              toLocalWallClock(prayerTimes!.isha),
+              settings.adjustmentMinutes,
+            );
 
       // Fajr (Dawn)
       prayers.add(
@@ -172,7 +229,7 @@ class PrayerService {
           name: 'Fajr',
           arabicName: 'الفجر',
           time: fajrTime,
-          timeString: _formatTime(fajrTime),
+          timeString: _formatTime(fajrTime, settings.use24Hour),
           subtitle: 'DAWN',
         ),
       );
@@ -183,7 +240,7 @@ class PrayerService {
           name: 'Sunrise',
           arabicName: 'الشروق',
           time: sunriseTime,
-          timeString: _formatTime(sunriseTime),
+          timeString: _formatTime(sunriseTime, settings.use24Hour),
           subtitle: 'SHURUQ',
         ),
       );
@@ -194,7 +251,7 @@ class PrayerService {
           name: 'Dhuhr',
           arabicName: 'الظهر',
           time: dhuhrTime,
-          timeString: _formatTime(dhuhrTime),
+          timeString: _formatTime(dhuhrTime, settings.use24Hour),
           subtitle: 'NOON',
         ),
       );
@@ -205,7 +262,7 @@ class PrayerService {
           name: 'Asr',
           arabicName: 'العصر',
           time: asrTime,
-          timeString: _formatTime(asrTime),
+          timeString: _formatTime(asrTime, settings.use24Hour),
           subtitle: 'AFTERNOON',
         ),
       );
@@ -216,7 +273,7 @@ class PrayerService {
           name: 'Maghrib',
           arabicName: 'المغرب',
           time: maghribTime,
-          timeString: _formatTime(maghribTime),
+          timeString: _formatTime(maghribTime, settings.use24Hour),
           subtitle: 'SUNSET',
         ),
       );
@@ -227,7 +284,7 @@ class PrayerService {
           name: 'Isha',
           arabicName: 'العشاء',
           time: ishaTime,
-          timeString: _formatTime(ishaTime),
+          timeString: _formatTime(ishaTime, settings.use24Hour),
           subtitle: 'NIGHT',
         ),
       );
@@ -240,8 +297,22 @@ class PrayerService {
         late final DateTime tahajjudTime;
         if (!useFallback) {
           final pt = prayerTimes!;
-          final ishaLocal = DateTime(pt.isha.year, pt.isha.month, pt.isha.day, pt.isha.hour, pt.isha.minute, pt.isha.second);
-          final fajrLocal = DateTime(pt.fajr.year, pt.fajr.month, pt.fajr.day, pt.fajr.hour, pt.fajr.minute, pt.fajr.second);
+          final ishaLocal = DateTime(
+            pt.isha.year,
+            pt.isha.month,
+            pt.isha.day,
+            pt.isha.hour,
+            pt.isha.minute,
+            pt.isha.second,
+          );
+          final fajrLocal = DateTime(
+            pt.fajr.year,
+            pt.fajr.month,
+            pt.fajr.day,
+            pt.fajr.hour,
+            pt.fajr.minute,
+            pt.fajr.second,
+          );
           tahajjudTime = ishaLocal.add(
             Duration(
               hours: (fajrLocal.difference(ishaLocal).inHours) ~/ 2,
@@ -249,7 +320,9 @@ class PrayerService {
             ),
           );
         } else {
-          tahajjudTime = ishaFallback!.subtract(const Duration(hours: 6)); // crude fallback
+          tahajjudTime = ishaFallback!.subtract(
+            const Duration(hours: 6),
+          ); // crude fallback
         }
 
         if (includeTahajjud) {
@@ -258,7 +331,7 @@ class PrayerService {
               name: 'Tahajjud',
               arabicName: 'التهجد',
               time: tahajjudTime,
-              timeString: _formatTime(tahajjudTime),
+              timeString: _formatTime(tahajjudTime, settings.use24Hour),
               subtitle: 'NIGHT PRAYER',
               isSunnah: true,
             ),
@@ -268,7 +341,9 @@ class PrayerService {
         // Dhuha (Morning prayer) - approximately 20-30 min after sunrise
         late final DateTime dhuhaTime;
         if (!useFallback) {
-          dhuhaTime = toLocalWallClock(prayerTimes!.sunrise).add(const Duration(minutes: 25));
+          dhuhaTime = toLocalWallClock(
+            prayerTimes!.sunrise,
+          ).add(const Duration(minutes: 25));
         } else {
           dhuhaTime = fajrFallback!.add(const Duration(hours: 3));
         }
@@ -279,7 +354,7 @@ class PrayerService {
               name: 'Dhuha',
               arabicName: 'الضحى',
               time: dhuhaTime,
-              timeString: _formatTime(dhuhaTime),
+              timeString: _formatTime(dhuhaTime, settings.use24Hour),
               subtitle: 'MORNING PRAYER',
               isSunnah: true,
             ),
@@ -290,10 +365,7 @@ class PrayerService {
       // Sort by time
       prayers.sort((a, b) => a.time.compareTo(b.time));
 
-      return DailyPrayerTimes(
-        date: date,
-        prayers: prayers,
-      );
+      return DailyPrayerTimes(date: date, prayers: prayers);
     } catch (e) {
       rethrow;
     }
@@ -301,7 +373,10 @@ class PrayerService {
 
   /// Get UTC offset for the given timezone
   /// If timezoneId is null, uses device timezone
-  static Future<Duration> _getUtcOffset(String? timezoneId, DateTime date) async {
+  static Future<Duration> _getUtcOffset(
+    String? timezoneId,
+    DateTime date,
+  ) async {
     try {
       if (timezoneId != null && timezoneId.isNotEmpty) {
         // Use specified timezone
@@ -324,9 +399,12 @@ class PrayerService {
   }
 
   /// Format DateTime to time string (e.g., "05:42 AM")
-  static String _formatTime(DateTime time) {
+  static String _formatTime(DateTime time, bool use24Hour) {
     final hour = time.hour;
     final minute = time.minute;
+    if (use24Hour) {
+      return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+    }
     final period = hour >= 12 ? 'PM' : 'AM';
     final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
 
@@ -351,7 +429,9 @@ class PrayerService {
       settings: settings,
     );
 
-    final upcoming = todayPrayers.prayers.where((p) => p.time.isAfter(now)).toList();
+    final upcoming = todayPrayers.prayers
+        .where((p) => p.time.isAfter(now))
+        .toList();
 
     if (upcoming.isNotEmpty) {
       upcoming.sort((a, b) => a.time.compareTo(b.time));
@@ -392,7 +472,9 @@ class PrayerService {
       settings: settings,
     );
 
-    final past = todayPrayers.prayers.where((p) => p.time.isBefore(now)).toList();
+    final past = todayPrayers.prayers
+        .where((p) => p.time.isBefore(now))
+        .toList();
     if (past.isNotEmpty) {
       past.sort((a, b) => b.time.compareTo(a.time));
       return past.first;
@@ -422,8 +504,16 @@ class PrayerService {
     required double longitude,
     required PrayerSettings settings,
   }) async {
-    final next = await getNextPrayerTime(latitude: latitude, longitude: longitude, settings: settings);
-    final prev = await getPreviousPrayerTime(latitude: latitude, longitude: longitude, settings: settings);
+    final next = await getNextPrayerTime(
+      latitude: latitude,
+      longitude: longitude,
+      settings: settings,
+    );
+    final prev = await getPreviousPrayerTime(
+      latitude: latitude,
+      longitude: longitude,
+      settings: settings,
+    );
     return {'previous': prev, 'next': next};
   }
 
@@ -436,5 +526,6 @@ class PrayerService {
   }
 
   /// Time until the given prayer from now
-  static Duration timeUntil(PrayerTime prayer) => prayer.time.difference(DateTime.now());
+  static Duration timeUntil(PrayerTime prayer) =>
+      prayer.time.difference(DateTime.now());
 }

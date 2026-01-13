@@ -163,9 +163,7 @@ class HomeCompass extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       tr('calculating'),
-                      style: const TextStyle(
-                        color: Colors.white70,
-                      ),
+                      style: const TextStyle(color: Colors.white70),
                     ),
                   ],
                 ),
@@ -212,9 +210,7 @@ class HomeCompass extends StatelessWidget {
                           width: 8,
                           height: 12,
                           decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Colors.white12,
-                            ),
+                            border: Border.all(color: Colors.white12),
                             color: const Color(0x66F4C025),
                             borderRadius: BorderRadius.circular(2),
                           ),
@@ -239,9 +235,7 @@ class HomeCompass extends StatelessWidget {
                       children: [
                         CustomPaint(
                           size: const Size(28, 34),
-                          painter: ArrowPainter(
-                            color: const Color(0xFFF4C025),
-                          ),
+                          painter: ArrowPainter(color: const Color(0xFFF4C025)),
                         ),
                         const SizedBox(height: 6),
                         Container(
@@ -271,10 +265,7 @@ class HomeCompass extends StatelessWidget {
         Text(
           tr(
             'degrees_label',
-            namedArgs: {
-              'deg': qiblaDeg.toStringAsFixed(0),
-              'dir': dir,
-            },
+            namedArgs: {'deg': qiblaDeg.toStringAsFixed(0), 'dir': dir},
           ),
           style: const TextStyle(
             color: Color(0xFFF4C025),
@@ -284,10 +275,7 @@ class HomeCompass extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 8,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: const Color(0xFF121008),
             borderRadius: BorderRadius.circular(999),
@@ -296,11 +284,7 @@ class HomeCompass extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.straight,
-                color: Color(0xFFF4C025),
-                size: 18,
-              ),
+              const Icon(Icons.straight, color: Color(0xFFF4C025), size: 18),
               const SizedBox(width: 8),
               // show formatted distance when location is ready, otherwise show label + spinner
               if (isLocationReady) ...[
@@ -326,9 +310,7 @@ class HomeCompass extends StatelessWidget {
                 const SizedBox(
                   width: 12,
                   height: 12,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                  ),
+                  child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               ],
             ],

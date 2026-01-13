@@ -11,7 +11,7 @@ void main() {
       name: 'Dhuha',
       arabicName: 'الضحى',
       time: now.add(const Duration(hours: 4)),
-      timeString: '11:00 AM',
+      timeString: '11:00',
       subtitle: 'MORNING PRAYER',
       isSunnah: true,
     );
@@ -20,7 +20,7 @@ void main() {
       name: 'Tahajjud',
       arabicName: 'التهجد',
       time: now.subtract(const Duration(hours: 2)),
-      timeString: '01:00 AM',
+      timeString: '01:00',
       subtitle: 'NIGHT PRAYER',
       isSunnah: true,
     );

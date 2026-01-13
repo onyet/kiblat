@@ -16,7 +16,6 @@ class AdService {
   bool _isShowing = false;
   bool _isDisposed = false;
 
-
   /// AdMob App ID: ca-app-pub-7967860040352202~1740407670
   /// Interstitial Ad Unit ID untuk close app
   static bool testMode = false;
@@ -76,36 +75,40 @@ class AdService {
           _isInterstitialAdReady = true;
 
           // Keep a safe default fullScreenContentCallback; it will be overridden when showing
-          _interstitialAd!.fullScreenContentCallback =
-              FullScreenContentCallback(
-                onAdDismissedFullScreenContent: (ad) {
-                  debugPrint(
-                    '[AdService] Interstitial dismissed (default callback)',
-                  );
-                  try {
-                    ad.dispose();
-                  } catch (_) {}
-                  _isInterstitialAdReady = false;
-                  // Muat ulang iklan untuk penggunaan berikutnya, kecuali sudah dispose
-                  if (!_isDisposed) {
-                    loadInterstitialAd();
-                  } else {
-                    debugPrint('[AdService] Service disposed, skipping reload after dismiss.');
-                  }
-                },
-                onAdFailedToShowFullScreenContent: (ad, error) {
-                  debugPrint('[AdService] Interstitial failed to show: $error');
-                  try {
-                    ad.dispose();
-                  } catch (_) {}
-                  _isInterstitialAdReady = false;
-                  if (!_isDisposed) {
-                    loadInterstitialAd();
-                  } else {
-                    debugPrint('[AdService] Service disposed, skipping reload after failure to show.');
-                  }
-                },
+          _interstitialAd!
+              .fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              debugPrint(
+                '[AdService] Interstitial dismissed (default callback)',
               );
+              try {
+                ad.dispose();
+              } catch (_) {}
+              _isInterstitialAdReady = false;
+              // Muat ulang iklan untuk penggunaan berikutnya, kecuali sudah dispose
+              if (!_isDisposed) {
+                loadInterstitialAd();
+              } else {
+                debugPrint(
+                  '[AdService] Service disposed, skipping reload after dismiss.',
+                );
+              }
+            },
+            onAdFailedToShowFullScreenContent: (ad, error) {
+              debugPrint('[AdService] Interstitial failed to show: $error');
+              try {
+                ad.dispose();
+              } catch (_) {}
+              _isInterstitialAdReady = false;
+              if (!_isDisposed) {
+                loadInterstitialAd();
+              } else {
+                debugPrint(
+                  '[AdService] Service disposed, skipping reload after failure to show.',
+                );
+              }
+            },
+          );
         },
         onAdFailedToLoad: (error) {
           debugPrint('[AdService] Interstitial failed to load: $error');
@@ -154,7 +157,9 @@ class AdService {
         if (!_isDisposed) {
           loadInterstitialAd();
         } else {
-          debugPrint('[AdService] Service disposed, skipping reload after show callback.');
+          debugPrint(
+            '[AdService] Service disposed, skipping reload after show callback.',
+          );
         }
         if (!completer.isCompleted) completer.complete(true);
       },
@@ -167,7 +172,9 @@ class AdService {
         if (!_isDisposed) {
           loadInterstitialAd();
         } else {
-          debugPrint('[AdService] Service disposed, skipping reload after failure to show.');
+          debugPrint(
+            '[AdService] Service disposed, skipping reload after failure to show.',
+          );
         }
         if (!completer.isCompleted) completer.complete(false);
       },
@@ -231,7 +238,9 @@ class AdService {
   /// Force reload interstitial ad. Disposes current ad (if any) and starts a fresh load.
   void reloadInterstitialAd() {
     if (_isDisposed) {
-      debugPrint('[AdService] reload requested but service is disposed, ignoring.');
+      debugPrint(
+        '[AdService] reload requested but service is disposed, ignoring.',
+      );
       return;
     }
     debugPrint('[AdService] Reloading interstitial ad (force)');

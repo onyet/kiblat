@@ -6,7 +6,11 @@ class HomeTopBar extends StatelessWidget {
   final String locationLabel;
   final VoidCallback onSettingsTap;
 
-  const HomeTopBar({super.key, required this.locationLabel, required this.onSettingsTap});
+  const HomeTopBar({
+    super.key,
+    required this.locationLabel,
+    required this.onSettingsTap,
+  });
 
   @override
   Widget build(BuildContext context) {

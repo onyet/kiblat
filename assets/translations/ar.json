@@ -102,5 +102,9 @@
   "open": "فتح",
   "open_source": "مفتوح المصدر — متاح على GitHub",
   "view_on_github": "عرض على GitHub",
-  "others": "أخرى"
+  "others": "أخرى",
+  "time_format": "تنسيق الوقت",
+  "time_format_24": "24 ساعة",
+  "time_format_12": "12 ساعة (AM/PM)",
+  "device_timezone": "منطقة زمن الجهاز"
 }  

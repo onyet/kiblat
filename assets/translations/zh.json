@@ -101,5 +101,9 @@
   "open": "打开",
   "open_source": "开源 — 可在 GitHub 获取",
   "view_on_github": "在 GitHub 查看",
-  "others": "其他"
+  "others": "其他",
+  "time_format": "时间格式",
+  "time_format_24": "24 小时",
+  "time_format_12": "12 小时 (AM/PM)",
+  "device_timezone": "设备时区"
 }

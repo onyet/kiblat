@@ -90,14 +90,20 @@ class LocationService {
   }
 
   /// Persist last successful location label and coordinates for offline fallback
-  static Future<void> saveLastLocation(String label, double lat, double lon) async {
+  static Future<void> saveLastLocation(
+    String label,
+    double lat,
+    double lon,
+  ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('last_loc_label', label);
       await prefs.setDouble('last_loc_lat', lat);
       await prefs.setDouble('last_loc_lon', lon);
     } catch (e) {
-      TelemetryService.instance.logEvent('save_last_location_error', {'error': e.toString()});
+      TelemetryService.instance.logEvent('save_last_location_error', {
+        'error': e.toString(),
+      });
     }
   }
 
@@ -112,14 +118,20 @@ class LocationService {
         return {'label': label, 'lat': lat, 'lon': lon};
       }
     } catch (e) {
-      TelemetryService.instance.logEvent('get_last_location_error', {'error': e.toString()});
+      TelemetryService.instance.logEvent('get_last_location_error', {
+        'error': e.toString(),
+      });
     }
     return null;
   }
 
   /// Attempt reverse geocoding with a timeout, save successful result to cache,
   /// and fall back to cached value if network/geocoding fails.
-  static Future<String> reverseGeocodeWithCache(double lat, double lon, {Duration timeout = const Duration(seconds: 5)}) async {
+  static Future<String> reverseGeocodeWithCache(
+    double lat,
+    double lon, {
+    Duration timeout = const Duration(seconds: 5),
+  }) async {
     try {
       final label = await reverseGeocode(lat, lon).timeout(timeout);
       if (label.isNotEmpty) {
@@ -128,12 +140,16 @@ class LocationService {
       }
       TelemetryService.instance.logEvent('reverse_geocode_empty');
     } catch (e) {
-      TelemetryService.instance.logEvent('reverse_geocode_failed', {'error': e.toString()});
+      TelemetryService.instance.logEvent('reverse_geocode_failed', {
+        'error': e.toString(),
+      });
     }
 
     final cached = await getLastLocation();
     if (cached != null) {
-      TelemetryService.instance.logEvent('reverse_geocode_used_cache', {'cached_label': cached['label']});
+      TelemetryService.instance.logEvent('reverse_geocode_used_cache', {
+        'cached_label': cached['label'],
+      });
       return '${cached['label']} (cached)';
     }
 

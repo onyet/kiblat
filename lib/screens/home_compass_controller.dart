@@ -14,7 +14,8 @@ class CompassHeadingController {
   double? _last;
 
   /// Provide an optional [source] for easier testing. If omitted, uses LocationService.headingStream().
-  CompassHeadingController({Stream<double?>? source}) : _source = source ?? LocationService.headingStream() {
+  CompassHeadingController({Stream<double?>? source})
+    : _source = source ?? LocationService.headingStream() {
     _sub = _source.listen((val) {
       if (val == null) return;
       final smoothed = _last == null ? val : (_last! * 0.8 + val * 0.2);

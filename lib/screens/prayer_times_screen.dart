@@ -4,9 +4,9 @@ import 'dart:async';
 import 'package:kiblat/services/prayer_service.dart' as ps;
 import 'package:kiblat/models/prayer_settings_model.dart';
 import 'package:kiblat/services/location_service.dart';
+import 'package:kiblat/services/settings_service.dart';
 import 'package:kiblat/utils/hijri_converter.dart';
 import 'package:kiblat/widgets/sunnah_compact.dart';
-
 
 class PrayerTimesScreen extends StatefulWidget {
   final String locationLabel;
@@ -22,7 +22,8 @@ class PrayerTimesScreen extends StatefulWidget {
   State<PrayerTimesScreen> createState() => _PrayerTimesScreenState();
 }
 
-class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProviderStateMixin {
+class _PrayerTimesScreenState extends State<PrayerTimesScreen>
+    with TickerProviderStateMixin {
   int _selectedTabIndex = 0;
 
   // Live data
@@ -48,10 +49,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
   double _progressToNext = 0.0;
   bool _refreshingPrevNext = false;
 
-
   DateTime get _todayDate => DateTime.now();
   DateTime get _tomorrowDate => DateTime.now().add(const Duration(days: 1));
-
 
   String _getQiblaDirection(double degrees) {
     if (degrees >= 337.5 || degrees < 22.5) return 'N';
@@ -76,7 +75,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
       final pos = await LocationService.getCurrentPosition();
       _latitude = pos.latitude;
       _longitude = pos.longitude;
-      _locationLabel = await LocationService.reverseGeocodeWithCache(_latitude!, _longitude!);
+      _locationLabel = await LocationService.reverseGeocodeWithCache(
+        _latitude!,
+        _longitude!,
+      );
       _qiblaDeg = LocationService.qiblaBearing(_latitude!, _longitude!);
 
       // Settings
@@ -93,7 +95,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
       _tomorrowPrayers = await ps.PrayerService.calculatePrayerTimes(
         latitude: _latitude!,
         longitude: _longitude!,
-        date: DateTime(_tomorrowDate.year, _tomorrowDate.month, _tomorrowDate.day),
+        date: DateTime(
+          _tomorrowDate.year,
+          _tomorrowDate.month,
+          _tomorrowDate.day,
+        ),
         settings: _settings!,
       );
 
@@ -112,7 +118,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
 
       // Persist last known location label
       if (_locationLabel.isNotEmpty) {
-        await LocationService.saveLastLocation(_locationLabel, _latitude!, _longitude!);
+        await LocationService.saveLastLocation(
+          _locationLabel,
+          _latitude!,
+          _longitude!,
+        );
       }
 
       // Update previous/next prayer references and start countdown
@@ -129,6 +139,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
       });
     }
   }
+
   IconData _iconForPrayer(String name) {
     switch (name.toLowerCase()) {
       case 'fajr':
@@ -152,6 +163,13 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
   void initState() {
     super.initState();
     _loadAll();
+    // Refresh when global settings change (e.g., 24/12h format)
+    SettingsService.instance.notifier.addListener(_onSettingsChanged);
+  }
+
+  void _onSettingsChanged() {
+    // Reload everything so formatted times update according to new settings
+    _loadAll();
   }
 
   @override
@@ -172,7 +190,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
               child: RefreshIndicator(
                 onRefresh: () async => _loadAll(),
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 24,
+                  ),
                   children: [
                     // Islamic and Gregorian dates
                     _buildDateSection(),
@@ -181,23 +202,37 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
 
                     // Body content
                     if (_loading)
-                      Center(child: Column(
-                        children: [
-                          const SizedBox(height: 40),
-                          const CircularProgressIndicator(),
-                          const SizedBox(height: 12),
-                          const Text('Loading prayer times...', style: TextStyle(color: Colors.white60)),
-                        ],
-                      ))
+                      Center(
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 40),
+                            const CircularProgressIndicator(),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Loading prayer times...',
+                              style: TextStyle(color: Colors.white60),
+                            ),
+                          ],
+                        ),
+                      )
                     else if (_error.isNotEmpty)
-                      Center(child: Text(_error, style: const TextStyle(color: Colors.redAccent)))
+                      Center(
+                        child: Text(
+                          _error,
+                          style: const TextStyle(color: Colors.redAccent),
+                        ),
+                      )
                     else ...[
                       if (_selectedTabIndex != 2) _buildCountdownBanner(),
 
                       if (_selectedTabIndex == 2)
                         _buildWeekView()
                       else
-                        _buildDayView(_selectedTabIndex == 0 ? _todayPrayers : _tomorrowPrayers),
+                        _buildDayView(
+                          _selectedTabIndex == 0
+                              ? _todayPrayers
+                              : _tomorrowPrayers,
+                        ),
 
                       const SizedBox(height: 32),
 
@@ -221,7 +256,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
       decoration: BoxDecoration(
         color: const Color(0xFF050505),
-        border: Border(bottom: BorderSide(color: const Color.fromRGBO(255, 255, 255, 0.05))),
+        border: Border(
+          bottom: BorderSide(color: const Color.fromRGBO(255, 255, 255, 0.05)),
+        ),
       ),
       child: Column(
         children: [
@@ -238,7 +275,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
                   child: InkWell(
                     onTap: () => Navigator.of(context).pop(),
                     borderRadius: BorderRadius.circular(8),
-                    child: const Icon(Icons.chevron_left, color: Colors.white, size: 24),
+                    child: const Icon(
+                      Icons.chevron_left,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                   ),
                 ),
               ),
@@ -250,7 +291,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.location_on, size: 14, color: Colors.white54),
+                        const Icon(
+                          Icons.location_on,
+                          size: 14,
+                          color: Colors.white54,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'CURRENT LOCATION',
@@ -288,7 +333,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
                   child: InkWell(
                     onTap: () => Navigator.of(context).pushNamed('/settings'),
                     borderRadius: BorderRadius.circular(8),
-                    child: const Icon(Icons.settings, color: Colors.white, size: 20),
+                    child: const Icon(
+                      Icons.settings,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                 ),
               ),
@@ -303,7 +352,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: const Color.fromRGBO(255, 255, 255, 0.05))),
+        border: Border(
+          bottom: BorderSide(color: const Color.fromRGBO(255, 255, 255, 0.05)),
+        ),
       ),
       child: Row(
         children: [
@@ -329,7 +380,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
               fontSize: 11,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.2,
-              color: isActive ? const Color(0xFFD4AF37) : const Color.fromRGBO(255, 255, 255, 0.4),
+              color: isActive
+                  ? const Color(0xFFD4AF37)
+                  : const Color.fromRGBO(255, 255, 255, 0.4),
             ),
           ),
           const SizedBox(height: 8),
@@ -344,7 +397,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
   }
 
   Widget _buildDateSection() {
-    final date = _selectedTabIndex == 0 ? _todayDate : ( _selectedTabIndex == 1 ? _tomorrowDate : _todayDate );
+    final date = _selectedTabIndex == 0
+        ? _todayDate
+        : (_selectedTabIndex == 1 ? _tomorrowDate : _todayDate);
     final hijri = HijriConverter.getHijriDate(date);
 
     return Row(
@@ -354,7 +409,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              tr('prayer_schedule') == 'prayer_schedule' ? 'ISLAMIC DATE' : tr('prayer_schedule'),
+              tr('prayer_schedule') == 'prayer_schedule'
+                  ? 'ISLAMIC DATE'
+                  : tr('prayer_schedule'),
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
@@ -407,12 +464,18 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
         final now = DateTime.now();
         final isSunrise = prayer.name.toLowerCase() == 'sunrise';
         final isActive = _activePrayer != null
-            ? (prayer.name == _activePrayer!.name && prayer.time == _activePrayer!.time)
+            ? (prayer.name == _activePrayer!.name &&
+                  prayer.time == _activePrayer!.time)
             : prayer.isActive(now);
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
-          child: _buildPrayerCardFromModel(prayer, iconData, isActive, isSunrise),
+          child: _buildPrayerCardFromModel(
+            prayer,
+            iconData,
+            isActive,
+            isSunrise,
+          ),
         );
       }).toList(),
     );
@@ -445,7 +508,13 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(dateStr, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
+            Text(
+              dateStr,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const SizedBox(height: 8),
             if (_settings?.showSunnahTimes == true && sunnah.isNotEmpty) ...[
               SunnahCompact(sunnahList: sunnah, activePrayer: _activePrayer),
@@ -471,7 +540,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
 
     // Get localized prayer name
     final nameKey = prayer.name.toLowerCase();
-    final localized = nameKey == 'sunrise' ? 'Sunrise' : (tr(nameKey) == nameKey ? prayer.name : tr(nameKey));
+    final localized = nameKey == 'sunrise'
+        ? 'Sunrise'
+        : (tr(nameKey) == nameKey ? prayer.name : tr(nameKey));
 
     final time = prayer.timeString;
 
@@ -481,14 +552,16 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
         color: isActive
             ? const Color.fromRGBO(212, 175, 55, 0.1)
             : isSunnah
-                ? const Color.fromRGBO(255, 255, 255, 0.02)
-                : (isSunrise ? const Color.fromRGBO(255, 255, 255, 0.02) : const Color.fromRGBO(255, 255, 255, 0.05)),
+            ? const Color.fromRGBO(255, 255, 255, 0.02)
+            : (isSunrise
+                  ? const Color.fromRGBO(255, 255, 255, 0.02)
+                  : const Color.fromRGBO(255, 255, 255, 0.05)),
         border: Border.all(
           color: isActive
               ? const Color(0xFFD4AF37)
               : isSunnah
-                  ? const Color.fromRGBO(255, 255, 255, 0.06)
-                  : const Color.fromRGBO(255, 255, 255, 0.1),
+              ? const Color.fromRGBO(255, 255, 255, 0.06)
+              : const Color.fromRGBO(255, 255, 255, 0.1),
           width: isActive ? 2 : (isSunnah ? 1 : 1),
         ),
         borderRadius: BorderRadius.circular(12),
@@ -507,7 +580,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
             ),
             child: Icon(
               iconData,
-              color: isActive ? const Color(0xFF050505) : const Color(0xFFD4AF37),
+              color: isActive
+                  ? const Color(0xFF050505)
+                  : const Color(0xFFD4AF37),
               size: 20,
             ),
           ),
@@ -524,7 +599,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: isActive ? Colors.white : const Color.fromRGBO(255, 255, 255, 0.9),
+                    color: isActive
+                        ? Colors.white
+                        : const Color.fromRGBO(255, 255, 255, 0.9),
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -552,7 +629,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
               fontWeight: FontWeight.w700,
               color: isSunnah
                   ? const Color.fromRGBO(255, 255, 255, 0.6)
-                  : (isActive ? const Color(0xFFD4AF37) : const Color.fromRGBO(255, 255, 255, 0.9)),
+                  : (isActive
+                        ? const Color(0xFFD4AF37)
+                        : const Color.fromRGBO(255, 255, 255, 0.9)),
               letterSpacing: -0.5,
             ),
           ),
@@ -592,7 +671,6 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
     return card;
   }
 
-
   Widget _buildQiblaCard() {
     final qiblaDeg = _qiblaDeg ?? widget.qiblaDeg;
     final qiblaDir = _getQiblaDirection(qiblaDeg);
@@ -603,14 +681,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF0A0A0A),
-            const Color(0xFF050505),
-          ],
+          colors: [const Color(0xFF0A0A0A), const Color(0xFF050505)],
         ),
-        border: Border.all(
-          color: const Color.fromRGBO(212, 175, 55, 0.2),
-        ),
+        border: Border.all(color: const Color.fromRGBO(212, 175, 55, 0.2)),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -642,7 +715,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
                         ),
                       ),
                       TextSpan(
-                        text: ' $qiblaDir from ${_locationLabel.isNotEmpty ? _locationLabel : widget.locationLabel}',
+                        text:
+                            ' $qiblaDir from ${_locationLabel.isNotEmpty ? _locationLabel : widget.locationLabel}',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -684,6 +758,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
 
   @override
   void dispose() {
+    SettingsService.instance.notifier.removeListener(_onSettingsChanged);
     _countdownTimer?.cancel();
     super.dispose();
   }
@@ -704,13 +779,21 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
       final next = map['next'];
 
       final now = DateTime.now();
-      final active = (prev != null && next != null && now.isAfter(prev.time) && now.isBefore(next.time)) ? prev : null;
+      final active =
+          (prev != null &&
+              next != null &&
+              now.isAfter(prev.time) &&
+              now.isBefore(next.time))
+          ? prev
+          : null;
 
       setState(() {
         _nextPrayer = next;
         _activePrayer = active;
         _timeToNext = next != null ? next.time.difference(now) : Duration.zero;
-        _progressToNext = (prev != null && next != null) ? ps.PrayerService.progressBetween(prev.time, next.time, now) : 0.0;
+        _progressToNext = (prev != null && next != null)
+            ? ps.PrayerService.progressBetween(prev.time, next.time, now)
+            : 0.0;
       });
     } finally {
       _refreshingPrevNext = false;
@@ -727,7 +810,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
       if (_nextPrayer == null) return;
 
       // If we've reached or passed the next prayer, refresh prev/next
-      if (now.isAfter(_nextPrayer!.time) || now.isAtSameMomentAs(_nextPrayer!.time)) {
+      if (now.isAfter(_nextPrayer!.time) ||
+          now.isAtSameMomentAs(_nextPrayer!.time)) {
         await _updatePrevNext();
         return;
       }
@@ -737,7 +821,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
         _timeToNext = _nextPrayer!.time.difference(now);
         // For progress we need previous; if not available just compute using last known active
         if (_activePrayer != null) {
-          _progressToNext = ps.PrayerService.progressBetween(_activePrayer!.time, _nextPrayer!.time, now);
+          _progressToNext = ps.PrayerService.progressBetween(
+            _activePrayer!.time,
+            _nextPrayer!.time,
+            now,
+          );
         } else {
           // fallback: progress from now to next is 0..1 based on some heuristic
           _progressToNext = 0.0;
@@ -760,7 +848,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
     if (_nextPrayer == null) return const SizedBox.shrink();
 
     final nameKey = _nextPrayer!.name.toLowerCase();
-    final localized = (tr(nameKey) == nameKey) ? _nextPrayer!.name : tr(nameKey);
+    final localized = (tr(nameKey) == nameKey)
+        ? _nextPrayer!.name
+        : tr(nameKey);
 
     return Column(
       children: [
@@ -773,27 +863,52 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
           ),
           child: Row(
             children: [
-              Icon(_iconForPrayer(_nextPrayer!.name), color: const Color(0xFFD4AF37)),
+              Icon(
+                _iconForPrayer(_nextPrayer!.name),
+                color: const Color(0xFFD4AF37),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      tr('time_to_prayer_fmt', namedArgs: {'dur': _formatDuration(_timeToNext), 'prayer': localized}),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                      tr(
+                        'time_to_prayer_fmt',
+                        namedArgs: {
+                          'dur': _formatDuration(_timeToNext),
+                          'prayer': localized,
+                        },
+                      ),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     LinearProgressIndicator(
                       value: _progressToNext,
-                      backgroundColor: const Color.fromRGBO(255, 255, 255, 0.04),
-                      valueColor: const AlwaysStoppedAnimation(Color(0xFFD4AF37)),
+                      backgroundColor: const Color.fromRGBO(
+                        255,
+                        255,
+                        255,
+                        0.04,
+                      ),
+                      valueColor: const AlwaysStoppedAnimation(
+                        Color(0xFFD4AF37),
+                      ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
-              Text(_nextPrayer!.timeString, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
+              Text(
+                _nextPrayer!.timeString,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
         ),
@@ -802,5 +917,4 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen> with TickerProvid
       ],
     );
   }
-
-  }
+}

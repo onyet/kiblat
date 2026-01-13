@@ -31,8 +31,8 @@ class HomeLocationController {
   HomeLocationController({
     PositionFetcher? fetchPos,
     ReverseGeocodeFetcher? reverseGeo,
-  })  : _fetchPos = fetchPos ?? LocationService.getCurrentPosition,
-        _reverseGeo = reverseGeo ?? LocationService.reverseGeocodeWithCache;
+  }) : _fetchPos = fetchPos ?? LocationService.getCurrentPosition,
+       _reverseGeo = reverseGeo ?? LocationService.reverseGeocodeWithCache;
 
   /// Fetch current position and return computed LocationResult. If reverse geocode
   /// returns empty label, the label will be empty and caller should handle fallbacks.
@@ -52,8 +52,15 @@ class HomeLocationController {
     );
   }
 
-  Future<void> saveManualCoordinates(String label, double lat, double lon) async {
+  Future<void> saveManualCoordinates(
+    String label,
+    double lat,
+    double lon,
+  ) async {
     await LocationService.saveLastLocation(label, lat, lon);
-    TelemetryService.instance.logEvent('manual_coords_saved', {'lat': lat, 'lon': lon});
+    TelemetryService.instance.logEvent('manual_coords_saved', {
+      'lat': lat,
+      'lon': lon,
+    });
   }
 }

@@ -102,5 +102,9 @@
   "quran": "Quran",
   "calibrate": "Calibrate",
   "status_available": "Available",
-  "status_unavailable": "Not available"
+  "status_unavailable": "Not available",
+  "time_format": "Time Format",
+  "time_format_24": "24-hour",
+  "time_format_12": "12-hour (AM/PM)",
+  "device_timezone": "Device Timezone"
 } 

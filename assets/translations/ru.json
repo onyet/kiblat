@@ -102,5 +102,9 @@
   "open": "Открыть",
   "open_source": "Открытый исходный код — доступно на GitHub",
   "view_on_github": "Посмотреть на GitHub",
-  "others": "Другие"
-}  
+  "others": "Другие",
+  "time_format": "Формат времени",
+  "time_format_24": "24-часовой",
+  "time_format_12": "12-часовой (AM/PM)",
+  "device_timezone": "Часовой пояс устройства"
+}

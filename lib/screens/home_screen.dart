@@ -13,13 +13,21 @@ import 'home_dialogs.dart';
 import 'home_prayer_sheet.dart';
 import 'package:kiblat/services/prayer_service.dart' as ps;
 import 'package:kiblat/models/prayer_settings_model.dart';
+import 'package:kiblat/services/settings_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool skipPermissionCheck; // useful for tests
-  final dynamic locationController; // accepts HomeLocationController or similar for injection
-  final dynamic compassController; // optional injection for tests (CompassHeadingController)
+  final dynamic
+  locationController; // accepts HomeLocationController or similar for injection
+  final dynamic
+  compassController; // optional injection for tests (CompassHeadingController)
 
-  const HomeScreen({super.key, this.locationController, this.compassController, this.skipPermissionCheck = false});
+  const HomeScreen({
+    super.key,
+    this.locationController,
+    this.compassController,
+    this.skipPermissionCheck = false,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -37,11 +45,20 @@ class _HomeScreenState extends State<HomeScreen>
 
   // Next prayer info
   ps.PrayerTime? _nextPrayer;
-  Duration _timeToNext = Duration.zero;
+  // Notifier for per-second countdown updates to avoid rebuilding the entire HomeScreen
+  final ValueNotifier<Duration> _timeToNextNotifier = ValueNotifier(
+    Duration.zero,
+  );
   Timer? _prayerTimer;
 
   double? _latitude;
   double? _longitude;
+
+  ps.PrayerTime? _prevPrayer;
+  bool _isPrevActive = false;
+
+  // Whether the next prayer is imminent (e.g., less than 10 minutes away)
+  final ValueNotifier<bool> _isImminentNotifier = ValueNotifier(false);
 
   StreamSubscription<double?>? _headingSub;
   CompassHeadingController? _compassController;
@@ -57,8 +74,6 @@ class _HomeScreenState extends State<HomeScreen>
     return '${s}s';
   }
 
-
-
   @override
   void initState() {
     super.initState();
@@ -68,6 +83,9 @@ class _HomeScreenState extends State<HomeScreen>
     );
     // small pop animation
     _controller.forward();
+
+    // React to settings changes (time format etc.) so we can refresh times immediately
+    SettingsService.instance.notifier.addListener(_onSettingsChanged);
 
     // Compass availability
     if (!LocationService.hasCompass()) {
@@ -81,7 +99,9 @@ class _HomeScreenState extends State<HomeScreen>
       });
     } else {
       // Start compass controller and listen to smoothed heading stream
-      _compassController = (widget.compassController as CompassHeadingController?) ?? CompassHeadingController();
+      _compassController =
+          (widget.compassController as CompassHeadingController?) ??
+          CompassHeadingController();
       _headingSub = _compassController!.smoothedStream.listen((val) {
         setState(() {
           headingDeg = val;
@@ -127,6 +147,9 @@ class _HomeScreenState extends State<HomeScreen>
     _prayerTimer?.cancel();
     _headingSub?.cancel();
     _compassController?.dispose();
+    SettingsService.instance.notifier.removeListener(_onSettingsChanged);
+    _timeToNextNotifier.dispose();
+    _isImminentNotifier.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -139,7 +162,8 @@ class _HomeScreenState extends State<HomeScreen>
 
       if (res.label.isEmpty) {
         setState(() {
-          _locationLabel = '${res.lat.toStringAsFixed(3)}, ${res.lon.toStringAsFixed(3)}';
+          _locationLabel =
+              '${res.lat.toStringAsFixed(3)}, ${res.lon.toStringAsFixed(3)}';
           qiblaDeg = res.qiblaDeg;
           distanceKm = res.distanceKm;
           _latitude = res.lat;
@@ -149,18 +173,20 @@ class _HomeScreenState extends State<HomeScreen>
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          _showGeocodeFailureOptions(Position(
-            latitude: res.lat,
-            longitude: res.lon,
-            timestamp: DateTime.now(),
-            accuracy: 1.0,
-            altitude: 0.0,
-            altitudeAccuracy: 0.0,
-            heading: 0.0,
-            headingAccuracy: 0.0,
-            speed: 0.0,
-            speedAccuracy: 0.0,
-          ));
+          _showGeocodeFailureOptions(
+            Position(
+              latitude: res.lat,
+              longitude: res.lon,
+              timestamp: DateTime.now(),
+              accuracy: 1.0,
+              altitude: 0.0,
+              altitudeAccuracy: 0.0,
+              heading: 0.0,
+              headingAccuracy: 0.0,
+              speed: 0.0,
+              speedAccuracy: 0.0,
+            ),
+          );
         });
         return;
       }
@@ -202,21 +228,26 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-
   // -- Error dialog helpers replaced by `home_dialogs` module --
   void _showGeocodeFailureOptions(Position pos) async {
-    await showGeocodeFailureOptions(context, pos, onUseCached: (label, lat, lon) {
-      setState(() {
-        _locationLabel = '$label (cached)';
-        qiblaDeg = LocationService.qiblaBearing(lat, lon);
-        distanceKm = LocationService.distanceToKaabaKm(lat, lon);        _latitude = lat;
-        _longitude = lon;        _isLocationReady = true;
-      });
-      TelemetryService.instance.logEvent('used_cached_location');
+    await showGeocodeFailureOptions(
+      context,
+      pos,
+      onUseCached: (label, lat, lon) {
+        setState(() {
+          _locationLabel = '$label (cached)';
+          qiblaDeg = LocationService.qiblaBearing(lat, lon);
+          distanceKm = LocationService.distanceToKaabaKm(lat, lon);
+          _latitude = lat;
+          _longitude = lon;
+          _isLocationReady = true;
+        });
+        TelemetryService.instance.logEvent('used_cached_location');
 
-      // When user picks cached location, refresh next prayer
-      _refreshNextPrayer();
-    });
+        // When user picks cached location, refresh next prayer
+        _refreshNextPrayer();
+      },
+    );
   }
 
   /// Refresh next prayer info using PrayerService and PrayerSettings
@@ -225,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen>
     try {
       final settings = await PrayerSettings.load();
       if (_latitude == null || _longitude == null) return;
-      final next = await ps.PrayerService.getNextPrayerTime(
+      final pair = await ps.PrayerService.getPrevAndNextPrayerTimes(
         latitude: _latitude!,
         longitude: _longitude!,
         settings: settings,
@@ -234,24 +265,34 @@ class _HomeScreenState extends State<HomeScreen>
       if (!mounted) return;
 
       setState(() {
-        _nextPrayer = next;
-        _updateTimeToNext();
+        _nextPrayer = pair['next'];
+        _prevPrayer = pair['previous'];
+
+        // compute active flag
+        final now = DateTime.now();
+        _isPrevActive =
+            (_prevPrayer != null &&
+            _nextPrayer != null &&
+            now.isAfter(_prevPrayer!.time) &&
+            now.isBefore(_nextPrayer!.time));
       });
 
-      // Start periodic updater
+      // Initialize the countdown notifier with the current remaining time and start periodic updater
+      _updateTimeToNextNotifier();
       _prayerTimer?.cancel();
       _prayerTimer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (!mounted) return;
-        _updateTimeToNext();
+        _updateTimeToNextNotifier();
       });
     } catch (e) {
       // ignore errors; we can retry when location/settings change
     }
   }
 
-  void _updateTimeToNext() {
+  void _updateTimeToNextNotifier() {
     if (_nextPrayer == null) {
-      _timeToNext = Duration.zero;
+      _timeToNextNotifier.value = Duration.zero;
+      _isImminentNotifier.value = false;
       return;
     }
 
@@ -262,12 +303,18 @@ class _HomeScreenState extends State<HomeScreen>
       return;
     }
 
-    setState(() {
-      _timeToNext = _nextPrayer!.time.difference(now);
-    });
+    final remaining = _nextPrayer!.time.difference(now);
+    _timeToNextNotifier.value = remaining;
+    _isImminentNotifier.value =
+        remaining > Duration.zero && remaining <= const Duration(minutes: 10);
   }
 
-
+  /// Called when global settings are updated
+  void _onSettingsChanged() {
+    // Settings changed (e.g., time format or calculation params) — refresh prayer times
+    // so UI updates immediately to the new format
+    _refreshNextPrayer();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -288,7 +335,8 @@ class _HomeScreenState extends State<HomeScreen>
               // Top bar (extracted to HomeTopBar)
               HomeTopBar(
                 locationLabel: _locationLabel,
-                onSettingsTap: () => Navigator.of(context).pushNamed('/settings'),
+                onSettingsTap: () =>
+                    Navigator.of(context).pushNamed('/settings'),
               ),
 
               const SizedBox(height: 12),
@@ -311,7 +359,17 @@ class _HomeScreenState extends State<HomeScreen>
               HomePrayerSheet(
                 prayerKey: _nextPrayer?.name.toLowerCase() ?? 'maghrib',
                 prayerTime: _nextPrayer?.timeString ?? '--:--',
-                countdownDur: _formatDuration(_timeToNext),
+                // Provide the notifier so HomePrayerSheet can rebuild only the badge
+                timeToNextListenable: _timeToNextNotifier,
+                countdownDur: _nextPrayer != null
+                    ? _formatDuration(
+                        _nextPrayer!.time.difference(DateTime.now()),
+                      )
+                    : '--:--',
+                activePrayerKey: _prevPrayer?.name.toLowerCase(),
+                isActive: _isPrevActive,
+                isImminent: false, // prefer listenable for live updates
+                isImminentListenable: _isImminentNotifier,
                 onViewFullSchedule: () {
                   Navigator.of(context).pushNamed(
                     '/prayer_times',
@@ -322,7 +380,6 @@ class _HomeScreenState extends State<HomeScreen>
                   );
                 },
               ),
-
             ],
           ),
         ),
@@ -336,4 +393,3 @@ class _HomeScreenState extends State<HomeScreen>
     await showExitAndMaybeShowAd(context);
   }
 }
-

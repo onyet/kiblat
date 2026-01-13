@@ -101,5 +101,9 @@
   "open": "開く",
   "open_source": "オープンソース — GitHub で利用可能",
   "view_on_github": "GitHub で見る",
-  "others": "その他"
+  "others": "その他",
+  "time_format": "時間形式",
+  "time_format_24": "24時間",
+  "time_format_12": "12時間 (AM/PM)",
+  "device_timezone": "デバイスのタイムゾーン"
 }  

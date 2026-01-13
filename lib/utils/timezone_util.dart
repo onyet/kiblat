@@ -7,7 +7,7 @@ class TimezoneUtil {
   static const List<String> popularTimezones = [
     // Default (device timezone)
     'Device Timezone',
-    
+
     // Asia
     'Asia/Jakarta',
     'Asia/Bangkok',
@@ -21,7 +21,7 @@ class TimezoneUtil {
     'Asia/Manila',
     'Asia/Istanbul',
     'Asia/Tehran',
-    
+
     // Europe
     'Europe/London',
     'Europe/Berlin',
@@ -31,14 +31,14 @@ class TimezoneUtil {
     'Europe/Amsterdam',
     'Europe/Moscow',
     'Europe/Istanbul',
-    
+
     // Africa
     'Africa/Cairo',
     'Africa/Johannesburg',
     'Africa/Lagos',
     'Africa/Nairobi',
     'Africa/Casablanca',
-    
+
     // Americas
     'America/New_York',
     'America/Chicago',
@@ -48,7 +48,7 @@ class TimezoneUtil {
     'America/Mexico_City',
     'America/Sao_Paulo',
     'America/Buenos_Aires',
-    
+
     // Australia & Pacific
     'Australia/Sydney',
     'Australia/Melbourne',

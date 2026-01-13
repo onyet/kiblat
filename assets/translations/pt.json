@@ -102,5 +102,9 @@
   "open": "Abrir",
   "open_source": "Código-fonte aberto — disponível no GitHub",
   "view_on_github": "Ver no GitHub",
-  "others": "Outros"
-}  
+  "others": "Outros",
+  "time_format": "Formato de hora",
+  "time_format_24": "24 horas",
+  "time_format_12": "12 horas (AM/PM)",
+  "device_timezone": "Fuso horário do dispositivo"
+}

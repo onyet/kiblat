@@ -9,6 +9,7 @@ import 'services/ad_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:kiblat/services/settings_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +33,7 @@ Future<void> main() async {
     EasyLocalization(
       supportedLocales: const [
         Locale('id'),
+        Locale('in'),
         Locale('ar'),
         Locale('en'),
         Locale('zh'),
@@ -62,6 +64,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     // Initialize AdMob when UI is ready (runs in background)
     // We don't await so the UI isn't blocked
     AdService.initialize();
+
+    // Load persisted settings into the global SettingsService so listeners can react
+    SettingsService.instance.load();
   }
 
   @override
@@ -127,7 +132,8 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
           return PageTransitions.fadeSlideTransition((_) => page);
         } else if (settings.name == '/home') {
           return PageTransitions.fadeSlideTransition((_) => page);
-        } else if (settings.name == '/settings' || settings.name == '/prayer_times') {
+        } else if (settings.name == '/settings' ||
+            settings.name == '/prayer_times') {
           return PageTransitions.slideInRightTransition((_) => page);
         }
 
