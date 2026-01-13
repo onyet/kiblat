@@ -81,7 +81,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: tr('app_title'),
+      title: EasyLocalization.of(context) != null ? tr('app_title') : 'Kiblat',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         // Optimize animations

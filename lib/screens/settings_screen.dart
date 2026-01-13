@@ -5,6 +5,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/ad_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
+import 'package:kiblat/models/prayer_settings_model.dart';
+import 'package:adhan/adhan.dart';
+import 'package:kiblat/utils/timezone_util.dart';
+import 'package:timezone/data/latest.dart' as tzdata;
 
 import '../services/location_service.dart';
 
@@ -20,6 +24,15 @@ class _SettingsScreenState extends State<SettingsScreen>
   bool _locationActive = false;
   bool _compassAvailable = false;
   bool _testAdMode = false;
+
+  // Prayer settings
+  PrayerSettings? _prayerSettings;
+  Madhab? _selectedMadhab;
+  CalculationMethod? _selectedMethod;
+  HighLatitudeRule? _selectedHighLatitudeRule;
+  late final TextEditingController _adjustmentController;
+  String? _selectedTimezoneId;
+  bool _loadingPrayerSettings = true;
 
   late final AnimationController _animController;
   late final Animation<double> _scaleAnim;
@@ -45,6 +58,11 @@ class _SettingsScreenState extends State<SettingsScreen>
     if (kDebugMode) {
       _loadTestMode();
     }
+
+    // Initialize timezone database and load prayer settings
+    tzdata.initializeTimeZones();
+    _adjustmentController = TextEditingController();
+    _loadPrayerSettings();
   }
 
   Future<void> _refreshStatus() async {
@@ -95,6 +113,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   @override
   void dispose() {
     _animController.dispose();
+    _adjustmentController.dispose();
     super.dispose();
   }
 
@@ -109,6 +128,34 @@ class _SettingsScreenState extends State<SettingsScreen>
       AdService.setTestMode(val);
       AdService.instance.reloadInterstitialAd();
     } catch (_) {}
+  }
+
+  Future<void> _loadPrayerSettings() async {
+    try {
+      final settings = await PrayerSettings.load();
+      if (!mounted) return;
+      setState(() {
+        _prayerSettings = settings;
+        _selectedMadhab = settings.madhab;
+        _selectedMethod = settings.calculationMethod;
+        _selectedHighLatitudeRule = settings.highLatitudeRule;
+        _selectedTimezoneId = settings.timezoneId ?? 'Device Timezone';
+        _adjustmentController.text = settings.adjustmentMinutes.toString();
+        _loadingPrayerSettings = false;
+      });
+    } catch (e) {
+      // ignore and continue with defaults
+      if (!mounted) return;
+      setState(() {
+        _prayerSettings = PrayerSettings();
+        _selectedMadhab = PrayerSettings().madhab;
+        _selectedMethod = PrayerSettings().calculationMethod;
+        _selectedHighLatitudeRule = PrayerSettings().highLatitudeRule;
+        _selectedTimezoneId = 'Device Timezone';
+        _adjustmentController.text = '0';
+        _loadingPrayerSettings = false;
+      });
+    }
   }
 
   Future<void> _toggleTestMode(bool value) async {
@@ -304,6 +351,127 @@ class _SettingsScreenState extends State<SettingsScreen>
                     const SizedBox(height: 8),
                   ],
 
+                  // Prayer Schedule configuration
+                  Text(
+                    tr('prayer_schedule') == 'prayer_schedule' ? 'Prayer Schedule' : tr('prayer_schedule'),
+                    style: const TextStyle(
+                      color: Color(0xFFF4C025),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  if (_loadingPrayerSettings)
+                    const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator()))
+                  else ...[
+                    _buildActionButton(
+                      title: tr('madhab') == 'madhab' ? 'Madhab' : tr('madhab'),
+                      subtitle: _selectedMadhab != null ? PrayerSettings.madhubDisplay(_selectedMadhab!) : '',
+                      icon: Icons.account_tree_outlined,
+                      onTap: _showMadhabDialog,
+                    ),
+                    const SizedBox(height: 8),
+
+                    _buildActionButton(
+                      title: tr('calculation_method') == 'calculation_method' ? 'Calculation Method' : tr('calculation_method'),
+                      subtitle: _selectedMethod != null ? PrayerSettings.calculationMethodDisplay(_selectedMethod!) : '',
+                      icon: Icons.calculate,
+                      onTap: _showCalculationMethodDialog,
+                    ),
+                    const SizedBox(height: 8),
+
+                    _buildActionButton(
+                      title: tr('high_latitude_rule') == 'high_latitude_rule' ? 'High Latitude Rule' : tr('high_latitude_rule'),
+                      subtitle: _selectedHighLatitudeRule != null ? PrayerSettings.highLatitudeRuleDisplay(_selectedHighLatitudeRule!) : '',
+                      icon: Icons.public,
+                      onTap: _showHighLatitudeDialog,
+                    ),
+                    const SizedBox(height: 8),
+
+                    _buildActionButton(
+                      title: tr('adjustment_minutes') == 'adjustment_minutes' ? 'Adjustment Minutes' : tr('adjustment_minutes'),
+                      subtitle: '${_adjustmentController.text} min',
+                      icon: Icons.timer,
+                      onTap: _showAdjustmentDialog,
+                    ),
+                    const SizedBox(height: 8),
+
+                    _buildActionButton(
+                      title: tr('timezone') == 'timezone' ? 'Timezone' : tr('timezone'),
+                      subtitle: _selectedTimezoneId == null ? 'Device Timezone' : TimezoneUtil.getDisplayName(_selectedTimezoneId),
+                      icon: Icons.schedule,
+                      onTap: _showTimezoneDialog,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Sunnah times toggle
+                    _buildStatusTile(
+                      icon: Icons.star,
+                      title: tr('sunnah_times') == 'sunnah_times' ? 'Sunnah times' : tr('sunnah_times'),
+                      subtitle: tr('sunnah_times_desc') == 'sunnah_times_desc' ? 'Show Dhuha and Tahajjud times' : tr('sunnah_times_desc'),
+                      trailing: Switch(
+                        value: _prayerSettings?.showSunnahTimes ?? true,
+                        activeThumbColor: const Color(0xFFF4C025),
+                        onChanged: _toggleShowSunnahTimes,
+                      ),
+                      onTap: () => _toggleShowSunnahTimes(!(_prayerSettings?.showSunnahTimes ?? true)),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Per-sunnah toggles
+                    _buildStatusTile(
+                      icon: Icons.brightness_5,
+                      title: tr('dhuha') == 'dhuha' ? 'Dhuha' : tr('dhuha'),
+                      subtitle: tr('show_dhuha_desc') == 'show_dhuha_desc' ? 'Show Dhuha time' : tr('show_dhuha_desc'),
+                      trailing: Switch(
+                        value: _prayerSettings?.showDhuha ?? true,
+                        activeThumbColor: const Color(0xFFF4C025),
+                        onChanged: (v) {
+                          setState(() => _prayerSettings = _prayerSettings?.copyWith(showDhuha: v) ?? PrayerSettings(showDhuha: v));
+                          _persistPrayerSettings();
+                        },
+                      ),
+                      onTap: () {
+                        setState(() => _prayerSettings = _prayerSettings?.copyWith(showDhuha: !(_prayerSettings?.showDhuha ?? true)) ?? PrayerSettings(showDhuha: true));
+                        _persistPrayerSettings();
+                      },
+                    ),
+                    const SizedBox(height: 8),
+
+                    _buildStatusTile(
+                      icon: Icons.nightlight_round,
+                      title: tr('tahajjud') == 'tahajjud' ? 'Tahajjud' : tr('tahajjud'),
+                      subtitle: tr('show_tahajjud_desc') == 'show_tahajjud_desc' ? 'Show Tahajjud time' : tr('show_tahajjud_desc'),
+                      trailing: Switch(
+                        value: _prayerSettings?.showTahajjud ?? true,
+                        activeThumbColor: const Color(0xFFF4C025),
+                        onChanged: (v) {
+                          setState(() => _prayerSettings = _prayerSettings?.copyWith(showTahajjud: v) ?? PrayerSettings(showTahajjud: v));
+                          _persistPrayerSettings();
+                        },
+                      ),
+                      onTap: () {
+                        setState(() => _prayerSettings = _prayerSettings?.copyWith(showTahajjud: !(_prayerSettings?.showTahajjud ?? true)) ?? PrayerSettings(showTahajjud: true));
+                        _persistPrayerSettings();
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+
+                  ],
+
+Text(
+                    tr('others') == 'others' ? 'LAINNYA' : tr('others'),
+                    style: const TextStyle(
+                      color: Color(0xFFF4C025),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   _buildActionButton(
                     title: tr('about_qibla_compass'),
                     subtitle: tr('version'),
@@ -541,30 +709,231 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 
-  Future<void> _showPrivacyPolicyDialog() async {
-    final url = Uri.parse('https://onyet.github.io/privacy-police.html');
+
+
+  Future<void> _openUrl(Uri url) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final errMsg = tr('could_not_open');
+    try {
+      final opened = await launchUrl(url, mode: LaunchMode.externalApplication);
+      if (!opened) {
+        messenger.showSnackBar(SnackBar(content: Text(errMsg)));
+      }
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(errMsg)));
+    }
+  }
+
+  String _localeLabel(Locale locale) {
+    switch (locale.languageCode) {
+      case 'id':
+        return 'Bahasa Indonesia';
+      case 'en':
+        return 'English';
+      case 'ar':
+        return 'العربية';
+      case 'ja':
+        return '日本語';
+      case 'pt':
+        return 'Português';
+      case 'ru':
+        return 'Русский';
+      case 'zh':
+        return '中文';
+      case 'de':
+        return 'Deutsch';
+      default:
+        return locale.languageCode.toUpperCase();
+    }
+  }
+
+  Future<void> _showMadhabDialog() async {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(tr('privacy_policy')),
-        content: Text(url.toString()),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
-            child: Text(tr('dismiss')),
+        title: Text(tr('madhab') == 'madhab' ? 'Madhab' : tr('madhab')),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: Madhab.values
+                .map(
+                  (m) => ListTile(
+                    title: Text(PrayerSettings.madhubDisplay(m)),
+                    trailing: _selectedMadhab == m ? const Icon(Icons.check, color: Color(0xFFF4C025)) : null,
+                    onTap: () {
+                      Navigator.of(ctx, rootNavigator: true).pop();
+                      setState(() {
+                        _selectedMadhab = m;
+                      });
+                      _persistPrayerSettings();
+                    },
+                  ),
+                )
+                .toList(),
           ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCalculationMethodDialog() async {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('calculation_method') == 'calculation_method' ? 'Calculation Method' : tr('calculation_method')),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: CalculationMethod.values
+                .map(
+                  (m) => ListTile(
+                    title: Text(PrayerSettings.calculationMethodDisplay(m)),
+                    trailing: _selectedMethod == m ? const Icon(Icons.check, color: Color(0xFFF4C025)) : null,
+                    onTap: () {
+                      Navigator.of(ctx, rootNavigator: true).pop();
+                      setState(() {
+                        _selectedMethod = m;
+                      });
+                      _persistPrayerSettings();
+                    },
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showHighLatitudeDialog() async {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('high_latitude_rule') == 'high_latitude_rule' ? 'High Latitude Rule' : tr('high_latitude_rule')),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: HighLatitudeRule.values
+                .map(
+                  (m) => ListTile(
+                    title: Text(PrayerSettings.highLatitudeRuleDisplay(m)),
+                    trailing: _selectedHighLatitudeRule == m ? const Icon(Icons.check, color: Color(0xFFF4C025)) : null,
+                    onTap: () {
+                      Navigator.of(ctx, rootNavigator: true).pop();
+                      setState(() {
+                        _selectedHighLatitudeRule = m;
+                      });
+                      _persistPrayerSettings();
+                    },
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showAdjustmentDialog() async {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('adjustment_minutes') == 'adjustment_minutes' ? 'Adjustment Minutes' : tr('adjustment_minutes')),
+        content: TextField(
+          controller: _adjustmentController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(hintText: 'e.g. 0, 2, -1'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(), child: Text(tr('dismiss'))),
           TextButton(
-            onPressed: () async {
+            onPressed: () {
+              final val = int.tryParse(_adjustmentController.text) ?? 0;
+              setState(() {
+                _adjustmentController.text = val.toString();
+              });
               Navigator.of(ctx, rootNavigator: true).pop();
-              await _openUrl(url);
+              _persistPrayerSettings();
             },
-            child: Text(tr('open')),
+            child: Text(tr('apply')),
           ),
         ],
       ),
     );
   }
 
+  Future<void> _showTimezoneDialog() async {
+    final timezones = TimezoneUtil.popularTimezones;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('timezone') == 'timezone' ? 'Timezone' : tr('timezone')),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView(
+            shrinkWrap: true,
+            children: timezones
+                .map((tzId) => ListTile(
+                      title: Text(tzId == 'Device Timezone' ? 'Device Timezone' : tzId),
+                      subtitle: tzId == 'Device Timezone' ? Text(TimezoneUtil.getOffsetString(null)) : Text(TimezoneUtil.getOffsetString(tzId)),
+                      trailing: _selectedTimezoneId == tzId ? const Icon(Icons.check, color: Color(0xFFF4C025)) : null,
+                      onTap: () {
+                        setState(() {
+                          _selectedTimezoneId = tzId == 'Device Timezone' ? null : tzId;
+                        });
+                        Navigator.of(ctx, rootNavigator: true).pop();
+                        _persistPrayerSettings();
+                      },
+                    ))
+                .toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+
+  /// Persist current selection-based prayer settings to storage and update UI.
+  Future<void> _persistPrayerSettings({bool showToast = true}) async {
+    final adjustment = int.tryParse(_adjustmentController.text) ?? 0;
+    final newSettings = PrayerSettings(
+      madhab: _selectedMadhab ?? PrayerSettings().madhab,
+      calculationMethod: _selectedMethod ?? PrayerSettings().calculationMethod,
+      highLatitudeRule: _selectedHighLatitudeRule ?? PrayerSettings().highLatitudeRule,
+      adjustmentMinutes: adjustment,
+      showSunnahTimes: _prayerSettings?.showSunnahTimes ?? true,
+      showDhuha: _prayerSettings?.showDhuha ?? true,
+      showTahajjud: _prayerSettings?.showTahajjud ?? true,
+      timezoneId: _selectedTimezoneId == 'Device Timezone' ? null : _selectedTimezoneId,
+    );
+
+    try {
+      await newSettings.save();
+      if (!mounted) return;
+      setState(() {
+        _prayerSettings = newSettings;
+      });
+      if (showToast) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('settings_saved')),
+            duration: const Duration(milliseconds: 900),
+          ),
+        );
+      }
+    } catch (_) {
+      // Silently ignore storage errors for now
+    }
+  }
+
+  void _toggleShowSunnahTimes(bool value) {
+    if (!mounted) return;
+    setState(() {
+      _prayerSettings = _prayerSettings?.copyWith(showSunnahTimes: value) ?? PrayerSettings(showSunnahTimes: value);
+    });
+    _persistPrayerSettings();
+  }
+
+  // Contact & Privacy dialogs
   Future<void> _showContactDialog() async {
     const whatsapp = 'https://wa.me/6282221874400';
     const email = 'mailto:onyetcorp@gmail.com';
@@ -616,39 +985,27 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 
-  Future<void> _openUrl(Uri url) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final errMsg = tr('could_not_open');
-    try {
-      final opened = await launchUrl(url, mode: LaunchMode.externalApplication);
-      if (!opened) {
-        messenger.showSnackBar(SnackBar(content: Text(errMsg)));
-      }
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(errMsg)));
-    }
-  }
-
-  String _localeLabel(Locale locale) {
-    switch (locale.languageCode) {
-      case 'id':
-        return 'Bahasa Indonesia';
-      case 'en':
-        return 'English';
-      case 'ar':
-        return 'العربية';
-      case 'ja':
-        return '日本語';
-      case 'pt':
-        return 'Português';
-      case 'ru':
-        return 'Русский';
-      case 'zh':
-        return '中文';
-      case 'de':
-        return 'Deutsch';
-      default:
-        return locale.languageCode.toUpperCase();
-    }
+  Future<void> _showPrivacyPolicyDialog() async {
+    final url = Uri.parse('https://onyet.github.io/privacy-police.html');
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('privacy_policy')),
+        content: Text(url.toString()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+            child: Text(tr('dismiss')),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx, rootNavigator: true).pop();
+              await _openUrl(url);
+            },
+            child: Text(tr('open')),
+          ),
+        ],
+      ),
+    );
   }
 }
