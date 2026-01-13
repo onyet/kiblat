@@ -20,10 +20,44 @@ class HomePrayerSheet extends StatelessWidget {
     final prayerName = tr(prayerKey);
     final countdownText = tr('time_to_prayer_fmt', namedArgs: {'dur': countdownDur, 'prayer': prayerName});
 
+    // Local helper to map prayer key to IconData (kept consistent with PrayerTimesScreen)
+    IconData iconForPrayer(String name) {
+      switch (name.toLowerCase()) {
+        case 'fajr':
+          return Icons.wb_twilight;
+        case 'dhuhr':
+          return Icons.wb_sunny;
+        case 'asr':
+          return Icons.sunny;
+        case 'maghrib':
+          return Icons.wb_twilight;
+        case 'isha':
+          return Icons.bedtime;
+        case 'sunrise':
+          return Icons.sunny_snowing;
+        default:
+          return Icons.access_time;
+      }
+    }
+
+    final isCompact = MediaQuery.of(context).size.height < 700;
+
+    final horizontalMargin = isCompact ? 16.0 : 20.0;
+    final contentPadding = isCompact ? 14.0 : 20.0;
+    final titleSpacing = isCompact ? 8.0 : 12.0;
+    final iconSize = isCompact ? 22.0 : 28.0;
+    final nameFontSize = isCompact ? 20.0 : 24.0;
+    final timeFontSize = isCompact ? 12.0 : 14.0;
+    final badgeHPadding = isCompact ? 10.0 : 14.0;
+    final badgeVPadding = isCompact ? 6.0 : 7.0;
+    final badgeFontSize = isCompact ? 12.0 : 13.0;
+    final betweenBadgeAndButton = isCompact ? 12.0 : 16.0;
+    final buttonHeight = isCompact ? 44.0 : 52.0;
+
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
-      padding: const EdgeInsets.all(20),
+      margin: EdgeInsets.only(left: horizontalMargin, right: horizontalMargin, bottom: horizontalMargin),
+      padding: EdgeInsets.all(contentPadding),
       decoration: BoxDecoration(
         color: const Color(0xFF0A0A0A),
         borderRadius: BorderRadius.circular(20),
@@ -44,69 +78,86 @@ class HomePrayerSheet extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: titleSpacing),
 
-          // Icon + Prayer name + Time - centered row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.wb_twilight, color: const Color(0xFFD4AF37), size: 28),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          // Icon + Prayer name + Time - animated when prayer changes
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 320),
+            switchInCurve: Curves.easeOutBack,
+            switchOutCurve: Curves.easeIn,
+            layoutBuilder: (currentChild, previousChildren) => Stack(children: [...previousChildren, if (currentChild != null) currentChild]),
+            transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: ScaleTransition(scale: anim, child: child)),
+            child: SizedBox(
+              key: ValueKey('${prayerKey}_$prayerTime'),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    prayerName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 24,
-                      height: 1.0,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    prayerTime,
-                    style: const TextStyle(
-                      color: Color.fromRGBO(255, 255, 255, 0.5),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  Icon(iconForPrayer(prayerKey), color: const Color(0xFFD4AF37), size: iconSize),
+                  SizedBox(width: isCompact ? 10 : 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        prayerName,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: nameFontSize,
+                          height: 1.0,
+                        ),
+                      ),
+                      SizedBox(height: isCompact ? 3 : 4),
+                      Text(
+                        prayerTime,
+                        style: TextStyle(
+                          color: Color.fromRGBO(255, 255, 255, 0.5),
+                          fontSize: timeFontSize,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
 
-          const SizedBox(height: 14),
+          SizedBox(height: isCompact ? 10 : 14),
 
-          // Golden countdown badge - centered
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-            decoration: BoxDecoration(
-              color: const Color.fromRGBO(212, 175, 55, 0.12),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color.fromRGBO(212, 175, 55, 0.25)),
-            ),
-            child: Text(
-              countdownText,
-              style: const TextStyle(
-                color: Color(0xFFD4AF37),
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5,
+          // Golden countdown badge - animated only when prayer name changes
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 280),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: SlideTransition(position: Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(anim), child: child)),
+            child: Container(
+              key: ValueKey('badge_$prayerKey'),
+              padding: EdgeInsets.symmetric(horizontal: badgeHPadding, vertical: badgeVPadding),
+              decoration: BoxDecoration(
+                color: const Color.fromRGBO(212, 175, 55, 0.12),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color.fromRGBO(212, 175, 55, 0.25)),
               ),
-              textAlign: TextAlign.center,
+              child: Text(
+                countdownText,
+                style: TextStyle(
+                  color: const Color(0xFFD4AF37),
+                  fontSize: badgeFontSize,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
 
-          const SizedBox(height: 16),
+          SizedBox(height: betweenBadgeAndButton),
 
           // Full-width gradient button
           SizedBox(
             width: double.infinity,
-            height: 52,
+            height: buttonHeight,
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -146,8 +197,8 @@ class HomePrayerSheet extends StatelessWidget {
                           letterSpacing: 1.0,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.calendar_today, size: 18, color: Colors.black),
+                      SizedBox(width: isCompact ? 6 : 8),
+                      Icon(Icons.calendar_today, size: isCompact ? 16 : 18, color: Colors.black),
                     ],
                   ),
                 ),

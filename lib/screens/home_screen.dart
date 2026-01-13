@@ -11,6 +11,8 @@ import 'home_compass_controller.dart';
 import 'home_location_controller.dart';
 import 'home_dialogs.dart';
 import 'home_prayer_sheet.dart';
+import 'package:kiblat/services/prayer_service.dart' as ps;
+import 'package:kiblat/models/prayer_settings_model.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool skipPermissionCheck; // useful for tests
@@ -33,9 +35,27 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isLocationReady =
       false; // true when qibla bearing and distance are calculated
 
+  // Next prayer info
+  ps.PrayerTime? _nextPrayer;
+  Duration _timeToNext = Duration.zero;
+  Timer? _prayerTimer;
+
+  double? _latitude;
+  double? _longitude;
+
   StreamSubscription<double?>? _headingSub;
   CompassHeadingController? _compassController;
   String _locationLabel = 'London, UK';
+
+  String _formatDuration(Duration d) {
+    if (d.isNegative) return '00:00:00';
+    final h = d.inHours;
+    final m = d.inMinutes.remainder(60);
+    final s = d.inSeconds.remainder(60);
+    if (h > 0) return '${h}h ${m}m';
+    if (m > 0) return '${m}m ${s}s';
+    return '${s}s';
+  }
 
 
 
@@ -104,6 +124,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
+    _prayerTimer?.cancel();
     _headingSub?.cancel();
     _compassController?.dispose();
     _controller.dispose();
@@ -121,6 +142,8 @@ class _HomeScreenState extends State<HomeScreen>
           _locationLabel = '${res.lat.toStringAsFixed(3)}, ${res.lon.toStringAsFixed(3)}';
           qiblaDeg = res.qiblaDeg;
           distanceKm = res.distanceKm;
+          _latitude = res.lat;
+          _longitude = res.lon;
           _isLocationReady = true;
         });
 
@@ -146,8 +169,12 @@ class _HomeScreenState extends State<HomeScreen>
         _locationLabel = res.label;
         qiblaDeg = res.qiblaDeg;
         distanceKm = res.distanceKm;
+        _latitude = res.lat;
+        _longitude = res.lon;
         _isLocationReady = true;
       });
+      // Refresh next prayer once we have location and settings
+      _refreshNextPrayer();
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -182,10 +209,61 @@ class _HomeScreenState extends State<HomeScreen>
       setState(() {
         _locationLabel = '$label (cached)';
         qiblaDeg = LocationService.qiblaBearing(lat, lon);
-        distanceKm = LocationService.distanceToKaabaKm(lat, lon);
-        _isLocationReady = true;
+        distanceKm = LocationService.distanceToKaabaKm(lat, lon);        _latitude = lat;
+        _longitude = lon;        _isLocationReady = true;
       });
       TelemetryService.instance.logEvent('used_cached_location');
+
+      // When user picks cached location, refresh next prayer
+      _refreshNextPrayer();
+    });
+  }
+
+  /// Refresh next prayer info using PrayerService and PrayerSettings
+  Future<void> _refreshNextPrayer() async {
+    if (!_isLocationReady) return;
+    try {
+      final settings = await PrayerSettings.load();
+      if (_latitude == null || _longitude == null) return;
+      final next = await ps.PrayerService.getNextPrayerTime(
+        latitude: _latitude!,
+        longitude: _longitude!,
+        settings: settings,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _nextPrayer = next;
+        _updateTimeToNext();
+      });
+
+      // Start periodic updater
+      _prayerTimer?.cancel();
+      _prayerTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        _updateTimeToNext();
+      });
+    } catch (e) {
+      // ignore errors; we can retry when location/settings change
+    }
+  }
+
+  void _updateTimeToNext() {
+    if (_nextPrayer == null) {
+      _timeToNext = Duration.zero;
+      return;
+    }
+
+    final now = DateTime.now();
+    if (now.isAfter(_nextPrayer!.time)) {
+      // Next prayer passed, try refresh
+      _refreshNextPrayer();
+      return;
+    }
+
+    setState(() {
+      _timeToNext = _nextPrayer!.time.difference(now);
     });
   }
 
@@ -231,9 +309,9 @@ class _HomeScreenState extends State<HomeScreen>
 
               // Prayer schedule card
               HomePrayerSheet(
-                prayerKey: 'maghrib',
-                prayerTime: '05:51 PM',
-                countdownDur: '1h 20m',
+                prayerKey: _nextPrayer?.name.toLowerCase() ?? 'maghrib',
+                prayerTime: _nextPrayer?.timeString ?? '--:--',
+                countdownDur: _formatDuration(_timeToNext),
                 onViewFullSchedule: () {
                   Navigator.of(context).pushNamed(
                     '/prayer_times',
