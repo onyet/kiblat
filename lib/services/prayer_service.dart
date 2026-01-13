@@ -230,7 +230,7 @@ class PrayerService {
           arabicName: 'الفجر',
           time: fajrTime,
           timeString: _formatTime(fajrTime, settings.use24Hour),
-          subtitle: 'DAWN',
+          subtitle: 'dawn',
         ),
       );
 
@@ -241,7 +241,7 @@ class PrayerService {
           arabicName: 'الشروق',
           time: sunriseTime,
           timeString: _formatTime(sunriseTime, settings.use24Hour),
-          subtitle: 'SHURUQ',
+          subtitle: 'sunrise',
         ),
       );
 
@@ -252,7 +252,7 @@ class PrayerService {
           arabicName: 'الظهر',
           time: dhuhrTime,
           timeString: _formatTime(dhuhrTime, settings.use24Hour),
-          subtitle: 'NOON',
+          subtitle: 'noon',
         ),
       );
 
@@ -263,7 +263,7 @@ class PrayerService {
           arabicName: 'العصر',
           time: asrTime,
           timeString: _formatTime(asrTime, settings.use24Hour),
-          subtitle: 'AFTERNOON',
+          subtitle: 'afternoon',
         ),
       );
 
@@ -274,7 +274,7 @@ class PrayerService {
           arabicName: 'المغرب',
           time: maghribTime,
           timeString: _formatTime(maghribTime, settings.use24Hour),
-          subtitle: 'SUNSET',
+          subtitle: 'sunset',
         ),
       );
 
@@ -285,7 +285,7 @@ class PrayerService {
           arabicName: 'العشاء',
           time: ishaTime,
           timeString: _formatTime(ishaTime, settings.use24Hour),
-          subtitle: 'NIGHT',
+          subtitle: 'night',
         ),
       );
 
@@ -332,7 +332,7 @@ class PrayerService {
               arabicName: 'التهجد',
               time: tahajjudTime,
               timeString: _formatTime(tahajjudTime, settings.use24Hour),
-              subtitle: 'NIGHT PRAYER',
+              subtitle: 'night_prayer',
               isSunnah: true,
             ),
           );
@@ -355,7 +355,7 @@ class PrayerService {
               arabicName: 'الضحى',
               time: dhuhaTime,
               timeString: _formatTime(dhuhaTime, settings.use24Hour),
-              subtitle: 'MORNING PRAYER',
+              subtitle: 'morning_prayer',
               isSunnah: true,
             ),
           );

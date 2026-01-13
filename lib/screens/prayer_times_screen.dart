@@ -63,6 +63,14 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     return 'NW';
   }
 
+  // Localize a subtitle key or prettify a raw subtitle string
+  String _localizedSubtitle(String raw) {
+    final key = raw.toLowerCase();
+    if (EasyLocalization.of(context) != null && tr(key) != key) return tr(key);
+    final s = key.replaceAll('_', ' ');
+    return s[0].toUpperCase() + s.substring(1);
+  }
+
   /// Load location, settings, and compute prayer times for today, tomorrow and this week
   Future<void> _loadAll() async {
     setState(() {
@@ -298,7 +306,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'CURRENT LOCATION',
+                          EasyLocalization.of(context) != null
+                              ? tr('current_location').toUpperCase()
+                              : 'CURRENT LOCATION',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
@@ -358,24 +368,27 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
       ),
       child: Row(
         children: [
-          _buildTabButton('TODAY', 0),
+          _buildTabButton('today', 0),
           const SizedBox(width: 32),
-          _buildTabButton('TOMORROW', 1),
+          _buildTabButton('tomorrow', 1),
           const SizedBox(width: 32),
-          _buildTabButton('THIS WEEK', 2),
+          _buildTabButton('this_week', 2),
         ],
       ),
     );
   }
 
-  Widget _buildTabButton(String label, int index) {
+  Widget _buildTabButton(String labelKey, int index) {
     final isActive = _selectedTabIndex == index;
+    final label = (EasyLocalization.of(context) != null && tr(labelKey) != labelKey)
+        ? tr(labelKey)
+        : labelKey[0].toUpperCase() + labelKey.substring(1);
     return GestureDetector(
       onTap: () => setState(() => _selectedTabIndex = index),
       child: Column(
         children: [
           Text(
-            label,
+            label.toUpperCase(),
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -434,7 +447,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              'GREGORIAN',
+              EasyLocalization.of(context) != null
+                  ? tr('gregorian').toUpperCase()
+                  : 'GREGORIAN',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
@@ -463,10 +478,17 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
         final iconData = _iconForPrayer(prayer.name);
         final now = DateTime.now();
         final isSunrise = prayer.name.toLowerCase() == 'sunrise';
+        // Robust active detection: match by name case-insensitively and allow
+        // a wide tolerance (up to 24 hours) to handle active prayers that
+        // belong to the previous day (e.g., Isha after midnight).
         final isActive = _activePrayer != null
-            ? (prayer.name == _activePrayer!.name &&
-                  prayer.time == _activePrayer!.time)
+            ? (prayer.name.toLowerCase() == _activePrayer!.name.toLowerCase() &&
+                (prayer.time.isAtSameMomentAs(_activePrayer!.time) ||
+                    (prayer.time.difference(_activePrayer!.time).inSeconds).abs() <= 86400))
             : prayer.isActive(now);
+
+        // Debug: print per-prayer active evaluation
+        debugPrint('[PrayerTimes] buildPrayerCard: name=${prayer.name} time=${prayer.time.toIso8601String()} isActive=$isActive activeCache=${_activePrayer?.name ?? 'null'}@${_activePrayer?.time.toIso8601String() ?? 'null'}');
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
@@ -486,6 +508,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
     final sunnah = day.prayers.where((p) => p.isSunnah).toList();
     final regular = day.prayers.where((p) => !p.isSunnah).toList();
+
+
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -536,13 +560,12 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   ) {
     // For sunnah times we slightly reduce opacity and add a tiny badge
     final isSunnah = prayer.isSunnah;
-    final subtitle = prayer.subtitle;
 
     // Get localized prayer name
     final nameKey = prayer.name.toLowerCase();
-    final localized = nameKey == 'sunrise'
-        ? 'Sunrise'
-        : (tr(nameKey) == nameKey ? prayer.name : tr(nameKey));
+    final localized = (EasyLocalization.of(context) != null && tr(nameKey) != nameKey)
+        ? tr(nameKey)
+        : prayer.name;
 
     final time = prayer.timeString;
 
@@ -607,7 +630,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  subtitle,
+                  _localizedSubtitle(prayer.subtitle),
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -621,19 +644,35 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
             ),
           ),
 
-          // Time
-          Text(
-            time,
-            style: TextStyle(
-              fontSize: isActive ? 22 : 18,
-              fontWeight: FontWeight.w700,
-              color: isSunnah
-                  ? const Color.fromRGBO(255, 255, 255, 0.6)
-                  : (isActive
-                        ? const Color(0xFFD4AF37)
-                        : const Color.fromRGBO(255, 255, 255, 0.9)),
-              letterSpacing: -0.5,
-            ),
+          // Time and inline ACTIVE label (for better visibility)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                time,
+                style: TextStyle(
+                  fontSize: isActive ? 22 : 18,
+                  fontWeight: FontWeight.w700,
+                  color: isSunnah
+                      ? const Color.fromRGBO(255, 255, 255, 0.6)
+                      : (isActive
+                            ? const Color(0xFFD4AF37)
+                            : const Color.fromRGBO(255, 255, 255, 0.9)),
+                  letterSpacing: -0.5,
+                ),
+              ),
+              if (isActive)
+                const SizedBox(height: 4),
+              if (isActive)
+                Text(
+                  tr('status_active').toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFFD4AF37),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
@@ -694,7 +733,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'FACING QIBLA',
+                  EasyLocalization.of(context) != null
+                      ? tr('facing_qibla').toUpperCase()
+                      : 'FACING QIBLA',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -779,13 +820,21 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
       final next = map['next'];
 
       final now = DateTime.now();
-      final active =
-          (prev != null &&
-              next != null &&
-              now.isAfter(prev.time) &&
-              now.isBefore(next.time))
+      // Consider the previous prayer active if the current time is >= prev.time
+      // and (next is null or current time < next.time). This also handles
+      // edge cases around midnight or missing next entries.
+      final active = (prev != null &&
+          (now.isAtSameMomentAs(prev.time) || now.isAfter(prev.time)) &&
+          (next == null || now.isBefore(next.time)))
           ? prev
           : null;
+
+      // Debug logging to help diagnose missing ACTIVE badge issues.
+      // Will log current time, prev/next prayer names and times, and computed active.
+      debugPrint('[PrayerTimes] now=${now.toIso8601String()}');
+      debugPrint('[PrayerTimes] prev=${prev?.name ?? 'null'}@${prev?.time.toIso8601String() ?? 'null'}');
+      debugPrint('[PrayerTimes] next=${next?.name ?? 'null'}@${next?.time.toIso8601String() ?? 'null'}');
+      debugPrint('[PrayerTimes] computedActive=${active?.name ?? 'null'}');
 
       setState(() {
         _nextPrayer = next;

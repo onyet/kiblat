@@ -147,8 +147,9 @@ class _SunnahCompactState extends State<SunnahCompact>
                       final isSunrise = p.name.toLowerCase() == 'sunrise';
                       final now = DateTime.now();
                       final isActive = widget.activePrayer != null
-                          ? (p.name == widget.activePrayer!.name &&
-                                p.time == widget.activePrayer!.time)
+                          ? (p.name.toLowerCase() == widget.activePrayer!.name.toLowerCase() &&
+                              (p.time.isAtSameMomentAs(widget.activePrayer!.time) ||
+                                  (p.time.difference(widget.activePrayer!.time).inSeconds).abs() <= 86400))
                           : p.isActive(now);
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8),
@@ -180,6 +181,14 @@ class _SunnahCompactState extends State<SunnahCompact>
       default:
         return Icons.access_time;
     }
+  }
+
+  // Localized subtitle helper used by both build and small cards
+  String _localizedSubtitle(String raw) {
+    final key = raw.toLowerCase();
+    if (EasyLocalization.of(context) != null && tr(key) != key) return tr(key);
+    final s = raw.replaceAll('_', ' ').toLowerCase();
+    return s[0].toUpperCase() + s.substring(1);
   }
 
   Widget _smallPrayerCard(
@@ -229,7 +238,11 @@ class _SunnahCompactState extends State<SunnahCompact>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  prayer.name,
+                  // Localize prayer name if available
+                  // Localize prayer name if available
+                  (EasyLocalization.of(context) != null && tr(prayer.name.toLowerCase()) != prayer.name.toLowerCase())
+                      ? tr(prayer.name.toLowerCase())
+                      : prayer.name,
                   style: TextStyle(
                     color: isActive
                         ? Colors.white
@@ -239,7 +252,7 @@ class _SunnahCompactState extends State<SunnahCompact>
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  prayer.subtitle,
+                  _localizedSubtitle(prayer.subtitle),
                   style: TextStyle(
                     color: isActive
                         ? const Color.fromRGBO(212, 175, 55, 0.8)
@@ -250,14 +263,29 @@ class _SunnahCompactState extends State<SunnahCompact>
               ],
             ),
           ),
-          Text(
-            prayer.timeString,
-            style: TextStyle(
-              color: isActive
-                  ? const Color(0xFFD4AF37)
-                  : const Color.fromRGBO(255, 255, 255, 0.9),
-              fontWeight: FontWeight.w700,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                prayer.timeString,
+                style: TextStyle(
+                  color: isActive
+                      ? const Color(0xFFD4AF37)
+                      : const Color.fromRGBO(255, 255, 255, 0.9),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (isActive) const SizedBox(height: 4),
+              if (isActive)
+                Text(
+                  tr('status_active').toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFFD4AF37),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
