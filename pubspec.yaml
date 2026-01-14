@@ -1,7 +1,7 @@
 name: kiblat
 description: "App to find the Qibla direction"
 publish_to: 'none'
-version: 0.1.0+1
+version: 2.1.0+3
 
 environment:
   sdk: ^3.10.4
