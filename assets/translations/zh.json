@@ -119,5 +119,9 @@
   "time_format": "时间格式",
   "time_format_24": "24 小时",
   "time_format_12": "12 小时 (AM/PM)",
+  "prayer_notifications": "祈祷通知",
+  "prayer_notifications_desc": "启用祈祷时间的本地通知",
+  "notification_prayer_title": "祈祷时间",
+  "notification_prayer_arrived": "到了{prayer}时间",
   "device_timezone": "设备时区"
-}
+} 

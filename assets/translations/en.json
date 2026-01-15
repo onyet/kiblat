@@ -120,5 +120,9 @@
   "time_format": "Time Format",
   "time_format_24": "24-hour",
   "time_format_12": "12-hour (AM/PM)",
+  "prayer_notifications": "Prayer notifications",
+  "prayer_notifications_desc": "Enable local notifications for prayer times",
+  "notification_prayer_title": "Prayer time",
+  "notification_prayer_arrived": "{prayer} time has arrived",
   "device_timezone": "Device Timezone"
-} 
+}  

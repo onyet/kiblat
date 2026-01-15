@@ -119,5 +119,9 @@
   "time_format": "時間形式",
   "time_format_24": "24時間",
   "time_format_12": "12時間 (AM/PM)",
+  "prayer_notifications": "礼拝通知",
+  "prayer_notifications_desc": "礼拝時間のローカル通知を有効にする",
+  "notification_prayer_title": "礼拝の時間",
+  "notification_prayer_arrived": "{prayer} の時間になりました",
   "device_timezone": "デバイスのタイムゾーン"
-}  
+}   

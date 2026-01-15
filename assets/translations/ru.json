@@ -120,5 +120,9 @@
   "time_format": "Формат времени",
   "time_format_24": "24-часовой",
   "time_format_12": "12-часовой (AM/PM)",
+  "prayer_notifications": "Уведомления о молитвe",
+  "prayer_notifications_desc": "Включить локальные уведомления для времени молитвы",
+  "notification_prayer_title": "Время молитвы",
+  "notification_prayer_arrived": "Время {prayer}",
   "device_timezone": "Часовой пояс устройства"
-}
+} 

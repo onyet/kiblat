@@ -120,5 +120,9 @@
   "time_format": "تنسيق الوقت",
   "time_format_24": "24 ساعة",
   "time_format_12": "12 ساعة (AM/PM)",
+  "prayer_notifications": "إشعارات الصلاة",
+  "prayer_notifications_desc": "تفعيل إشعارات محلية لأوقات الصلاة",
+  "notification_prayer_title": "وقت الصلاة",
+  "notification_prayer_arrived": "حان وقت {prayer}",
   "device_timezone": "منطقة زمن الجهاز"
-}  
+}   

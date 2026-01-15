@@ -120,5 +120,9 @@
   "time_format": "Formato de hora",
   "time_format_24": "24 horas",
   "time_format_12": "12 horas (AM/PM)",
+  "prayer_notifications": "Notificações de oração",
+  "prayer_notifications_desc": "Ativar notificações locais para horários de oração",
+  "notification_prayer_title": "Hora da Oração",
+  "notification_prayer_arrived": "É hora do {prayer}",
   "device_timezone": "Fuso horário do dispositivo"
-}
+} 

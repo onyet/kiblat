@@ -3,6 +3,8 @@
     <!-- Permissions for location -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Android 13+ requires runtime permission for posting notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:label="Kiblat"
         android:name="${applicationName}"

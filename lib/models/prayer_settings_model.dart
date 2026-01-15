@@ -30,6 +30,9 @@ class PrayerSettings {
   /// Whether to display prayer times in 24-hour format (e.g., 16:21). Default: true.
   final bool use24Hour;
 
+  /// Whether to show local prayer notifications
+  final bool enablePrayerNotifications;
+
   PrayerSettings({
     this.madhab = Madhab.shafi,
     this.calculationMethod = CalculationMethod.muslim_world_league,
@@ -40,6 +43,7 @@ class PrayerSettings {
     this.showTahajjud = true,
     this.timezoneId,
     this.use24Hour = true,
+    this.enablePrayerNotifications = true,
   });
 
   /// Create a copy of this settings with optional modifications
@@ -53,6 +57,7 @@ class PrayerSettings {
     bool? showTahajjud,
     String? timezoneId,
     bool? use24Hour,
+    bool? enablePrayerNotifications,
   }) {
     return PrayerSettings(
       madhab: madhab ?? this.madhab,
@@ -64,6 +69,7 @@ class PrayerSettings {
       showTahajjud: showTahajjud ?? this.showTahajjud,
       timezoneId: timezoneId ?? this.timezoneId,
       use24Hour: use24Hour ?? this.use24Hour,
+      enablePrayerNotifications: enablePrayerNotifications ?? this.enablePrayerNotifications,
     );
   }
 
@@ -83,6 +89,7 @@ class PrayerSettings {
       await prefs.remove('timezoneId');
     }
     await prefs.setBool('use24Hour', use24Hour);
+    await prefs.setBool('enablePrayerNotifications', enablePrayerNotifications);
   }
 
   /// Load settings from SharedPreferences
@@ -110,6 +117,7 @@ class PrayerSettings {
     final showTahajjud = prefs.getBool('showTahajjud') ?? true;
     final timezoneId = prefs.getString('timezoneId');
     final use24Hour = prefs.getBool('use24Hour') ?? true;
+    final enablePrayerNotifications = prefs.getBool('enablePrayerNotifications') ?? true;
 
     return PrayerSettings(
       madhab: madhab,
@@ -121,6 +129,7 @@ class PrayerSettings {
       showTahajjud: showTahajjud,
       timezoneId: timezoneId,
       use24Hour: use24Hour,
+      enablePrayerNotifications: enablePrayerNotifications,
     );
   }
 

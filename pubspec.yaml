@@ -22,7 +22,8 @@ dependencies:
   adhan: ^2.0.0
   intl: ^0.20.0
   hijri: ^3.0.0
-  timezone: ^0.11.0
+  timezone: ^0.10.1
+  flutter_local_notifications: ^19.5.0
 
 dev_dependencies:
   flutter_test:

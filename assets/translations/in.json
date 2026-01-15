@@ -119,5 +119,9 @@
   "time_format": "Format Waktu",
   "time_format_24": "24-jam",
   "time_format_12": "12-jam (AM/PM)",
+  "prayer_notifications": "Notifikasi Sholat",
+  "prayer_notifications_desc": "Aktifkan notifikasi lokal untuk waktu sholat",
+  "notification_prayer_title": "Waktu Sholat",
+  "notification_prayer_arrived": "Waktu {prayer} telah tiba",
   "device_timezone": "Zona Waktu Perangkat"
-} 
+}  

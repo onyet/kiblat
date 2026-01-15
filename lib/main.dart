@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:kiblat/services/settings_service.dart';
+import 'package:kiblat/services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +57,8 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
   @override
   void initState() {
     super.initState();
@@ -66,6 +69,11 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
     // Load persisted settings into the global SettingsService so listeners can react
     SettingsService.instance.load();
+
+    // Initialize notifications after first frame to have a valid navigator key
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      NotificationService.instance.initialize(_navigatorKey);
+    });
   }
 
   @override
@@ -91,6 +99,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       debugShowCheckedModeBanner: false,
       title: EasyLocalization.of(context) != null ? tr('app_title') : 'Kiblat',
       theme: ThemeData(

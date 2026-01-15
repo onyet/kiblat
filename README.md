@@ -30,7 +30,7 @@ Hey! Kiblat is a tiny, chill Flutter app that points you to the Kaaba and now al
 Gallery (2x2 + single):
 
 | | |
-|---:|:---|
+| ---: | :--- |
 | ![img1](assets/screenshots/home.png) | ![img2](assets/screenshots/welcome.jpeg) |
 | ![img3](assets/screenshots/prayer_screen.png) | ![img4](assets/screenshots/settings-prayer-screen.png) |
 | ![img5](assets/screenshots/permissions.jpeg) | |
@@ -56,7 +56,7 @@ Requirements: Flutter SDK and a device/emulator with location & sensors.
 flutter pub get
 ```
 
-2. Run the app:
+1. Run the app:
 
 ```bash
 flutter run
@@ -77,13 +77,13 @@ keyAlias=YOUR_KEY_ALIAS
 storeFile=keystore.jks
 ```
 
-2. Build AAB:
+1. Build AAB:
 
 ```bash
 flutter build appbundle --release
 ```
 
-3. Upload `build/app/outputs/bundle/release/app-release.aab` to Play Console.
+1. Upload `build/app/outputs/bundle/release/app-release.aab` to Play Console.
 
 > Keep `android/key.properties` out of source control. Use CI secrets for automated builds.
 
@@ -118,8 +118,8 @@ QA tips: watch logs for `[AdService]` and test exit flow to confirm interstitial
 
 ## Contact & Privacy 🔐
 
-- **Privacy Policy:** https://onyet.github.io/privacy-police.html
-- **Support:** onyetcorp@gmail.com (or WhatsApp: +62 822-2187-4400)
+- **Privacy Policy:** <https://onyet.github.io/privacy-police.html>
+- **Support:** <onyetcorp@gmail.com> (or WhatsApp: +62 822-2187-4400)
 
 ---
 
@@ -131,4 +131,3 @@ QA tips: watch logs for `[AdService]` and test exit flow to confirm interstitial
 ---
 
 License: MIT
-

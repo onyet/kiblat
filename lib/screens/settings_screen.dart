@@ -12,6 +12,7 @@ import 'package:kiblat/utils/timezone_util.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 
 import '../services/location_service.dart';
+import 'package:kiblat/services/notification_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -456,6 +457,48 @@ class _SettingsScreenState extends State<SettingsScreen>
                         onChanged: (v) => _toggleTimeFormat(v),
                       ),
                       onTap: () => _toggleTimeFormat(!(_prayerSettings?.use24Hour ?? true)),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Prayer notifications
+                    _buildStatusTile(
+                      icon: Icons.notifications,
+                      title: tr('prayer_notifications') == 'prayer_notifications'
+                          ? 'Prayer notifications'
+                          : tr('prayer_notifications'),
+                      subtitle: tr('prayer_notifications_desc') == 'prayer_notifications_desc'
+                          ? 'Enable local notifications for prayer times'
+                          : tr('prayer_notifications_desc'),
+                      trailing: Switch(
+                        value: _prayerSettings?.enablePrayerNotifications ?? true,
+                        activeThumbColor: const Color(0xFFF4C025),
+                        onChanged: (v) async {
+                          setState(() {
+                            _prayerSettings = _prayerSettings?.copyWith(enablePrayerNotifications: v) ?? PrayerSettings(enablePrayerNotifications: v);
+                          });
+                          await _persistPrayerSettings();
+                          // Schedule/cancel notifications based on the new value
+                          if (!mounted) return;
+                          if (_prayerSettings?.enablePrayerNotifications ?? true) {
+                            await NotificationService.instance.schedulePrayerNotificationsForCurrentLocation(_prayerSettings!);
+                          } else {
+                            await NotificationService.instance.cancelAllPrayerNotifications();
+                          }
+                        },
+                      ),
+                      onTap: () async {
+                        final newVal = !(_prayerSettings?.enablePrayerNotifications ?? true);
+                        setState(() {
+                          _prayerSettings = _prayerSettings?.copyWith(enablePrayerNotifications: newVal) ?? PrayerSettings(enablePrayerNotifications: newVal);
+                        });
+                        await _persistPrayerSettings();
+                        if (!mounted) return;
+                        if (_prayerSettings?.enablePrayerNotifications ?? true) {
+                          await NotificationService.instance.schedulePrayerNotificationsForCurrentLocation(_prayerSettings!);
+                        } else {
+                          await NotificationService.instance.cancelAllPrayerNotifications();
+                        }
+                      },
                     ),
                     const SizedBox(height: 12),
 
@@ -1021,6 +1064,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       timezoneId: _selectedTimezoneId == 'Device Timezone'
           ? null
           : _selectedTimezoneId,
+      enablePrayerNotifications: _prayerSettings?.enablePrayerNotifications ?? true,
     );
 
     try {

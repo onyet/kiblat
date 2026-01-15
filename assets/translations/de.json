@@ -120,5 +120,9 @@
   "time_format": "Zeitformat",
   "time_format_24": "24-Stunden",
   "time_format_12": "12-Stunden (AM/PM)",
+  "prayer_notifications": "Gebets-Benachrichtigungen",
+  "prayer_notifications_desc": "Lokale Benachrichtigungen für Gebetszeiten aktivieren",
+  "notification_prayer_title": "Gebetszeit",
+  "notification_prayer_arrived": "Es ist Zeit für {prayer}",
   "device_timezone": "Geräte-Zeitzone"
-}  
+}   
