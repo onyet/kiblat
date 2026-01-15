@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, curly_braces_in_flow_control_structures
 
 import 'dart:convert';
 import 'dart:io';
@@ -25,9 +25,14 @@ void main() async {
   }
 
   // Base keys from en.json
-  final enFile = files.firstWhere((f) => f.path.endsWith('/en.json'), orElse: () => File(''));
+  final enFile = files.firstWhere(
+    (f) => f.path.endsWith('/en.json'),
+    orElse: () => File(''),
+  );
   if (enFile.path.isEmpty) {
-    print('Base en.json not found. Please ensure en.json exists in assets/translations.');
+    print(
+      'Base en.json not found. Please ensure en.json exists in assets/translations.',
+    );
   }
 
   final Map<String, Set<String>> duplicateKeys = {};
@@ -86,8 +91,10 @@ void main() async {
     print('  Keys total: ${keys.length}');
     if (missing.isNotEmpty) print('  Missing keys: ${missing.length}');
     if (extra.isNotEmpty) print('  Extra keys: ${extra.length}');
-    if (duplicateKeys.containsKey(f.path)) print('  Duplicate keys: ${duplicateKeys[f.path]!.join(', ')}');
-    if (parseErrors.containsKey(f.path)) print('  JSON parse error: ${parseErrors[f.path]!.join(', ')}');
+    if (duplicateKeys.containsKey(f.path))
+      print('  Duplicate keys: ${duplicateKeys[f.path]!.join(', ')}');
+    if (parseErrors.containsKey(f.path))
+      print('  JSON parse error: ${parseErrors[f.path]!.join(', ')}');
     if (missing.isNotEmpty) print('    -> ${missing.toList().join(', ')}');
     if (extra.isNotEmpty) print('    <- ${extra.toList().join(', ')}');
 
@@ -95,8 +102,14 @@ void main() async {
   }
 
   // Summary
-  final totalMissing = files.fold<int>(0, (acc, f) => acc + (baseKeys.difference(fileKeys[f.path] ?? {}).length));
-  final totalDuplicates = duplicateKeys.values.fold<int>(0, (acc, s) => acc + s.length);
+  final totalMissing = files.fold<int>(
+    0,
+    (acc, f) => acc + (baseKeys.difference(fileKeys[f.path] ?? {}).length),
+  );
+  final totalDuplicates = duplicateKeys.values.fold<int>(
+    0,
+    (acc, s) => acc + s.length,
+  );
   final filesWithErrors = parseErrors.keys.length;
 
   print('Summary:');
@@ -108,6 +121,8 @@ void main() async {
   if (totalMissing == 0 && totalDuplicates == 0 && filesWithErrors == 0) {
     print('\nAll translation files look consistent with en.json ✅');
   } else {
-    print('\nConsider adding missing keys (use English fallback) and removing duplicates.');
+    print(
+      '\nConsider adding missing keys (use English fallback) and removing duplicates.',
+    );
   }
 }

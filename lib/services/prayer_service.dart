@@ -305,7 +305,7 @@ class PrayerService {
             pt.isha.minute,
             pt.isha.second,
           );
-          final fajrLocal = DateTime(
+          var fajrLocal = DateTime(
             pt.fajr.year,
             pt.fajr.month,
             pt.fajr.day,
@@ -313,12 +313,13 @@ class PrayerService {
             pt.fajr.minute,
             pt.fajr.second,
           );
-          tahajjudTime = ishaLocal.add(
-            Duration(
-              hours: (fajrLocal.difference(ishaLocal).inHours) ~/ 2,
-              minutes: (fajrLocal.difference(ishaLocal).inMinutes % 60) ~/ 2,
-            ),
-          );
+          // If Fajr occurs before or equal to Isha, it refers to the next day; adjust to next day
+          if (!fajrLocal.isAfter(ishaLocal)) {
+            fajrLocal = fajrLocal.add(const Duration(days: 1));
+          }
+          final nightDuration = fajrLocal.difference(ishaLocal);
+          // Use half of the night duration (in minutes) for midpoint
+          tahajjudTime = ishaLocal.add(Duration(minutes: nightDuration.inMinutes ~/ 2));
         } else {
           tahajjudTime = ishaFallback!.subtract(
             const Duration(hours: 6),

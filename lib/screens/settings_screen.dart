@@ -809,7 +809,7 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   String _localeLabel(Locale locale) {
     switch (locale.languageCode) {
-      case 'id':
+      case 'in':
         return 'Bahasa Indonesia';
       case 'en':
         return 'English';

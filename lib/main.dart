@@ -32,7 +32,6 @@ Future<void> main() async {
   runApp(
     EasyLocalization(
       supportedLocales: const [
-        Locale('id'),
         Locale('in'),
         Locale('ar'),
         Locale('en'),

@@ -50,3 +50,4 @@ app.*.map.json
 
 blueprint/
 trace.ap
+translation_missing_report.txt

@@ -9,7 +9,7 @@ class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   static const _languages = <String, String>{
-    'id': 'Indonesia',
+    'in': 'Indonesia',
     'ar': 'العربية',
     'en': 'English',
     'zh': '中文',
