@@ -1,0 +1,31 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+    
+    <!-- Outer circle (compass ring) -->
+    <path
+        android:pathData="M48,8 C69.05,8 88,26.95 88,48 C88,69.05 69.05,88 48,88 C26.95,88 8,69.05 8,48 C8,26.95 26.95,8 48,8Z"
+        android:strokeWidth="2"
+        android:strokeColor="#33D4AF37"
+        android:fillColor="@android:color/transparent"/>
+    
+    <!-- Arrow pointing up (north) - Gold color -->
+    <path
+        android:pathData="M48,16 L56,40 L50,40 L50,72 L46,72 L46,40 L40,40 Z"
+        android:fillColor="#D4AF37"/>
+    
+    <!-- Arrow head highlight -->
+    <path
+        android:pathData="M48,16 L52,32 L48,28 L44,32 Z"
+        android:fillColor="#FFD700"/>
+    
+    <!-- Small kaaba icon at arrow tip -->
+    <path
+        android:pathData="M44,68 L52,68 L52,76 L44,76 Z"
+        android:fillColor="#1A1A1A"
+        android:strokeWidth="1"
+        android:strokeColor="#D4AF37"/>
+        
+</vector>

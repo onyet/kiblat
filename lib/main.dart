@@ -11,9 +11,28 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:kiblat/services/settings_service.dart';
 import 'package:kiblat/services/notification_service.dart';
+import 'package:kiblat/services/home_widget_service.dart';
+
+/// Migrate old Indonesian locale code 'id' to 'in' for existing users
+/// EasyLocalization stores locale in SharedPreferences with key 'locale'
+/// Old users who selected Indonesian had 'id' saved, but file is now 'in.json'
+Future<void> _migrateIndonesianLocale() async {
+  final prefs = await SharedPreferences.getInstance();
+  final savedLocale = prefs.getString('locale');
+  
+  // Check if saved locale is the old 'id' code (could be 'id', 'id_', 'id_ID', etc.)
+  if (savedLocale != null && savedLocale.startsWith('id')) {
+    // Migrate to new 'in' code
+    await prefs.setString('locale', 'in');
+  }
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Migrate old 'id' locale to 'in' for existing users before EasyLocalization init
+  await _migrateIndonesianLocale();
+  
   await EasyLocalization.ensureInitialized();
 
   // Enable test mode in debug for easier ad testing
@@ -42,6 +61,8 @@ Future<void> main() async {
         Locale('de'),
         Locale('pt'),
       ],
+      // Force start locale to 'in' to avoid loading legacy 'id.json' on some devices
+      startLocale: const Locale('in'),
       path: 'assets/translations',
       fallbackLocale: const Locale('en'),
       child: const MainApp(),
@@ -67,12 +88,14 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     // We don't await so the UI isn't blocked
     AdService.initialize();
 
-    // Load persisted settings into the global SettingsService so listeners can react
-    SettingsService.instance.load();
-
-    // Initialize notifications after first frame to have a valid navigator key
+    // Initialize notifications and load settings after first frame to avoid blocking UI
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Load persisted settings into the global SettingsService so listeners can react
+      SettingsService.instance.load();
+
       NotificationService.instance.initialize(_navigatorKey);
+      // Initialize home widget service for Android/iOS home screen widgets
+      HomeWidgetService.instance.initialize();
     });
   }
 

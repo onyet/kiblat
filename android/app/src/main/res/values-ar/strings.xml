@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">ويدجت القبلة</string>
+    <string name="widget_description">يعرض اتجاه القبلة وأوقات الصلاة</string>
+    <string name="widget_now">الآن</string>
+    <string name="widget_next">التالي</string>
+</resources>

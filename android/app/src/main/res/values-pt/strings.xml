@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">Widget Kiblat</string>
+    <string name="widget_description">Mostra direção da Qibla e horários de oração</string>
+    <string name="widget_now">Agora</string>
+    <string name="widget_next">Próximo</string>
+</resources>

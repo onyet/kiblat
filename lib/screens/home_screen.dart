@@ -14,6 +14,7 @@ import 'home_prayer_sheet.dart';
 import 'package:kiblat/services/prayer_service.dart' as ps;
 import 'package:kiblat/models/prayer_settings_model.dart';
 import 'package:kiblat/services/settings_service.dart';
+import 'package:kiblat/services/home_widget_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool skipPermissionCheck; // useful for tests
@@ -201,6 +202,14 @@ class _HomeScreenState extends State<HomeScreen>
       });
       // Refresh next prayer once we have location and settings
       _refreshNextPrayer();
+      
+      // Update home screen widget with new location data
+      HomeWidgetService.instance.updateQiblaData(
+        qiblaDegree: res.qiblaDeg,
+        locationName: res.label,
+        latitude: res.lat,
+        longitude: res.lon,
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -276,6 +285,16 @@ class _HomeScreenState extends State<HomeScreen>
             now.isAfter(_prevPrayer!.time) &&
             now.isBefore(_nextPrayer!.time));
       });
+
+      // Update home screen widget with prayer data
+      if (_prevPrayer != null || _nextPrayer != null) {
+        HomeWidgetService.instance.updatePrayerData(
+          currentPrayer: _prevPrayer?.name ?? '',
+          currentPrayerTime: _prevPrayer?.timeString ?? '--:--',
+          nextPrayer: _nextPrayer?.name ?? '',
+          nextPrayerTime: _nextPrayer?.timeString ?? '--:--',
+        );
+      }
 
       // Initialize the countdown notifier with the current remaining time and start periodic updater
       _updateTimeToNextNotifier();

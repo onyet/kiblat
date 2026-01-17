@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">キブラウィジェット</string>
+    <string name="widget_description">キブラの方向と礼拝時間を表示</string>
+    <string name="widget_now">現在</string>
+    <string name="widget_next">次</string>
+</resources>

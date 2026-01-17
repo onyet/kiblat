@@ -1,7 +1,7 @@
 name: kiblat
 description: "App to find the Qibla direction"
 publish_to: 'none'
-version: 2.1.0+3
+version: 2.1.0+4
 
 environment:
   sdk: ^3.10.4
@@ -24,6 +24,7 @@ dependencies:
   hijri: ^3.0.0
   timezone: ^0.10.1
   flutter_local_notifications: ^19.5.0
+  home_widget: ^0.7.0
 
 dev_dependencies:
   flutter_test:

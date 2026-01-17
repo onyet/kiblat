@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">朝向小部件</string>
+    <string name="widget_description">显示朝向方向和祈祷时间</string>
+    <string name="widget_now">当前</string>
+    <string name="widget_next">下一个</string>
+</resources>

@@ -21,7 +21,7 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentCode = context.locale.languageCode;
+    final currentCode = context.locale.languageCode == 'id' ? 'in' : context.locale.languageCode;
 
     return PopScope(
       canPop: false,

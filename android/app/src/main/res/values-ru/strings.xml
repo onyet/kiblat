@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">Виджет Кибла</string>
+    <string name="widget_description">Показывает направление Киблы и время молитв</string>
+    <string name="widget_now">Сейчас</string>
+    <string name="widget_next">Следующий</string>
+</resources>
