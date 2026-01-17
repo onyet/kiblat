@@ -6,6 +6,12 @@ import 'package:kiblat/services/prayer_service.dart' as ps;
 import 'package:kiblat/models/prayer_settings_model.dart';
 
 /// Service to manage home screen widget data updates
+/// 
+/// Prinsip utama (dari WIDGET_HOME.md):
+/// - Widget HARUS bisa dirender walau semua data NULL
+/// - Selalu set default value
+/// - Widget TIDAK BOLEH akses GPS/sensor/network langsung
+/// - Gunakan cache sebagai sumber utama
 class HomeWidgetService {
   static const String appGroupId = 'group.id.onyet.app.kiblat';
   static const String androidWidgetName = 'KiblatWidgetProvider';
@@ -23,41 +29,101 @@ class HomeWidgetService {
   static const String keyLatitude = 'latitude';
   static const String keyLongitude = 'longitude';
 
+  // Default values untuk fallback
+  static const double defaultQiblaDegree = 0.0;
+  static const String defaultDirection = 'N';
+  static const String defaultLocation = 'Buka app untuk update';
+  static const String defaultPrayer = '--';
+  static const String defaultTime = '--:--';
+
   HomeWidgetService._();
   static final HomeWidgetService _instance = HomeWidgetService._();
   static HomeWidgetService get instance => _instance;
 
   Timer? _updateTimer;
+  bool _initialized = false;
 
   /// Initialize widget service and register callbacks
   Future<void> initialize() async {
-    // Set the app group ID for iOS (not used on Android but doesn't hurt)
-    await HomeWidget.setAppGroupId(appGroupId);
+    if (_initialized) return;
+    
+    try {
+      // Set the app group ID for iOS (not used on Android but doesn't hurt)
+      await HomeWidget.setAppGroupId(appGroupId);
 
-    // Register background callback for widget interactions
-    await HomeWidget.registerInteractivityCallback(backgroundCallback);
+      // PENTING: Inisialisasi data default terlebih dahulu
+      // Ini memastikan widget tidak crash saat pertama kali ditambahkan
+      await _initializeDefaultData();
 
-    // Initial widget update
-    await updateWidgetData();
+      // Register background callback for widget interactions
+      await HomeWidget.registerInteractivityCallback(backgroundCallback);
 
-    // Set up periodic updates (every 5 minutes)
-    _updateTimer?.cancel();
-    _updateTimer = Timer.periodic(const Duration(minutes: 5), (_) {
-      updateWidgetData();
-    });
+      // Initial widget update (non-blocking)
+      _updateWidgetDataSafely();
+
+      // Set up periodic updates (every 5 minutes)
+      _updateTimer?.cancel();
+      _updateTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+        _updateWidgetDataSafely();
+      });
+      
+      _initialized = true;
+    } catch (e) {
+      // Silently fail - widget akan menampilkan data default
+    }
+  }
+
+  /// Initialize default data untuk widget
+  /// Dipanggil sebelum widget pertama kali dirender
+  Future<void> _initializeDefaultData() async {
+    try {
+      // Cek apakah sudah ada data
+      final existingDegree = await HomeWidget.getWidgetData<double>(keyQiblaDegree);
+      
+      // Jika belum ada data, set defaults
+      if (existingDegree == null) {
+        await Future.wait([
+          HomeWidget.saveWidgetData<double>(keyQiblaDegree, defaultQiblaDegree),
+          HomeWidget.saveWidgetData<String>(keyQiblaDirection, defaultDirection),
+          HomeWidget.saveWidgetData<String>(keyLocationName, defaultLocation),
+          HomeWidget.saveWidgetData<String>(keyCurrentPrayer, defaultPrayer),
+          HomeWidget.saveWidgetData<String>(keyCurrentPrayerTime, defaultTime),
+          HomeWidget.saveWidgetData<String>(keyNextPrayer, defaultPrayer),
+          HomeWidget.saveWidgetData<String>(keyNextPrayerTime, defaultTime),
+          HomeWidget.saveWidgetData<String>(keyLastUpdated, defaultTime),
+          HomeWidget.saveWidgetData<double>(keyLatitude, 0.0),
+          HomeWidget.saveWidgetData<double>(keyLongitude, 0.0),
+        ]);
+        
+        // Request widget update dengan data default
+        await _updateWidget();
+      }
+    } catch (e) {
+      // Ignore - widget akan menggunakan defaults dari layout XML
+    }
   }
 
   /// Dispose of timer
   void dispose() {
     _updateTimer?.cancel();
     _updateTimer = null;
+    _initialized = false;
   }
 
   /// Background callback for widget interactions (e.g., refresh button tap)
   @pragma('vm:entry-point')
   static Future<void> backgroundCallback(Uri? uri) async {
     if (uri?.host == 'refresh') {
-      await HomeWidgetService.instance.updateWidgetData();
+      await HomeWidgetService.instance._updateWidgetDataSafely();
+    }
+  }
+
+  /// Update widget data safely (dengan try-catch)
+  Future<void> _updateWidgetDataSafely() async {
+    try {
+      await updateWidgetData();
+    } catch (e) {
+      // Silently fail - widget akan menampilkan data cached atau default
     }
   }
 
@@ -174,14 +240,18 @@ class HomeWidgetService {
     required String nextPrayer,
     required String nextPrayerTime,
   }) async {
-    await Future.wait([
-      HomeWidget.saveWidgetData<String>(keyCurrentPrayer, currentPrayer),
-      HomeWidget.saveWidgetData<String>(keyCurrentPrayerTime, currentPrayerTime),
-      HomeWidget.saveWidgetData<String>(keyNextPrayer, nextPrayer),
-      HomeWidget.saveWidgetData<String>(keyNextPrayerTime, nextPrayerTime),
-      HomeWidget.saveWidgetData<String>(keyLastUpdated, _formatTime(DateTime.now())),
-    ]);
-    await _updateWidget();
+    try {
+      await Future.wait([
+        HomeWidget.saveWidgetData<String>(keyCurrentPrayer, currentPrayer.isNotEmpty ? currentPrayer : defaultPrayer),
+        HomeWidget.saveWidgetData<String>(keyCurrentPrayerTime, currentPrayerTime.isNotEmpty ? currentPrayerTime : defaultTime),
+        HomeWidget.saveWidgetData<String>(keyNextPrayer, nextPrayer.isNotEmpty ? nextPrayer : defaultPrayer),
+        HomeWidget.saveWidgetData<String>(keyNextPrayerTime, nextPrayerTime.isNotEmpty ? nextPrayerTime : defaultTime),
+        HomeWidget.saveWidgetData<String>(keyLastUpdated, _formatTime(DateTime.now())),
+      ]);
+      await _updateWidget();
+    } catch (e) {
+      // Silently fail
+    }
   }
 
   /// Update qibla data (called when location changes)
@@ -191,16 +261,20 @@ class HomeWidgetService {
     required double latitude,
     required double longitude,
   }) async {
-    final qiblaDirection = _getCardinalDirection(qiblaDegree);
-    await Future.wait([
-      HomeWidget.saveWidgetData<double>(keyQiblaDegree, qiblaDegree),
-      HomeWidget.saveWidgetData<String>(keyQiblaDirection, qiblaDirection),
-      HomeWidget.saveWidgetData<String>(keyLocationName, locationName),
-      HomeWidget.saveWidgetData<double>(keyLatitude, latitude),
-      HomeWidget.saveWidgetData<double>(keyLongitude, longitude),
-      HomeWidget.saveWidgetData<String>(keyLastUpdated, _formatTime(DateTime.now())),
-    ]);
-    await _updateWidget();
+    try {
+      final qiblaDirection = _getCardinalDirection(qiblaDegree);
+      await Future.wait([
+        HomeWidget.saveWidgetData<double>(keyQiblaDegree, qiblaDegree),
+        HomeWidget.saveWidgetData<String>(keyQiblaDirection, qiblaDirection),
+        HomeWidget.saveWidgetData<String>(keyLocationName, locationName.isNotEmpty ? locationName : defaultLocation),
+        HomeWidget.saveWidgetData<double>(keyLatitude, latitude),
+        HomeWidget.saveWidgetData<double>(keyLongitude, longitude),
+        HomeWidget.saveWidgetData<String>(keyLastUpdated, _formatTime(DateTime.now())),
+      ]);
+      await _updateWidget();
+    } catch (e) {
+      // Silently fail
+    }
   }
 
   /// Request native widget update

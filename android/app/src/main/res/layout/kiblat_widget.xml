@@ -1,124 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/widget_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="@drawable/widget_background"
-    android:padding="16dp">
+    android:padding="12dp">
 
-    <!-- Qibla Arrow Section (Top) -->
-    <RelativeLayout
-        android:id="@+id/qibla_section"
+    <!-- Top Section: Qibla Info -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:gravity="center_horizontal">
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-        <!-- Arrow container for rotation -->
-        <FrameLayout
-            android:id="@+id/arrow_container"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_centerHorizontal="true">
+        <!-- Small Qibla Arrow (Left) -->
+        <ImageView
+            android:id="@+id/qibla_arrow"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_qibla_arrow"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/widget_name" />
 
-            <ImageView
-                android:id="@+id/qibla_arrow"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:src="@drawable/ic_qibla_arrow"
-                android:scaleType="fitCenter"
-                android:contentDescription="Qibla direction arrow" />
-        </FrameLayout>
-
-        <!-- Qibla degree text -->
-        <TextView
-            android:id="@+id/qibla_degree"
-            android:layout_width="wrap_content"
+        <!-- Qibla Info (Right of Arrow) -->
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_below="@id/arrow_container"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="4dp"
-            android:text="295° NW"
-            android:textColor="#D4AF37"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-medium" />
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:orientation="vertical">
 
-        <!-- Location name -->
-        <TextView
-            android:id="@+id/location_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/qibla_degree"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="2dp"
-            android:text="Jakarta, Indonesia"
-            android:textColor="#AAAAAA"
-            android:textSize="11sp"
-            android:maxLines="1"
-            android:ellipsize="end" />
-    </RelativeLayout>
+            <!-- Degree Info -->
+            <TextView
+                android:id="@+id/qibla_degree"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0° N"
+                android:textColor="#D4AF37"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium"
+                tools:text="295° NW" />
 
-    <!-- Divider -->
+            <!-- Location (small text below) -->
+            <TextView
+                android:id="@+id/location_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Buka app untuk update"
+                android:textColor="#888888"
+                android:textSize="11sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="Jakarta, Indonesia" />
+        </LinearLayout>
+
+        <!-- Refresh Button -->
+        <ImageView
+            android:id="@+id/refresh_button"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_refresh"
+            android:padding="2dp"
+            android:contentDescription="@string/widget_name" />
+    </LinearLayout>
+
+    <!-- Gold Divider -->
     <View
-        android:id="@+id/divider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_below="@id/qibla_section"
-        android:layout_marginTop="12dp"
-        android:layout_marginBottom="12dp"
-        android:background="#33D4AF37" />
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:background="#D4AF37" />
 
-    <!-- Prayer Times Section (Bottom) -->
+    <!-- Bottom Section: Prayer Time -->
     <LinearLayout
-        android:id="@+id/prayer_section"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/divider"
-        android:layout_marginTop="8dp"
         android:orientation="horizontal"
-        android:gravity="center">
+        android:gravity="center_vertical">
 
         <!-- Current Prayer -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <TextView
                 android:id="@+id/current_prayer_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Now"
+                android:text="Now: "
                 android:textColor="#888888"
-                android:textSize="10sp"
-                android:textAllCaps="true" />
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/current_prayer_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Dhuhr"
+                android:text="--"
                 android:textColor="#FFFFFF"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:fontFamily="sans-serif-medium" />
+                tools:text="Dhuhr" />
 
             <TextView
                 android:id="@+id/current_prayer_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="12:05"
+                android:layout_marginStart="4dp"
+                android:text="--:--"
                 android:textColor="#D4AF37"
-                android:textSize="12sp" />
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:text="12:05" />
         </LinearLayout>
 
         <!-- Vertical Divider -->
         <View
             android:layout_width="1dp"
-            android:layout_height="40dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
             android:background="#33D4AF37" />
 
         <!-- Next Prayer -->
@@ -126,48 +134,38 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <TextView
                 android:id="@+id/next_prayer_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Next"
+                android:text="Next: "
                 android:textColor="#888888"
-                android:textSize="10sp"
-                android:textAllCaps="true" />
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/next_prayer_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Asr"
+                android:text="--"
                 android:textColor="#FFFFFF"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:fontFamily="sans-serif-medium" />
+                tools:text="Asr" />
 
             <TextView
                 android:id="@+id/next_prayer_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="15:30"
+                android:layout_marginStart="4dp"
+                android:text="--:--"
                 android:textColor="#D4AF37"
-                android:textSize="12sp" />
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:text="15:30" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Refresh indicator (small, bottom right) -->
-    <ImageView
-        android:id="@+id/refresh_button"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:src="@drawable/ic_refresh"
-        android:tint="#555555"
-        android:padding="4dp"
-        android:contentDescription="Refresh widget" />
-
-</RelativeLayout>
+</LinearLayout>
