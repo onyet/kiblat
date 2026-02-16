@@ -10,6 +10,9 @@ import 'package:kiblat/services/settings_service.dart';
 import 'package:adhan/adhan.dart';
 import 'package:kiblat/utils/timezone_util.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 import '../services/location_service.dart';
 import 'package:kiblat/services/notification_service.dart';
@@ -26,6 +29,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   bool _locationActive = false;
   bool _compassAvailable = false;
   bool _testAdMode = false;
+  bool _notificationPermissionGranted = false;
 
   // Prayer settings
   PrayerSettings? _prayerSettings;
@@ -75,10 +79,17 @@ class _SettingsScreenState extends State<SettingsScreen>
         perm == LocationPermission.whileInUse;
     final compass = LocationService.hasCompass();
 
+    // Check notification permission
+    bool notifEnabled = false;
+    try {
+      notifEnabled = await NotificationService.instance.areNotificationsEnabled();
+    } catch (_) {}
+
     if (!mounted) return;
     setState(() {
       _locationActive = serviceEnabled && hasPermission;
       _compassAvailable = compass;
+      _notificationPermissionGranted = notifEnabled;
     });
   }
 
@@ -460,33 +471,95 @@ class _SettingsScreenState extends State<SettingsScreen>
                     ),
                     const SizedBox(height: 12),
 
-                    // Prayer notifications
+                    // Prayer notifications with permission status
                     _buildStatusTile(
                       icon: Icons.notifications,
                       title: tr('prayer_notifications') == 'prayer_notifications'
                           ? 'Prayer notifications'
                           : tr('prayer_notifications'),
-                      subtitle: tr('prayer_notifications_desc') == 'prayer_notifications_desc'
-                          ? 'Enable local notifications for prayer times'
-                          : tr('prayer_notifications_desc'),
-                      trailing: Switch(
-                        value: _prayerSettings?.enablePrayerNotifications ?? true,
-                        activeThumbColor: const Color(0xFFF4C025),
-                        onChanged: (v) async {
-                          setState(() {
-                            _prayerSettings = _prayerSettings?.copyWith(enablePrayerNotifications: v) ?? PrayerSettings(enablePrayerNotifications: v);
-                          });
-                          await _persistPrayerSettings();
-                          // Schedule/cancel notifications based on the new value
-                          if (!mounted) return;
-                          if (_prayerSettings?.enablePrayerNotifications ?? true) {
-                            await NotificationService.instance.schedulePrayerNotificationsForCurrentLocation(_prayerSettings!);
-                          } else {
-                            await NotificationService.instance.cancelAllPrayerNotifications();
-                          }
-                        },
+                      subtitle: !_notificationPermissionGranted
+                          ? (tr('notification_permission_off') == 'notification_permission_off'
+                              ? 'Notification permission is OFF. Tap to enable.'
+                              : tr('notification_permission_off'))
+                          : (tr('prayer_notifications_desc') == 'prayer_notifications_desc'
+                              ? 'Enable local notifications for prayer times'
+                              : tr('prayer_notifications_desc')),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (!_notificationPermissionGranted)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                              margin: const EdgeInsets.only(right: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withAlpha(30),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'OFF',
+                                style: const TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          Switch(
+                            value: _notificationPermissionGranted && (_prayerSettings?.enablePrayerNotifications ?? true),
+                            activeThumbColor: const Color(0xFFF4C025),
+                            onChanged: (v) async {
+                              if (!_notificationPermissionGranted) {
+                                // Request permission first
+                                final granted = await NotificationService.instance.requestPermissions();
+                                if (!mounted) return;
+                                setState(() {
+                                  _notificationPermissionGranted = granted;
+                                });
+                                if (!granted) {
+                                  _showInfoDialog(
+                                    tr('notification_permission_title') == 'notification_permission_title'
+                                        ? 'Notification Permission'
+                                        : tr('notification_permission_title'),
+                                    tr('notification_permission_msg_denied') == 'notification_permission_msg_denied'
+                                        ? 'Please enable notification permission in your device settings to receive prayer time notifications.'
+                                        : tr('notification_permission_msg_denied'),
+                                  );
+                                  return;
+                                }
+                              }
+                              setState(() {
+                                _prayerSettings = _prayerSettings?.copyWith(enablePrayerNotifications: v) ?? PrayerSettings(enablePrayerNotifications: v);
+                              });
+                              await _persistPrayerSettings();
+                              if (!mounted) return;
+                              if (_prayerSettings?.enablePrayerNotifications ?? true) {
+                                await NotificationService.instance.schedulePrayerNotificationsForCurrentLocation(_prayerSettings!);
+                              } else {
+                                await NotificationService.instance.cancelAllPrayerNotifications();
+                              }
+                            },
+                          ),
+                        ],
                       ),
                       onTap: () async {
+                        if (!_notificationPermissionGranted) {
+                          final granted = await NotificationService.instance.requestPermissions();
+                          if (!mounted) return;
+                          setState(() {
+                            _notificationPermissionGranted = granted;
+                          });
+                          if (!granted) {
+                            _showInfoDialog(
+                              tr('notification_permission_title') == 'notification_permission_title'
+                                  ? 'Notification Permission'
+                                  : tr('notification_permission_title'),
+                              tr('notification_permission_msg_denied') == 'notification_permission_msg_denied'
+                                  ? 'Please enable notification permission in your device settings.'
+                                  : tr('notification_permission_msg_denied'),
+                            );
+                          }
+                          return;
+                        }
                         final newVal = !(_prayerSettings?.enablePrayerNotifications ?? true);
                         setState(() {
                           _prayerSettings = _prayerSettings?.copyWith(enablePrayerNotifications: newVal) ?? PrayerSettings(enablePrayerNotifications: newVal);
@@ -499,6 +572,20 @@ class _SettingsScreenState extends State<SettingsScreen>
                           await NotificationService.instance.cancelAllPrayerNotifications();
                         }
                       },
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Custom adzan ringtone
+                    _buildActionButton(
+                      title: tr('custom_ringtone') == 'custom_ringtone'
+                          ? 'Custom Adzan Ringtone'
+                          : tr('custom_ringtone'),
+                      subtitle: _prayerSettings?.customRingtoneName ??
+                          (tr('default_ringtone') == 'default_ringtone'
+                              ? 'Default'
+                              : tr('default_ringtone')),
+                      icon: Icons.music_note,
+                      onTap: _showCustomRingtoneDialog,
                     ),
                     const SizedBox(height: 12),
 
@@ -1065,6 +1152,8 @@ class _SettingsScreenState extends State<SettingsScreen>
           ? null
           : _selectedTimezoneId,
       enablePrayerNotifications: _prayerSettings?.enablePrayerNotifications ?? true,
+      customRingtonePath: _prayerSettings?.customRingtonePath,
+      customRingtoneName: _prayerSettings?.customRingtoneName,
     );
 
     try {
@@ -1111,6 +1200,232 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   // Contact & Privacy dialogs
+
+  /// Show custom ringtone options dialog
+  Future<void> _showCustomRingtoneDialog() async {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          tr('custom_ringtone') == 'custom_ringtone'
+              ? 'Custom Adzan Ringtone'
+              : tr('custom_ringtone'),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_prayerSettings?.customRingtoneName != null) ...[
+              ListTile(
+                leading: const Icon(Icons.music_note, color: Color(0xFFF4C025)),
+                title: Text(
+                  tr('current_ringtone') == 'current_ringtone'
+                      ? 'Current'
+                      : tr('current_ringtone'),
+                ),
+                subtitle: Text(_prayerSettings!.customRingtoneName!),
+              ),
+              const Divider(),
+            ],
+            ListTile(
+              leading: const Icon(Icons.upload_file, color: Color(0xFFF4C025)),
+              title: Text(
+                tr('upload_custom_ringtone') == 'upload_custom_ringtone'
+                    ? 'Upload Custom Adzan'
+                    : tr('upload_custom_ringtone'),
+              ),
+              subtitle: Text(
+                tr('watch_ad_to_unlock') == 'watch_ad_to_unlock'
+                    ? 'Watch a short ad to unlock'
+                    : tr('watch_ad_to_unlock'),
+              ),
+              onTap: () async {
+                Navigator.of(ctx, rootNavigator: true).pop();
+                await _handleCustomRingtoneUpload();
+              },
+            ),
+            if (_prayerSettings?.customRingtonePath != null)
+              ListTile(
+                leading: const Icon(Icons.restore, color: Colors.redAccent),
+                title: Text(
+                  tr('reset_to_default') == 'reset_to_default'
+                      ? 'Reset to Default'
+                      : tr('reset_to_default'),
+                ),
+                onTap: () async {
+                  Navigator.of(ctx, rootNavigator: true).pop();
+                  await _resetRingtone();
+                },
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+            child: Text(tr('dismiss')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Handle custom ringtone upload: show rewarded ad, then pick file
+  Future<void> _handleCustomRingtoneUpload() async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Show loading indicator
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          tr('loading_ad') == 'loading_ad'
+              ? 'Loading ad...'
+              : tr('loading_ad'),
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    // Show rewarded ad first
+    final adService = AdService.instance;
+    if (!adService.isRewardedAdReady) {
+      // Ad not ready, try to load and wait briefly
+      adService.loadRewardedAd();
+      await Future.delayed(const Duration(seconds: 3));
+    }
+
+    if (!adService.isRewardedAdReady) {
+      if (!mounted) return;
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            tr('ad_not_ready') == 'ad_not_ready'
+                ? 'Ad is not ready yet. Please try again later.'
+                : tr('ad_not_ready'),
+          ),
+        ),
+      );
+      return;
+    }
+
+    messenger.hideCurrentSnackBar();
+
+    // Show the rewarded ad
+    final earned = await adService.showRewardedAd();
+    if (!earned) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            tr('ad_not_completed') == 'ad_not_completed'
+                ? 'Please watch the full ad to unlock custom ringtone.'
+                : tr('ad_not_completed'),
+          ),
+        ),
+      );
+      return;
+    }
+
+    // User earned the reward — now pick the audio file
+    if (!mounted) return;
+    await _pickAndSaveRingtone();
+  }
+
+  /// Pick an audio file and save it as custom ringtone
+  Future<void> _pickAndSaveRingtone() async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.audio,
+        allowMultiple: false,
+      );
+
+      if (result == null || result.files.isEmpty) return;
+
+      final file = result.files.first;
+      if (file.path == null) return;
+
+      // Copy the file to app's storage directory
+      final appDir = await getApplicationSupportDirectory();
+      final destDir = Directory('${appDir.path}/ringtones');
+      if (!await destDir.exists()) {
+        await destDir.create(recursive: true);
+      }
+
+      final ext = file.extension ?? 'mp3';
+      final destPath = '${destDir.path}/custom_adzan.$ext';
+      final sourceFile = File(file.path!);
+      await sourceFile.copy(destPath);
+
+      final fileName = file.name;
+
+      if (!mounted) return;
+      setState(() {
+        _prayerSettings = _prayerSettings?.copyWith(
+          customRingtonePath: destPath,
+          customRingtoneName: fileName,
+        ) ?? PrayerSettings(
+          customRingtonePath: destPath,
+          customRingtoneName: fileName,
+        );
+      });
+      await _persistPrayerSettings(showToast: false);
+
+      // Reschedule notifications with new sound
+      if (_prayerSettings?.enablePrayerNotifications ?? false) {
+        await NotificationService.instance
+            .schedulePrayerNotificationsForCurrentLocation(_prayerSettings!);
+      }
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            tr('ringtone_set_success') == 'ringtone_set_success'
+                ? 'Custom adzan ringtone set: $fileName'
+                : tr('ringtone_set_success'),
+          ),
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            tr('ringtone_set_failed') == 'ringtone_set_failed'
+                ? 'Failed to set custom ringtone'
+                : tr('ringtone_set_failed'),
+          ),
+        ),
+      );
+    }
+  }
+
+  /// Reset ringtone back to default
+  Future<void> _resetRingtone() async {
+    if (!mounted) return;
+    setState(() {
+      _prayerSettings = _prayerSettings?.copyWith(clearCustomRingtone: true) ??
+          PrayerSettings();
+    });
+    await _persistPrayerSettings(showToast: false);
+
+    // Reschedule notifications with default sound
+    if (_prayerSettings?.enablePrayerNotifications ?? false) {
+      await NotificationService.instance
+          .schedulePrayerNotificationsForCurrentLocation(_prayerSettings!);
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          tr('ringtone_reset_success') == 'ringtone_reset_success'
+              ? 'Ringtone reset to default'
+              : tr('ringtone_reset_success'),
+        ),
+      ),
+    );
+  }
+
   Future<void> _showContactDialog() async {
     const whatsapp = 'https://wa.me/6282221874400';
     const email = 'mailto:onyetcorp@gmail.com';

@@ -33,6 +33,12 @@ class PrayerSettings {
   /// Whether to show local prayer notifications
   final bool enablePrayerNotifications;
 
+  /// Path to a user-selected custom adzan ringtone file (null = default sound)
+  final String? customRingtonePath;
+
+  /// Human-readable name for the custom ringtone (e.g., the original filename)
+  final String? customRingtoneName;
+
   PrayerSettings({
     this.madhab = Madhab.shafi,
     this.calculationMethod = CalculationMethod.muslim_world_league,
@@ -44,6 +50,8 @@ class PrayerSettings {
     this.timezoneId,
     this.use24Hour = true,
     this.enablePrayerNotifications = true,
+    this.customRingtonePath,
+    this.customRingtoneName,
   });
 
   /// Create a copy of this settings with optional modifications
@@ -58,6 +66,9 @@ class PrayerSettings {
     String? timezoneId,
     bool? use24Hour,
     bool? enablePrayerNotifications,
+    String? customRingtonePath,
+    String? customRingtoneName,
+    bool clearCustomRingtone = false,
   }) {
     return PrayerSettings(
       madhab: madhab ?? this.madhab,
@@ -70,6 +81,8 @@ class PrayerSettings {
       timezoneId: timezoneId ?? this.timezoneId,
       use24Hour: use24Hour ?? this.use24Hour,
       enablePrayerNotifications: enablePrayerNotifications ?? this.enablePrayerNotifications,
+      customRingtonePath: clearCustomRingtone ? null : (customRingtonePath ?? this.customRingtonePath),
+      customRingtoneName: clearCustomRingtone ? null : (customRingtoneName ?? this.customRingtoneName),
     );
   }
 
@@ -90,6 +103,16 @@ class PrayerSettings {
     }
     await prefs.setBool('use24Hour', use24Hour);
     await prefs.setBool('enablePrayerNotifications', enablePrayerNotifications);
+    if (customRingtonePath != null) {
+      await prefs.setString('customRingtonePath', customRingtonePath!);
+    } else {
+      await prefs.remove('customRingtonePath');
+    }
+    if (customRingtoneName != null) {
+      await prefs.setString('customRingtoneName', customRingtoneName!);
+    } else {
+      await prefs.remove('customRingtoneName');
+    }
   }
 
   /// Load settings from SharedPreferences
@@ -118,6 +141,8 @@ class PrayerSettings {
     final timezoneId = prefs.getString('timezoneId');
     final use24Hour = prefs.getBool('use24Hour') ?? true;
     final enablePrayerNotifications = prefs.getBool('enablePrayerNotifications') ?? true;
+    final customRingtonePath = prefs.getString('customRingtonePath');
+    final customRingtoneName = prefs.getString('customRingtoneName');
 
     return PrayerSettings(
       madhab: madhab,
@@ -130,6 +155,8 @@ class PrayerSettings {
       timezoneId: timezoneId,
       use24Hour: use24Hour,
       enablePrayerNotifications: enablePrayerNotifications,
+      customRingtonePath: customRingtonePath,
+      customRingtoneName: customRingtoneName,
     );
   }
 

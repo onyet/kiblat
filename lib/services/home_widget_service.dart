@@ -121,9 +121,75 @@ class HomeWidgetService {
   /// Background callback for widget interactions (e.g., refresh button tap)
   @pragma('vm:entry-point')
   static Future<void> backgroundCallback(Uri? uri) async {
-    if (uri?.host == 'refresh') {
-      await HomeWidgetService.instance._updateWidgetDataSafely();
+    // Background isolate — must be completely self-contained with try-catch.
+    // Do NOT call LocationService.getCurrentPosition() here as it requires
+    // the Flutter engine to be fully attached.
+    try {
+      if (uri?.host == 'refresh') {
+        // Only read cached data and update the widget; don't attempt GPS calls.
+        final prefs = await SharedPreferences.getInstance();
+        final lat = prefs.getDouble('last_loc_lat');
+        final lon = prefs.getDouble('last_loc_lon');
+        if (lat != null && lon != null) {
+          final locationName = prefs.getString('last_loc_label') ?? 'Unknown';
+          final qiblaDeg = LocationService.qiblaBearing(lat, lon);
+          final qiblaDirection = _getCardinalDirectionStatic(qiblaDeg);
+
+          final settings = await PrayerSettings.load();
+          final now = DateTime.now();
+          final dailyPrayers = await ps.PrayerService.calculatePrayerTimes(
+            latitude: lat,
+            longitude: lon,
+            date: now,
+            settings: settings,
+          );
+
+          final fardPrayers = dailyPrayers.prayers.where((p) => !p.isSunnah).toList();
+          String currentPrayer = '--';
+          String currentPrayerTime = '--:--';
+          String nextPrayer = '--';
+          String nextPrayerTime = '--:--';
+
+          for (int i = fardPrayers.length - 1; i >= 0; i--) {
+            if (fardPrayers[i].time.isBefore(now)) {
+              currentPrayer = fardPrayers[i].name;
+              currentPrayerTime = fardPrayers[i].timeString;
+              if (i + 1 < fardPrayers.length) {
+                nextPrayer = fardPrayers[i + 1].name;
+                nextPrayerTime = fardPrayers[i + 1].timeString;
+              }
+              break;
+            }
+          }
+
+          await Future.wait([
+            HomeWidget.saveWidgetData<double>('qibla_degree', qiblaDeg),
+            HomeWidget.saveWidgetData<String>('qibla_direction', qiblaDirection),
+            HomeWidget.saveWidgetData<String>('location_name', locationName),
+            HomeWidget.saveWidgetData<String>('current_prayer', currentPrayer),
+            HomeWidget.saveWidgetData<String>('current_prayer_time', currentPrayerTime),
+            HomeWidget.saveWidgetData<String>('next_prayer', nextPrayer),
+            HomeWidget.saveWidgetData<String>('next_prayer_time', nextPrayerTime),
+            HomeWidget.saveWidgetData<String>('last_updated',
+                '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}'),
+          ]);
+          await HomeWidget.updateWidget(
+            name: androidWidgetName,
+            androidName: androidWidgetName,
+            iOSName: iOSWidgetName,
+          );
+        }
+      }
+    } catch (_) {
+      // Silently ignore — background callbacks must never crash
     }
+  }
+
+  /// Static cardinal direction helper for use in background callback
+  static String _getCardinalDirectionStatic(double degrees) {
+    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    final index = ((degrees + 22.5) % 360 / 45).floor();
+    return directions[index];
   }
 
   /// Update widget data safely (dengan try-catch)
@@ -147,10 +213,16 @@ class HomeWidgetService {
       // Try to get current position if no cached location
       if (lat == null || lon == null) {
         try {
-          final position = await LocationService.getCurrentPosition();
+          final position = await LocationService.getCurrentPosition()
+              .timeout(const Duration(seconds: 10));
           lat = position.latitude;
           lon = position.longitude;
-          locationName = await LocationService.reverseGeocode(lat, lon);
+          try {
+            locationName = await LocationService.reverseGeocode(lat, lon)
+                .timeout(const Duration(seconds: 5));
+          } catch (_) {
+            // reverseGeocode failed, use coordinates
+          }
           if (locationName.isEmpty) {
             locationName = '${lat.toStringAsFixed(2)}, ${lon.toStringAsFixed(2)}';
           }

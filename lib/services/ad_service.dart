@@ -16,6 +16,10 @@ class AdService {
   bool _isShowing = false;
   bool _isDisposed = false;
 
+  RewardedAd? _rewardedAd;
+  bool _isRewardedAdReady = false;
+  bool _isShowingRewarded = false;
+
   /// AdMob App ID: ca-app-pub-7967860040352202~1740407670
   /// Interstitial Ad Unit ID untuk close app
   static bool testMode = false;
@@ -27,7 +31,6 @@ class AdService {
 
   static String get interstitialAdUnitId {
     if (testMode) {
-      // Google's sample interstitial ad unit id
       if (Platform.isAndroid) return 'ca-app-pub-3940256099942544/1033173712';
       if (Platform.isIOS) return 'ca-app-pub-3940256099942544/4411468910';
     }
@@ -40,12 +43,27 @@ class AdService {
     throw UnsupportedError('Platform tidak didukung');
   }
 
+  static String get rewardedAdUnitId {
+    if (testMode) {
+      if (Platform.isAndroid) return 'ca-app-pub-3940256099942544/5224354917';
+      if (Platform.isIOS) return 'ca-app-pub-3940256099942544/1712485313';
+    }
+
+    if (Platform.isAndroid) {
+      return 'ca-app-pub-7967860040352202/9413432801';
+    } else if (Platform.isIOS) {
+      return 'ca-app-pub-7967860040352202/9413432801';
+    }
+    throw UnsupportedError('Platform tidak didukung');
+  }
+
   /// Inisialisasi Mobile Ads SDK
   static Future<void> initialize() async {
     debugPrint('[AdService] Initializing MobileAds (testMode=$testMode)');
     await MobileAds.instance.initialize();
-    // Muat iklan interstitial setelah inisialisasi
+    // Muat iklan setelah inisialisasi
     instance.loadInterstitialAd();
+    instance.loadRewardedAd();
   }
 
   /// Memuat iklan interstitial
@@ -253,12 +271,132 @@ class AdService {
     loadInterstitialAd();
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // Rewarded Ad
+  // ──────────────────────────────────────────────────────────────────────────
+
+  /// Load a rewarded ad for custom ringtone unlock
+  void loadRewardedAd() {
+    if (_isDisposed) {
+      debugPrint('[AdService] Service disposed, not loading rewarded.');
+      return;
+    }
+    if (_rewardedAd != null) {
+      debugPrint('[AdService] Rewarded already loaded, skipping.');
+      return;
+    }
+
+    debugPrint('[AdService] Loading rewarded ad (unit: $rewardedAdUnitId)');
+
+    RewardedAd.load(
+      adUnitId: rewardedAdUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          debugPrint('[AdService] Rewarded ad loaded');
+          _rewardedAd = ad;
+          _isRewardedAdReady = true;
+        },
+        onAdFailedToLoad: (error) {
+          debugPrint('[AdService] Rewarded ad failed to load: $error');
+          _isRewardedAdReady = false;
+          // Retry after delay
+          Future.delayed(const Duration(seconds: 30), () {
+            if (!_isDisposed) loadRewardedAd();
+          });
+        },
+      ),
+    );
+  }
+
+  /// Show rewarded ad and wait for reward.
+  /// Returns true if the user earned the reward, false otherwise.
+  Future<bool> showRewardedAd({
+    Duration timeout = const Duration(seconds: 30),
+  }) async {
+    if (!_isRewardedAdReady || _rewardedAd == null) return false;
+    if (_isShowingRewarded) return false;
+
+    final ad = _rewardedAd!;
+    _rewardedAd = null;
+    _isRewardedAdReady = false;
+    _isShowingRewarded = true;
+
+    final completer = Completer<bool>();
+    bool userEarnedReward = false;
+
+    ad.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (ad) {
+        debugPrint('[AdService] Rewarded ad showed');
+      },
+      onAdDismissedFullScreenContent: (ad) {
+        debugPrint('[AdService] Rewarded ad dismissed (earned=$userEarnedReward)');
+        try {
+          ad.dispose();
+        } catch (_) {}
+        _isShowingRewarded = false;
+        if (!_isDisposed) loadRewardedAd();
+        if (!completer.isCompleted) completer.complete(userEarnedReward);
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        debugPrint('[AdService] Rewarded ad failed to show: $error');
+        try {
+          ad.dispose();
+        } catch (_) {}
+        _isShowingRewarded = false;
+        if (!_isDisposed) loadRewardedAd();
+        if (!completer.isCompleted) completer.complete(false);
+      },
+    );
+
+    try {
+      debugPrint('[AdService] Attempting to show rewarded ad');
+      await ad.show(
+        onUserEarnedReward: (AdWithoutView adView, RewardItem reward) {
+          debugPrint(
+            '[AdService] User earned reward: ${reward.amount} ${reward.type}',
+          );
+          userEarnedReward = true;
+        },
+      );
+    } catch (e) {
+      debugPrint('[AdService] Error showing rewarded ad: $e');
+      _isShowingRewarded = false;
+      if (!_isDisposed) loadRewardedAd();
+      if (!completer.isCompleted) completer.complete(false);
+    }
+
+    try {
+      return await completer.future.timeout(
+        timeout,
+        onTimeout: () {
+          _isShowingRewarded = false;
+          if (!_isDisposed) loadRewardedAd();
+          return false;
+        },
+      );
+    } catch (_) {
+      _isShowingRewarded = false;
+      if (!_isDisposed) loadRewardedAd();
+      return false;
+    }
+  }
+
+  /// Cek apakah rewarded ad sudah siap
+  bool get isRewardedAdReady => _isRewardedAdReady;
+
+  /// Cek apakah sedang menampilkan rewarded ad
+  bool get isShowingRewarded => _isShowingRewarded;
+
   /// Dispose resources
   void dispose() {
-    debugPrint('[AdService] Disposing interstitial ad');
+    debugPrint('[AdService] Disposing ads');
     _isDisposed = true;
     _interstitialAd?.dispose();
     _interstitialAd = null;
     _isInterstitialAdReady = false;
+    _rewardedAd?.dispose();
+    _rewardedAd = null;
+    _isRewardedAdReady = false;
   }
 }

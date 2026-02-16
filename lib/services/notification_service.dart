@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -21,8 +22,10 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
-  late final AndroidNotificationChannel _channel;
   bool _initialized = false;
+
+  /// Current notification channel ID (changes when custom sound is set)
+  String _currentChannelId = 'prayer_times';
 
   GlobalKey<NavigatorState>? _navigatorKey;
 
@@ -46,24 +49,14 @@ class NotificationService {
       },
     );
 
-    _channel = const AndroidNotificationChannel(
-      'prayer_times',
-      'Prayer times',
-      description: 'Notifications for prayer times',
-      importance: Importance.high,
-    );
-
-    await _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(_channel);
+    // Create default channel
+    await _ensureNotificationChannel(null);
 
     // Listen for settings changes to reschedule notifications with new locale/time
     SettingsService.instance.notifier.addListener(() async {
       final s = SettingsService.instance.notifier.value;
       final ctx = _navigatorKey?.currentContext;
-      if (ctx == null) return; // can't localize without a valid context
+      if (ctx == null) return;
       await _maybeReschedule(ctx, s);
     });
 
@@ -75,6 +68,52 @@ class NotificationService {
     _initialized = true;
   }
 
+  /// Create or update the notification channel with optional custom sound
+  Future<void> _ensureNotificationChannel(String? customSoundPath) async {
+    final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    if (androidPlugin == null) return;
+
+    if (customSoundPath != null && customSoundPath.isNotEmpty) {
+      // Use a dedicated channel for custom sound
+      const newChannelId = 'prayer_times_custom';
+
+      // Delete old custom channel to reset sound setting
+      try {
+        await androidPlugin.deleteNotificationChannel(newChannelId);
+      } catch (_) {}
+      // Also clean up default channel
+      try {
+        await androidPlugin.deleteNotificationChannel('prayer_times');
+      } catch (_) {}
+
+      final channel = AndroidNotificationChannel(
+        newChannelId,
+        'Prayer times (Custom Adzan)',
+        description: 'Adzan notifications for prayer times',
+        importance: Importance.high,
+        sound: UriAndroidNotificationSound(customSoundPath),
+        playSound: true,
+      );
+      await androidPlugin.createNotificationChannel(channel);
+      _currentChannelId = newChannelId;
+    } else {
+      // Delete custom channel if switching back to default
+      try {
+        await androidPlugin.deleteNotificationChannel('prayer_times_custom');
+      } catch (_) {}
+
+      const channel = AndroidNotificationChannel(
+        'prayer_times',
+        'Prayer times',
+        description: 'Notifications for prayer times',
+        importance: Importance.high,
+      );
+      await androidPlugin.createNotificationChannel(channel);
+      _currentChannelId = 'prayer_times';
+    }
+  }
+
   Future<void> _maybeReschedule(BuildContext? context, PrayerSettings s) async {
     if (s.enablePrayerNotifications) {
       if (context == null) return;
@@ -84,19 +123,46 @@ class NotificationService {
     }
   }
 
-  /// Request notification permissions (useful for iOS and Android 13+)
-  Future<void> requestPermissions() async {
-    // Request iOS permissions. Android 13+ should request at runtime via
-    // permission_handler or similar; manifest contains POST_NOTIFICATIONS.
-    await _plugin
-        .resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin
-        >()
-        ?.requestPermissions(alert: true, badge: true, sound: true);
+  /// Check if notification permissions are granted (Android 13+)
+  Future<bool> areNotificationsEnabled() async {
+    if (Platform.isAndroid) {
+      final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        final enabled = await androidPlugin.areNotificationsEnabled();
+        return enabled ?? false;
+      }
+    }
+    // On iOS, assume enabled unless we can check
+    return true;
+  }
 
-    // Skipping explicit Android runtime permission request here to avoid
-    // calling an API that may not exist across versions; use a permission
-    // plugin in app flow if you want to proactively request POST_NOTIFICATIONS.
+  /// Request notification permissions (Android 13+ and iOS)
+  /// Returns true if permission was granted
+  Future<bool> requestPermissions() async {
+    if (Platform.isAndroid) {
+      final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        final granted = await androidPlugin.requestNotificationsPermission();
+        return granted ?? false;
+      }
+    }
+
+    if (Platform.isIOS) {
+      final iosPlugin = _plugin.resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin>();
+      if (iosPlugin != null) {
+        final granted = await iosPlugin.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+        return granted ?? false;
+      }
+    }
+
+    return true;
   }
 
   /// Cancel all scheduled prayer notifications
@@ -117,8 +183,15 @@ class NotificationService {
     PrayerSettings settings,
   ) async {
     try {
-      // Ensure permissions and timezone data are ready
-      await requestPermissions();
+      // Check and request permissions first
+      final hasPermission = await areNotificationsEnabled();
+      if (!hasPermission) {
+        final granted = await requestPermissions();
+        if (!granted) return; // Can't schedule without permission
+      }
+
+      // Ensure the notification channel matches the current ringtone setting
+      await _ensureNotificationChannel(settings.customRingtonePath);
 
       final pos = await LocationService.getCurrentPosition();
       final lat = pos.latitude;
@@ -133,8 +206,6 @@ class NotificationService {
           cached['lon'] as double,
           settings,
         );
-      } else {
-        // cannot schedule without location
       }
     }
   }
@@ -162,6 +233,10 @@ class NotificationService {
       settings: settings,
     );
 
+    // Build notification details with custom sound if set
+    final hasCustomSound = settings.customRingtonePath != null &&
+        settings.customRingtonePath!.isNotEmpty;
+
     // We schedule notifications only for main prayers Fajr, Dhuhr, Asr, Maghrib, Isha
     final mainNames = {'Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'};
 
@@ -170,17 +245,13 @@ class NotificationService {
 
       final id = _prayerIds[prayer.name]!;
 
-      // Build localized message using navigatorKey context if available and still mounted
-      // We captured `elem` and `ctxMounted` before the async gap above. Use them
-      // only when the element was mounted to avoid using a stale BuildContext.
+      // Build localized message
       final prayerLabel = ctxMounted
           ? tr(prayer.name.toLowerCase(), context: elem)
           : prayer.name;
-      // ignore: use_build_context_synchronously
       final title = ctxMounted
           ? tr('notification_prayer_title', context: elem)
           : 'Prayer time';
-      // ignore: use_build_context_synchronously
       final body = ctxMounted
           ? tr(
               'notification_prayer_arrived',
@@ -204,16 +275,19 @@ class NotificationService {
         scheduled,
         NotificationDetails(
           android: AndroidNotificationDetails(
-            _channel.id,
-            _channel.name,
-            channelDescription: _channel.description,
+            _currentChannelId,
+            'Prayer times',
+            channelDescription: 'Adzan notifications for prayer times',
             importance: Importance.high,
             priority: Priority.high,
             ticker: 'prayer',
+            sound: hasCustomSound
+                ? UriAndroidNotificationSound(settings.customRingtonePath!)
+                : null,
+            playSound: true,
           ),
           iOS: const DarwinNotificationDetails(),
         ),
-        // Use explicit Android scheduling mode to ensure alarms trigger on modern OS versions
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time,
         payload: prayer.name,
