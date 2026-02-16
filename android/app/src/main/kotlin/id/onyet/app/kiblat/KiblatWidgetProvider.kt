@@ -28,6 +28,9 @@ class KiblatWidgetProvider : HomeWidgetProvider() {
     companion object {
         private const val TAG = "KiblatWidget"
         
+        // Prefix used by home_widget package to mark doubles stored as Long
+        private const val DOUBLE_LONG_PREFIX = "home_widget.double."
+        
         // Default values untuk fallback
         private const val DEFAULT_QIBLA_DEGREE = 0f
         private const val DEFAULT_DIRECTION = "N"
@@ -37,6 +40,42 @@ class KiblatWidgetProvider : HomeWidgetProvider() {
         
         // Arrow bitmap size (smaller for horizontal layout)
         private const val ARROW_SIZE = 120
+        
+        /**
+         * Safely read a double from SharedPreferences written by the home_widget package.
+         * 
+         * The home_widget Flutter plugin stores Dart doubles as Long (using
+         * Double.doubleToRawLongBits) and sets a boolean flag with prefix
+         * "home_widget.double.<key>" = true to mark them. Reading with
+         * getFloat() causes a ClassCastException. This helper handles both
+         * the Long-encoded case and the plain Float case.
+         */
+        fun getDoubleSafe(prefs: SharedPreferences, key: String, defaultVal: Float): Float {
+            return try {
+                // Check if this was stored as a Long-encoded double by home_widget
+                val isDoubleLong = prefs.getBoolean("$DOUBLE_LONG_PREFIX$key", false)
+                if (isDoubleLong) {
+                    val longBits = prefs.getLong(key, 0L)
+                    java.lang.Double.longBitsToDouble(longBits).toFloat()
+                } else {
+                    // Try reading as Float first, then Long, then fallback
+                    try {
+                        prefs.getFloat(key, defaultVal)
+                    } catch (e: ClassCastException) {
+                        // Could be stored as Long without the flag (edge case)
+                        try {
+                            val longVal = prefs.getLong(key, 0L)
+                            java.lang.Double.longBitsToDouble(longVal).toFloat()
+                        } catch (e2: Exception) {
+                            defaultVal
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to read double for key=$key, using default", e)
+                defaultVal
+            }
+        }
     }
 
     override fun onUpdate(
@@ -67,11 +106,8 @@ class KiblatWidgetProvider : HomeWidgetProvider() {
         val views = RemoteViews(context.packageName, R.layout.kiblat_widget)
         
         // Ambil data dengan safe defaults (null safety)
-        val qiblaDegree = try {
-            widgetData.getFloat("qibla_degree", DEFAULT_QIBLA_DEGREE)
-        } catch (e: Exception) {
-            DEFAULT_QIBLA_DEGREE
-        }
+        // Use getDoubleSafe because home_widget stores Dart doubles as Long
+        val qiblaDegree = getDoubleSafe(widgetData, "qibla_degree", DEFAULT_QIBLA_DEGREE)
         
         val qiblaDirection = widgetData.getString("qibla_direction", DEFAULT_DIRECTION) 
             ?: DEFAULT_DIRECTION

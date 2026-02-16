@@ -55,9 +55,6 @@ class HomeWidgetService {
       // Ini memastikan widget tidak crash saat pertama kali ditambahkan
       await _initializeDefaultData();
 
-      // Register background callback for widget interactions
-      await HomeWidget.registerInteractivityCallback(backgroundCallback);
-
       // Initial widget update (non-blocking)
       _updateWidgetDataSafely();
 
@@ -68,6 +65,17 @@ class HomeWidgetService {
       });
       
       _initialized = true;
+
+      // Register background callback for widget interactions (e.g., refresh button)
+      // Done after marking _initialized=true so a failure here doesn't block
+      // the periodic timer or data updates.
+      try {
+        await HomeWidget.registerInteractivityCallback(backgroundCallback);
+      } catch (e) {
+        // registerInteractivityCallback may not be available on all versions;
+        // the widget still works without it (refresh button won't trigger Dart
+        // code, but periodic timer and app-triggered updates still function).
+      }
     } catch (e) {
       // Silently fail - widget akan menampilkan data default
     }

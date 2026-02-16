@@ -240,6 +240,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                           _selectedTabIndex == 0
                               ? _todayPrayers
                               : _tomorrowPrayers,
+                          isToday: _selectedTabIndex == 0,
                         ),
 
                       const SizedBox(height: 32),
@@ -472,20 +473,23 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     );
   }
 
-  Widget _buildPrayerCardsForList(List<ps.PrayerTime> prayersList) {
+  Widget _buildPrayerCardsForList(List<ps.PrayerTime> prayersList, {bool isToday = true}) {
     return Column(
       children: prayersList.map((prayer) {
         final iconData = _iconForPrayer(prayer.name);
         final now = DateTime.now();
         final isSunrise = prayer.name.toLowerCase() == 'sunrise';
+        // Only show active status for today's prayers — not tomorrow or future days.
         // Robust active detection: match by name case-insensitively and allow
         // a wide tolerance (up to 24 hours) to handle active prayers that
         // belong to the previous day (e.g., Isha after midnight).
-        final isActive = _activePrayer != null
-            ? (prayer.name.toLowerCase() == _activePrayer!.name.toLowerCase() &&
-                (prayer.time.isAtSameMomentAs(_activePrayer!.time) ||
-                    (prayer.time.difference(_activePrayer!.time).inSeconds).abs() <= 86400))
-            : prayer.isActive(now);
+        final isActive = isToday
+            ? (_activePrayer != null
+                ? (prayer.name.toLowerCase() == _activePrayer!.name.toLowerCase() &&
+                    (prayer.time.isAtSameMomentAs(_activePrayer!.time) ||
+                        (prayer.time.difference(_activePrayer!.time).inSeconds).abs() <= 86400))
+                : prayer.isActive(now))
+            : false;
 
         // Debug: print per-prayer active evaluation
         debugPrint('[PrayerTimes] buildPrayerCard: name=${prayer.name} time=${prayer.time.toIso8601String()} isActive=$isActive activeCache=${_activePrayer?.name ?? 'null'}@${_activePrayer?.time.toIso8601String() ?? 'null'}');
@@ -503,7 +507,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     );
   }
 
-  Widget _buildDayView(ps.DailyPrayerTimes? day) {
+  Widget _buildDayView(ps.DailyPrayerTimes? day, {bool isToday = true}) {
     if (day == null) return const SizedBox.shrink();
 
     final sunnah = day.prayers.where((p) => p.isSunnah).toList();
@@ -515,10 +519,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (_settings?.showSunnahTimes == true && sunnah.isNotEmpty) ...[
-          SunnahCompact(sunnahList: sunnah, activePrayer: _activePrayer),
+          SunnahCompact(sunnahList: sunnah, activePrayer: isToday ? _activePrayer : null),
           const SizedBox(height: 12),
         ],
-        _buildPrayerCardsForList(regular),
+        _buildPrayerCardsForList(regular, isToday: isToday),
       ],
     );
   }
@@ -527,6 +531,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     return Column(
       children: _weekPrayers.map((day) {
         final dateStr = HijriConverter.formatGregorianShort(day.date);
+        final now = DateTime.now();
+        final dayIsToday = day.date.year == now.year &&
+            day.date.month == now.month &&
+            day.date.day == now.day;
         final sunnah = day.prayers.where((p) => p.isSunnah).toList();
         final regular = day.prayers.where((p) => !p.isSunnah).toList();
         return Column(
@@ -541,10 +549,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
             ),
             const SizedBox(height: 8),
             if (_settings?.showSunnahTimes == true && sunnah.isNotEmpty) ...[
-              SunnahCompact(sunnahList: sunnah, activePrayer: _activePrayer),
+              SunnahCompact(sunnahList: sunnah, activePrayer: dayIsToday ? _activePrayer : null),
               const SizedBox(height: 8),
             ],
-            _buildPrayerCardsForList(regular),
+            _buildPrayerCardsForList(regular, isToday: dayIsToday),
             const SizedBox(height: 18),
           ],
         );
