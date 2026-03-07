@@ -124,5 +124,8 @@
   "prayer_notifications_desc": "Lokale Benachrichtigungen für Gebetszeiten aktivieren",
   "notification_prayer_title": "Gebetszeit",
   "notification_prayer_arrived": "Es ist Zeit für {prayer}",
-  "device_timezone": "Geräte-Zeitzone"
+  "device_timezone": "Geräte-Zeitzone",
+  "watch_ad_support": "Entwickler unterstützen",
+  "watch_ad_support_desc": "Sieh dir eine kurze Werbung an, um diese App kostenlos zu halten",
+  "watch_ad_thanks": "Vielen Dank für deine Unterstützung! ❤️"
 }   

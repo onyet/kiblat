@@ -137,10 +137,12 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
       await _updatePrevNext();
       _startCountdownUpdater();
 
+      if (!mounted) return;
       setState(() {
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _loading = false;
         _error = 'Unable to load prayer times: ${e.toString()}';

@@ -124,5 +124,8 @@
   "prayer_notifications_desc": "Включить локальные уведомления для времени молитвы",
   "notification_prayer_title": "Время молитвы",
   "notification_prayer_arrived": "Время {prayer}",
-  "device_timezone": "Часовой пояс устройства"
+  "device_timezone": "Часовой пояс устройства",
+  "watch_ad_support": "Поддержать разработчика",
+  "watch_ad_support_desc": "Посмотрите короткую рекламу, чтобы приложение оставалось бесплатным",
+  "watch_ad_thanks": "Спасибо за вашу поддержку! ❤️"
 } 

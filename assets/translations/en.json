@@ -139,5 +139,8 @@
   "ringtone_set_success": "Custom adzan ringtone has been set",
   "ringtone_set_failed": "Failed to set custom ringtone",
   "ringtone_reset_success": "Ringtone reset to default",
-  "device_timezone": "Device Timezone"
+  "device_timezone": "Device Timezone",
+  "watch_ad_support": "Support Developer",
+  "watch_ad_support_desc": "Watch a short ad to help keep this app free",
+  "watch_ad_thanks": "Thank you for your support! ❤️"
 }  

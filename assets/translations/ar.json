@@ -124,5 +124,8 @@
   "prayer_notifications_desc": "تفعيل إشعارات محلية لأوقات الصلاة",
   "notification_prayer_title": "وقت الصلاة",
   "notification_prayer_arrived": "حان وقت {prayer}",
-  "device_timezone": "منطقة زمن الجهاز"
+  "device_timezone": "منطقة زمن الجهاز",
+  "watch_ad_support": "ادعم المطوّر",
+  "watch_ad_support_desc": "شاهد إعلانًا قصيرًا لدعم بقاء التطبيق مجانيًا",
+  "watch_ad_thanks": "شكرًا لدعمك! ❤️"
 }   

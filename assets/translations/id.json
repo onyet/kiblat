@@ -123,5 +123,8 @@
   "prayer_notifications_desc": "Aktifkan notifikasi lokal untuk waktu sholat",
   "notification_prayer_title": "Waktu Sholat",
   "notification_prayer_arrived": "Waktu {prayer} telah tiba",
-  "device_timezone": "Zona Waktu Perangkat"
+  "device_timezone": "Zona Waktu Perangkat",
+  "watch_ad_support": "Dukung Pengembang",
+  "watch_ad_support_desc": "Tonton iklan singkat untuk mendukung aplikasi ini tetap gratis",
+  "watch_ad_thanks": "Terima kasih atas dukungannya! ❤️"
 }

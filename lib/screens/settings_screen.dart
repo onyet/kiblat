@@ -13,6 +13,7 @@ import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'dart:async';
 
 import '../services/location_service.dart';
 import 'package:kiblat/services/notification_service.dart';
@@ -30,6 +31,8 @@ class _SettingsScreenState extends State<SettingsScreen>
   bool _compassAvailable = false;
   bool _testAdMode = false;
   bool _notificationPermissionGranted = false;
+  bool _isInterstitialAdReady = false;
+  Timer? _adCheckTimer;
 
   // Prayer settings
   PrayerSettings? _prayerSettings;
@@ -69,6 +72,22 @@ class _SettingsScreenState extends State<SettingsScreen>
     tzdata.initializeTimeZones();
     _adjustmentController = TextEditingController();
     _loadPrayerSettings();
+
+    // Periodically check if interstitial ad is ready for voluntary watch
+    _refreshAdStatus();
+    _adCheckTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      _refreshAdStatus();
+    });
+  }
+
+  void _refreshAdStatus() {
+    final ready = AdService.instance.isInterstitialAdReady &&
+        !AdService.instance.isShowingInterstitial;
+    if (ready != _isInterstitialAdReady && mounted) {
+      setState(() {
+        _isInterstitialAdReady = ready;
+      });
+    }
   }
 
   Future<void> _refreshStatus() async {
@@ -125,6 +144,7 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   @override
   void dispose() {
+    _adCheckTimer?.cancel();
     _animController.dispose();
     _adjustmentController.dispose();
     super.dispose();
@@ -281,6 +301,13 @@ class _SettingsScreenState extends State<SettingsScreen>
                   ),
 
                   const SizedBox(height: 6),
+
+                  // Voluntary ad support button - only visible when ad is ready
+                  if (_isInterstitialAdReady) ...[
+                    _buildWatchAdCard(),
+                    const SizedBox(height: 14),
+                  ],
+
                   Text(
                     tr('configuration'),
                     style: const TextStyle(
@@ -798,6 +825,115 @@ class _SettingsScreenState extends State<SettingsScreen>
             if (trailing != null) trailing,
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildWatchAdCard() {
+    return InkWell(
+      onTap: _handleWatchAd,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0x33F4C025), Color(0x0DF4C025)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0x33F4C025)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: const Color(0x29F4C025),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.play_circle_outline,
+                color: Color(0xFFF4C025),
+                size: 26,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tr('watch_ad_support') == 'watch_ad_support'
+                        ? 'Support Developer'
+                        : tr('watch_ad_support'),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    tr('watch_ad_support_desc') == 'watch_ad_support_desc'
+                        ? 'Watch a short ad to help keep this app free'
+                        : tr('watch_ad_support_desc'),
+                    style: const TextStyle(
+                      color: Colors.white60,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.favorite,
+              color: Color(0xFFF4C025),
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleWatchAd() async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    if (!AdService.instance.isInterstitialAdReady) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            tr('ad_not_ready') == 'ad_not_ready'
+                ? 'Ad is not ready yet. Please try again later.'
+                : tr('ad_not_ready'),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final shown = await AdService.instance.showInterstitialAd(
+      timeout: const Duration(seconds: 7),
+    );
+
+    if (!mounted) return;
+
+    _refreshAdStatus();
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          shown
+              ? (tr('watch_ad_thanks') == 'watch_ad_thanks'
+                  ? 'Thank you for your support! ❤️'
+                  : tr('watch_ad_thanks'))
+              : (tr('ad_not_completed') == 'ad_not_completed'
+                  ? 'Ad could not be shown. Thanks anyway!'
+                  : tr('ad_not_completed')),
+        ),
+        duration: const Duration(seconds: 2),
       ),
     );
   }

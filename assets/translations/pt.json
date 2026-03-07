@@ -124,5 +124,8 @@
   "prayer_notifications_desc": "Ativar notificações locais para horários de oração",
   "notification_prayer_title": "Hora da Oração",
   "notification_prayer_arrived": "É hora do {prayer}",
-  "device_timezone": "Fuso horário do dispositivo"
+  "device_timezone": "Fuso horário do dispositivo",
+  "watch_ad_support": "Apoie o desenvolvedor",
+  "watch_ad_support_desc": "Assista a um anúncio curto para manter este app gratuito",
+  "watch_ad_thanks": "Obrigado pelo seu apoio! ❤️"
 } 

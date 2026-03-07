@@ -123,5 +123,8 @@
   "prayer_notifications_desc": "礼拝時間のローカル通知を有効にする",
   "notification_prayer_title": "礼拝の時間",
   "notification_prayer_arrived": "{prayer} の時間になりました",
-  "device_timezone": "デバイスのタイムゾーン"
+  "device_timezone": "デバイスのタイムゾーン",
+  "watch_ad_support": "開発者を応援",
+  "watch_ad_support_desc": "短い広告を見てアプリの無料提供を支援",
+  "watch_ad_thanks": "ご支援ありがとうございます！❤️"
 }   

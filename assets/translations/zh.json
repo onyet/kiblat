@@ -123,5 +123,8 @@
   "prayer_notifications_desc": "启用祈祷时间的本地通知",
   "notification_prayer_title": "祈祷时间",
   "notification_prayer_arrived": "到了{prayer}时间",
-  "device_timezone": "设备时区"
+  "device_timezone": "设备时区",
+  "watch_ad_support": "支持开发者",
+  "watch_ad_support_desc": "观看一段短广告以帮助保持此应用免费",
+  "watch_ad_thanks": "感谢您的支持！❤️"
 } 
