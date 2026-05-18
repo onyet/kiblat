@@ -11,9 +11,9 @@ class PageTransitions {
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         return FadeTransition(opacity: animation, child: child);
       },
-      transitionDuration: const Duration(milliseconds: 400),
-      reverseTransitionDuration: const Duration(milliseconds: 300),
-      opaque: false, // Optimize by rendering both screens during transition
+      transitionDuration: const Duration(milliseconds: 260),
+      reverseTransitionDuration: const Duration(milliseconds: 220),
+      opaque: false,
     );
   }
 
@@ -35,8 +35,8 @@ class PageTransitions {
 
         return SlideTransition(position: animation.drive(tween), child: child);
       },
-      transitionDuration: const Duration(milliseconds: 500),
-      reverseTransitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 320),
+      reverseTransitionDuration: const Duration(milliseconds: 260),
       opaque: true, // Opaque slide transition
     );
   }
@@ -59,8 +59,8 @@ class PageTransitions {
 
         return SlideTransition(position: animation.drive(tween), child: child);
       },
-      transitionDuration: const Duration(milliseconds: 500),
-      reverseTransitionDuration: const Duration(milliseconds: 400),
+      transitionDuration: const Duration(milliseconds: 320),
+      reverseTransitionDuration: const Duration(milliseconds: 260),
       opaque: false,
     );
   }
@@ -94,8 +94,8 @@ class PageTransitions {
           ),
         );
       },
-      transitionDuration: const Duration(milliseconds: 450),
-      reverseTransitionDuration: const Duration(milliseconds: 350),
+      transitionDuration: const Duration(milliseconds: 280),
+      reverseTransitionDuration: const Duration(milliseconds: 230),
       opaque: false,
     );
   }
@@ -127,8 +127,8 @@ class PageTransitions {
           ),
         );
       },
-      transitionDuration: const Duration(milliseconds: 400),
-      reverseTransitionDuration: const Duration(milliseconds: 300),
+      transitionDuration: const Duration(milliseconds: 260),
+      reverseTransitionDuration: const Duration(milliseconds: 220),
       opaque: false,
     );
   }

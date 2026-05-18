@@ -69,12 +69,13 @@
     </LinearLayout>
 
     <!-- Gold Divider -->
-    <View
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
-        android:background="#D4AF37" />
+        android:background="#D4AF37"
+        android:text="" />
 
     <!-- Bottom Section: Prayer Time -->
     <LinearLayout
@@ -122,12 +123,13 @@
         </LinearLayout>
 
         <!-- Vertical Divider -->
-        <View
+        <TextView
             android:layout_width="1dp"
             android:layout_height="20dp"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
-            android:background="#33D4AF37" />
+            android:background="#33D4AF37"
+            android:text="" />
 
         <!-- Next Prayer -->
         <LinearLayout

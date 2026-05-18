@@ -18,6 +18,7 @@ class AdService {
 
   RewardedAd? _rewardedAd;
   bool _isRewardedAdReady = false;
+  bool _isRewardedAdLoading = false;
   bool _isShowingRewarded = false;
 
   /// AdMob App ID: ca-app-pub-7967860040352202~1740407670
@@ -28,6 +29,8 @@ class AdService {
     testMode = enabled;
     debugPrint('[AdService] testMode set: $testMode');
   }
+
+  static bool get bypassRewardedGate => kDebugMode && testMode;
 
   static String get interstitialAdUnitId {
     if (testMode) {
@@ -281,12 +284,17 @@ class AdService {
       debugPrint('[AdService] Service disposed, not loading rewarded.');
       return;
     }
+    if (_isRewardedAdLoading) {
+      debugPrint('[AdService] Rewarded load already in progress, skipping.');
+      return;
+    }
     if (_rewardedAd != null) {
       debugPrint('[AdService] Rewarded already loaded, skipping.');
       return;
     }
 
     debugPrint('[AdService] Loading rewarded ad (unit: $rewardedAdUnitId)');
+    _isRewardedAdLoading = true;
 
     RewardedAd.load(
       adUnitId: rewardedAdUnitId,
@@ -296,10 +304,12 @@ class AdService {
           debugPrint('[AdService] Rewarded ad loaded');
           _rewardedAd = ad;
           _isRewardedAdReady = true;
+          _isRewardedAdLoading = false;
         },
         onAdFailedToLoad: (error) {
           debugPrint('[AdService] Rewarded ad failed to load: $error');
           _isRewardedAdReady = false;
+          _isRewardedAdLoading = false;
           // Retry after delay
           Future.delayed(const Duration(seconds: 30), () {
             if (!_isDisposed) loadRewardedAd();
@@ -307,6 +317,22 @@ class AdService {
         },
       ),
     );
+  }
+
+  Future<bool> waitForRewardedAdReady({
+    Duration timeout = const Duration(seconds: 10),
+  }) async {
+    if (bypassRewardedGate) return true;
+    if (_isRewardedAdReady && _rewardedAd != null) return true;
+
+    loadRewardedAd();
+
+    final deadline = DateTime.now().add(timeout);
+    while (DateTime.now().isBefore(deadline)) {
+      if (_isRewardedAdReady && _rewardedAd != null) return true;
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
+    return _isRewardedAdReady && _rewardedAd != null;
   }
 
   /// Show rewarded ad and wait for reward.
@@ -330,7 +356,9 @@ class AdService {
         debugPrint('[AdService] Rewarded ad showed');
       },
       onAdDismissedFullScreenContent: (ad) {
-        debugPrint('[AdService] Rewarded ad dismissed (earned=$userEarnedReward)');
+        debugPrint(
+          '[AdService] Rewarded ad dismissed (earned=$userEarnedReward)',
+        );
         try {
           ad.dispose();
         } catch (_) {}
@@ -385,8 +413,25 @@ class AdService {
   /// Cek apakah rewarded ad sudah siap
   bool get isRewardedAdReady => _isRewardedAdReady;
 
+  bool get isRewardedAdLoading => _isRewardedAdLoading;
+
   /// Cek apakah sedang menampilkan rewarded ad
   bool get isShowingRewarded => _isShowingRewarded;
+
+  void reloadRewardedAd() {
+    if (_isDisposed) {
+      debugPrint('[AdService] reload requested but service is disposed.');
+      return;
+    }
+    debugPrint('[AdService] Reloading rewarded ad (force)');
+    try {
+      _rewardedAd?.dispose();
+    } catch (_) {}
+    _rewardedAd = null;
+    _isRewardedAdReady = false;
+    _isRewardedAdLoading = false;
+    loadRewardedAd();
+  }
 
   /// Dispose resources
   void dispose() {
@@ -398,5 +443,6 @@ class AdService {
     _rewardedAd?.dispose();
     _rewardedAd = null;
     _isRewardedAdReady = false;
+    _isRewardedAdLoading = false;
   }
 }

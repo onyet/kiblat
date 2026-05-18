@@ -167,6 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       });
       AdService.setTestMode(val);
       AdService.instance.reloadInterstitialAd();
+      AdService.instance.reloadRewardedAd();
     } catch (_) {}
   }
 
@@ -204,6 +205,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       await prefs.setBool('ad_test_mode', value);
       AdService.setTestMode(value);
       AdService.instance.reloadInterstitialAd();
+      AdService.instance.reloadRewardedAd();
       if (!mounted) return;
       setState(() {
         _testAdMode = value;
@@ -1461,6 +1463,12 @@ class _SettingsScreenState extends State<SettingsScreen>
   /// Handle custom ringtone upload: show rewarded ad, then pick file
   Future<void> _handleCustomRingtoneUpload() async {
     final messenger = ScaffoldMessenger.of(context);
+    final adService = AdService.instance;
+
+    if (AdService.bypassRewardedGate) {
+      await _pickAndSaveRingtone();
+      return;
+    }
 
     // Show loading indicator
     messenger.showSnackBar(
@@ -1472,15 +1480,10 @@ class _SettingsScreenState extends State<SettingsScreen>
       ),
     );
 
-    // Show rewarded ad first
-    final adService = AdService.instance;
-    if (!adService.isRewardedAdReady) {
-      // Ad not ready, try to load and wait briefly
-      adService.loadRewardedAd();
-      await Future.delayed(const Duration(seconds: 3));
-    }
-
-    if (!adService.isRewardedAdReady) {
+    // Show rewarded ad first. Test ads can still load asynchronously, so wait a
+    // little instead of failing immediately.
+    final ready = await adService.waitForRewardedAdReady();
+    if (!ready) {
       if (!mounted) return;
       messenger.hideCurrentSnackBar();
       messenger.showSnackBar(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'screens/welcome_screen.dart';
@@ -97,12 +99,14 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
       final prayerSettings = SettingsService.instance.notifier.value;
       if (prayerSettings.enablePrayerNotifications) {
-        NotificationService.instance
-            .schedulePrayerNotificationsForCurrentLocation(prayerSettings);
+        unawaited(
+          NotificationService.instance
+              .schedulePrayerNotificationsForCurrentLocation(prayerSettings),
+        );
       }
 
       // Initialize home widget service for Android/iOS home screen widgets
-      HomeWidgetService.instance.initialize();
+      unawaited(HomeWidgetService.instance.initialize());
     });
   }
 
