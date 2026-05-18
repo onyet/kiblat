@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tzdata;
@@ -22,6 +23,9 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
+  static const MethodChannel _platformChannel = MethodChannel(
+    'id.onyet.app.kiblat/platform',
+  );
   bool _initialized = false;
 
   /// Current notification channel ID (changes when custom sound is set)
@@ -60,31 +64,101 @@ class NotificationService {
       await _maybeReschedule(ctx, s);
     });
 
-    // Ensure timezone data is initialized for scheduling
-    try {
-      tzdata.initializeTimeZones();
-    } catch (_) {}
+    await _configureLocalTimezone();
 
     _initialized = true;
   }
 
+  Future<void> _configureLocalTimezone([String? timezoneId]) async {
+    try {
+      tzdata.initializeTimeZones();
+    } catch (_) {}
+
+    String? localTimezoneId = timezoneId;
+    if (localTimezoneId == null || localTimezoneId.isEmpty) {
+      try {
+        localTimezoneId = await _platformChannel.invokeMethod<String>(
+          'getLocalTimezone',
+        );
+      } catch (_) {}
+    }
+
+    if (localTimezoneId == null || localTimezoneId.isEmpty) return;
+
+    try {
+      tz.setLocalLocation(tz.getLocation(localTimezoneId));
+    } catch (_) {
+      // Keep timezone's default UTC location if the OS returns an unknown ID.
+    }
+  }
+
+  Future<String?> _usableAndroidSoundUri(String? customSoundPath) async {
+    if (customSoundPath == null || customSoundPath.isEmpty) return null;
+    if (!Platform.isAndroid) return customSoundPath;
+
+    // Android's NotificationManager cannot reliably read app-private file
+    // paths. Use persisted content/resource URIs, otherwise fall back to the
+    // default channel sound instead of creating a broken custom channel.
+    if (customSoundPath.startsWith('content://') ||
+        customSoundPath.startsWith('android.resource://')) {
+      return customSoundPath;
+    }
+    return null;
+  }
+
+  String _channelIdForSound(String? soundUri) {
+    if (soundUri == null || soundUri.isEmpty) return 'prayer_times';
+
+    var hash = 2166136261;
+    for (final unit in soundUri.codeUnits) {
+      hash ^= unit;
+      hash = (hash * 16777619) & 0xffffffff;
+    }
+    return 'prayer_times_custom_${hash.toRadixString(16)}';
+  }
+
+  Future<AndroidScheduleMode> _resolveAndroidScheduleMode() async {
+    if (!Platform.isAndroid) return AndroidScheduleMode.exactAllowWhileIdle;
+
+    final androidPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (androidPlugin == null) return AndroidScheduleMode.inexactAllowWhileIdle;
+
+    try {
+      final canScheduleExact = await androidPlugin
+          .canScheduleExactNotifications();
+      if (canScheduleExact ?? false) {
+        return AndroidScheduleMode.exactAllowWhileIdle;
+      }
+    } catch (_) {}
+
+    return AndroidScheduleMode.inexactAllowWhileIdle;
+  }
+
   /// Create or update the notification channel with optional custom sound
   Future<void> _ensureNotificationChannel(String? customSoundPath) async {
-    final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (androidPlugin == null) return;
 
-    if (customSoundPath != null && customSoundPath.isNotEmpty) {
-      // Use a dedicated channel for custom sound
-      const newChannelId = 'prayer_times_custom';
+    final soundUri = await _usableAndroidSoundUri(customSoundPath);
 
-      // Delete old custom channel to reset sound setting
+    if (soundUri != null && soundUri.isNotEmpty) {
+      // Use a dedicated channel for custom sound
+      final newChannelId = _channelIdForSound(soundUri);
+
+      // Clean up the previous custom channel when changing sounds. Android
+      // channel sounds are immutable after first creation, so each sound gets a
+      // stable dedicated channel ID.
       try {
-        await androidPlugin.deleteNotificationChannel(newChannelId);
-      } catch (_) {}
-      // Also clean up default channel
-      try {
-        await androidPlugin.deleteNotificationChannel('prayer_times');
+        if (_currentChannelId != 'prayer_times' &&
+            _currentChannelId != newChannelId) {
+          await androidPlugin.deleteNotificationChannel(_currentChannelId);
+        }
       } catch (_) {}
 
       final channel = AndroidNotificationChannel(
@@ -92,7 +166,7 @@ class NotificationService {
         'Prayer times (Custom Adzan)',
         description: 'Adzan notifications for prayer times',
         importance: Importance.high,
-        sound: UriAndroidNotificationSound(customSoundPath),
+        sound: UriAndroidNotificationSound(soundUri),
         playSound: true,
       );
       await androidPlugin.createNotificationChannel(channel);
@@ -100,7 +174,9 @@ class NotificationService {
     } else {
       // Delete custom channel if switching back to default
       try {
-        await androidPlugin.deleteNotificationChannel('prayer_times_custom');
+        if (_currentChannelId != 'prayer_times') {
+          await androidPlugin.deleteNotificationChannel(_currentChannelId);
+        }
       } catch (_) {}
 
       const channel = AndroidNotificationChannel(
@@ -126,8 +202,10 @@ class NotificationService {
   /// Check if notification permissions are granted (Android 13+)
   Future<bool> areNotificationsEnabled() async {
     if (Platform.isAndroid) {
-      final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final androidPlugin = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (androidPlugin != null) {
         final enabled = await androidPlugin.areNotificationsEnabled();
         return enabled ?? false;
@@ -141,8 +219,10 @@ class NotificationService {
   /// Returns true if permission was granted
   Future<bool> requestPermissions() async {
     if (Platform.isAndroid) {
-      final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final androidPlugin = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       if (androidPlugin != null) {
         final granted = await androidPlugin.requestNotificationsPermission();
         return granted ?? false;
@@ -150,8 +230,10 @@ class NotificationService {
     }
 
     if (Platform.isIOS) {
-      final iosPlugin = _plugin.resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin>();
+      final iosPlugin = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
       if (iosPlugin != null) {
         final granted = await iosPlugin.requestPermissions(
           alert: true,
@@ -218,6 +300,7 @@ class NotificationService {
   ) async {
     // Cancel existing prayer notifications first
     await cancelAllPrayerNotifications();
+    await _configureLocalTimezone(settings.timezoneId);
 
     // Capture context early to avoid using BuildContext across async gaps
     final ctx = _navigatorKey?.currentContext;
@@ -234,8 +317,12 @@ class NotificationService {
     );
 
     // Build notification details with custom sound if set
-    final hasCustomSound = settings.customRingtonePath != null &&
-        settings.customRingtonePath!.isNotEmpty;
+    final customSoundUri = await _usableAndroidSoundUri(
+      settings.customRingtonePath,
+    );
+    final hasCustomSound = customSoundUri != null && customSoundUri.isNotEmpty;
+    await _ensureNotificationChannel(settings.customRingtonePath);
+    final androidScheduleMode = await _resolveAndroidScheduleMode();
 
     // We schedule notifications only for main prayers Fajr, Dhuhr, Asr, Maghrib, Isha
     final mainNames = {'Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'};
@@ -282,13 +369,13 @@ class NotificationService {
             priority: Priority.high,
             ticker: 'prayer',
             sound: hasCustomSound
-                ? UriAndroidNotificationSound(settings.customRingtonePath!)
+                ? UriAndroidNotificationSound(customSoundUri)
                 : null,
             playSound: true,
           ),
           iOS: const DarwinNotificationDetails(),
         ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: androidScheduleMode,
         matchDateTimeComponents: DateTimeComponents.time,
         payload: prayer.name,
       );

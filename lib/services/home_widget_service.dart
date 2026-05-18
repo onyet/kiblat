@@ -6,7 +6,7 @@ import 'package:kiblat/services/prayer_service.dart' as ps;
 import 'package:kiblat/models/prayer_settings_model.dart';
 
 /// Service to manage home screen widget data updates
-/// 
+///
 /// Prinsip utama (dari WIDGET_HOME.md):
 /// - Widget HARUS bisa dirender walau semua data NULL
 /// - Selalu set default value
@@ -46,7 +46,7 @@ class HomeWidgetService {
   /// Initialize widget service and register callbacks
   Future<void> initialize() async {
     if (_initialized) return;
-    
+
     try {
       // Set the app group ID for iOS (not used on Android but doesn't hurt)
       await HomeWidget.setAppGroupId(appGroupId);
@@ -63,7 +63,7 @@ class HomeWidgetService {
       _updateTimer = Timer.periodic(const Duration(minutes: 5), (_) {
         _updateWidgetDataSafely();
       });
-      
+
       _initialized = true;
 
       // Register background callback for widget interactions (e.g., refresh button)
@@ -86,13 +86,18 @@ class HomeWidgetService {
   Future<void> _initializeDefaultData() async {
     try {
       // Cek apakah sudah ada data
-      final existingDegree = await HomeWidget.getWidgetData<double>(keyQiblaDegree);
-      
+      final existingDegree = await HomeWidget.getWidgetData<double>(
+        keyQiblaDegree,
+      );
+
       // Jika belum ada data, set defaults
       if (existingDegree == null) {
         await Future.wait([
           HomeWidget.saveWidgetData<double>(keyQiblaDegree, defaultQiblaDegree),
-          HomeWidget.saveWidgetData<String>(keyQiblaDirection, defaultDirection),
+          HomeWidget.saveWidgetData<String>(
+            keyQiblaDirection,
+            defaultDirection,
+          ),
           HomeWidget.saveWidgetData<String>(keyLocationName, defaultLocation),
           HomeWidget.saveWidgetData<String>(keyCurrentPrayer, defaultPrayer),
           HomeWidget.saveWidgetData<String>(keyCurrentPrayerTime, defaultTime),
@@ -102,7 +107,7 @@ class HomeWidgetService {
           HomeWidget.saveWidgetData<double>(keyLatitude, 0.0),
           HomeWidget.saveWidgetData<double>(keyLongitude, 0.0),
         ]);
-        
+
         // Request widget update dengan data default
         await _updateWidget();
       }
@@ -144,7 +149,9 @@ class HomeWidgetService {
             settings: settings,
           );
 
-          final fardPrayers = dailyPrayers.prayers.where((p) => !p.isSunnah).toList();
+          final fardPrayers = dailyPrayers.prayers
+              .where((p) => !p.isSunnah)
+              .toList();
           String currentPrayer = '--';
           String currentPrayerTime = '--:--';
           String nextPrayer = '--';
@@ -162,16 +169,32 @@ class HomeWidgetService {
             }
           }
 
+          if (nextPrayer == '--' && fardPrayers.isNotEmpty) {
+            nextPrayer = fardPrayers.first.name;
+            nextPrayerTime = fardPrayers.first.timeString;
+          }
+
           await Future.wait([
             HomeWidget.saveWidgetData<double>('qibla_degree', qiblaDeg),
-            HomeWidget.saveWidgetData<String>('qibla_direction', qiblaDirection),
+            HomeWidget.saveWidgetData<String>(
+              'qibla_direction',
+              qiblaDirection,
+            ),
             HomeWidget.saveWidgetData<String>('location_name', locationName),
             HomeWidget.saveWidgetData<String>('current_prayer', currentPrayer),
-            HomeWidget.saveWidgetData<String>('current_prayer_time', currentPrayerTime),
+            HomeWidget.saveWidgetData<String>(
+              'current_prayer_time',
+              currentPrayerTime,
+            ),
             HomeWidget.saveWidgetData<String>('next_prayer', nextPrayer),
-            HomeWidget.saveWidgetData<String>('next_prayer_time', nextPrayerTime),
-            HomeWidget.saveWidgetData<String>('last_updated',
-                '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}'),
+            HomeWidget.saveWidgetData<String>(
+              'next_prayer_time',
+              nextPrayerTime,
+            ),
+            HomeWidget.saveWidgetData<String>(
+              'last_updated',
+              '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+            ),
           ]);
           await HomeWidget.updateWidget(
             name: androidWidgetName,
@@ -213,24 +236,27 @@ class HomeWidgetService {
       // Try to get current position if no cached location
       if (lat == null || lon == null) {
         try {
-          final position = await LocationService.getCurrentPosition()
-              .timeout(const Duration(seconds: 10));
+          final position = await LocationService.getCurrentPosition().timeout(
+            const Duration(seconds: 10),
+          );
           lat = position.latitude;
           lon = position.longitude;
           try {
-            locationName = await LocationService.reverseGeocode(lat, lon)
-                .timeout(const Duration(seconds: 5));
+            locationName = await LocationService.reverseGeocode(
+              lat,
+              lon,
+            ).timeout(const Duration(seconds: 5));
           } catch (_) {
             // reverseGeocode failed, use coordinates
           }
           if (locationName.isEmpty) {
-            locationName = '${lat.toStringAsFixed(2)}, ${lon.toStringAsFixed(2)}';
+            locationName =
+                '${lat.toStringAsFixed(2)}, ${lon.toStringAsFixed(2)}';
           }
+          await LocationService.saveLastLocation(locationName, lat, lon);
         } catch (e) {
-          // Use default values if location unavailable
-          lat = 0.0;
-          lon = 0.0;
-          locationName = 'Location unavailable';
+          await _saveUnavailableWidgetData();
+          return;
         }
       }
 
@@ -255,12 +281,14 @@ class HomeWidgetService {
       String nextPrayerTime = '';
 
       // Get only fard prayers (exclude sunnah)
-      final fardPrayers = dailyPrayers.prayers.where((p) => !p.isSunnah).toList();
-      
+      final fardPrayers = dailyPrayers.prayers
+          .where((p) => !p.isSunnah)
+          .toList();
+
       // Find current active prayer (most recent past prayer)
       ps.PrayerTime? current;
       ps.PrayerTime? next;
-      
+
       for (int i = fardPrayers.length - 1; i >= 0; i--) {
         if (fardPrayers[i].time.isBefore(now)) {
           current = fardPrayers[i];
@@ -289,7 +317,9 @@ class HomeWidgetService {
       } else {
         // Next prayer is Fajr tomorrow
         nextPrayer = 'Fajr';
-        nextPrayerTime = fardPrayers.isNotEmpty ? fardPrayers.first.timeString : '--:--';
+        nextPrayerTime = fardPrayers.isNotEmpty
+            ? fardPrayers.first.timeString
+            : '--:--';
       }
 
       // Save data to widget storage
@@ -298,7 +328,10 @@ class HomeWidgetService {
         HomeWidget.saveWidgetData<String>(keyQiblaDirection, qiblaDirection),
         HomeWidget.saveWidgetData<String>(keyLocationName, locationName),
         HomeWidget.saveWidgetData<String>(keyCurrentPrayer, currentPrayer),
-        HomeWidget.saveWidgetData<String>(keyCurrentPrayerTime, currentPrayerTime),
+        HomeWidget.saveWidgetData<String>(
+          keyCurrentPrayerTime,
+          currentPrayerTime,
+        ),
         HomeWidget.saveWidgetData<String>(keyNextPrayer, nextPrayer),
         HomeWidget.saveWidgetData<String>(keyNextPrayerTime, nextPrayerTime),
         HomeWidget.saveWidgetData<String>(keyLastUpdated, _formatTime(now)),
@@ -313,6 +346,21 @@ class HomeWidgetService {
     }
   }
 
+  Future<void> _saveUnavailableWidgetData() async {
+    await Future.wait([
+      HomeWidget.saveWidgetData<String>(keyLocationName, defaultLocation),
+      HomeWidget.saveWidgetData<String>(keyCurrentPrayer, defaultPrayer),
+      HomeWidget.saveWidgetData<String>(keyCurrentPrayerTime, defaultTime),
+      HomeWidget.saveWidgetData<String>(keyNextPrayer, defaultPrayer),
+      HomeWidget.saveWidgetData<String>(keyNextPrayerTime, defaultTime),
+      HomeWidget.saveWidgetData<String>(
+        keyLastUpdated,
+        _formatTime(DateTime.now()),
+      ),
+    ]);
+    await _updateWidget();
+  }
+
   /// Update specific prayer data (called when prayer times change)
   Future<void> updatePrayerData({
     required String currentPrayer,
@@ -322,11 +370,26 @@ class HomeWidgetService {
   }) async {
     try {
       await Future.wait([
-        HomeWidget.saveWidgetData<String>(keyCurrentPrayer, currentPrayer.isNotEmpty ? currentPrayer : defaultPrayer),
-        HomeWidget.saveWidgetData<String>(keyCurrentPrayerTime, currentPrayerTime.isNotEmpty ? currentPrayerTime : defaultTime),
-        HomeWidget.saveWidgetData<String>(keyNextPrayer, nextPrayer.isNotEmpty ? nextPrayer : defaultPrayer),
-        HomeWidget.saveWidgetData<String>(keyNextPrayerTime, nextPrayerTime.isNotEmpty ? nextPrayerTime : defaultTime),
-        HomeWidget.saveWidgetData<String>(keyLastUpdated, _formatTime(DateTime.now())),
+        HomeWidget.saveWidgetData<String>(
+          keyCurrentPrayer,
+          currentPrayer.isNotEmpty ? currentPrayer : defaultPrayer,
+        ),
+        HomeWidget.saveWidgetData<String>(
+          keyCurrentPrayerTime,
+          currentPrayerTime.isNotEmpty ? currentPrayerTime : defaultTime,
+        ),
+        HomeWidget.saveWidgetData<String>(
+          keyNextPrayer,
+          nextPrayer.isNotEmpty ? nextPrayer : defaultPrayer,
+        ),
+        HomeWidget.saveWidgetData<String>(
+          keyNextPrayerTime,
+          nextPrayerTime.isNotEmpty ? nextPrayerTime : defaultTime,
+        ),
+        HomeWidget.saveWidgetData<String>(
+          keyLastUpdated,
+          _formatTime(DateTime.now()),
+        ),
       ]);
       await _updateWidget();
     } catch (e) {
@@ -346,10 +409,16 @@ class HomeWidgetService {
       await Future.wait([
         HomeWidget.saveWidgetData<double>(keyQiblaDegree, qiblaDegree),
         HomeWidget.saveWidgetData<String>(keyQiblaDirection, qiblaDirection),
-        HomeWidget.saveWidgetData<String>(keyLocationName, locationName.isNotEmpty ? locationName : defaultLocation),
+        HomeWidget.saveWidgetData<String>(
+          keyLocationName,
+          locationName.isNotEmpty ? locationName : defaultLocation,
+        ),
         HomeWidget.saveWidgetData<double>(keyLatitude, latitude),
         HomeWidget.saveWidgetData<double>(keyLongitude, longitude),
-        HomeWidget.saveWidgetData<String>(keyLastUpdated, _formatTime(DateTime.now())),
+        HomeWidget.saveWidgetData<String>(
+          keyLastUpdated,
+          _formatTime(DateTime.now()),
+        ),
       ]);
       await _updateWidget();
     } catch (e) {

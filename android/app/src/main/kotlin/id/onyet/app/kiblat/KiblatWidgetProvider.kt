@@ -11,6 +11,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.util.Log
 import androidx.core.content.ContextCompat
+import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 import es.antonborri.home_widget.HomeWidgetProvider
 
 /**
@@ -233,16 +234,9 @@ class KiblatWidgetProvider : HomeWidgetProvider() {
         views.setOnClickPendingIntent(R.id.widget_container, openAppPendingIntent)
 
         // Click pada refresh button
-        val refreshIntent = Intent(context, KiblatWidgetProvider::class.java).apply {
-            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, intArrayOf(widgetId))
-            data = Uri.parse("homewidget://refresh")
-        }
-        val refreshPendingIntent = PendingIntent.getBroadcast(
+        val refreshPendingIntent = HomeWidgetBackgroundIntent.getBroadcast(
             context,
-            widgetId,
-            refreshIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            Uri.parse("homewidget://refresh")
         )
         views.setOnClickPendingIntent(R.id.refresh_button, refreshPendingIntent)
     }

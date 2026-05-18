@@ -19,7 +19,7 @@ import 'package:kiblat/services/home_widget_service.dart';
 Future<void> _migrateIndonesianLocale() async {
   final prefs = await SharedPreferences.getInstance();
   final savedLocale = prefs.getString('locale');
-  
+
   // Check if saved locale is the old 'id' code (could be 'id', 'id_', 'id_ID', etc.)
   if (savedLocale != null && savedLocale.startsWith('id')) {
     // Migrate to new 'in' code
@@ -29,10 +29,10 @@ Future<void> _migrateIndonesianLocale() async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Migrate old 'id' locale to 'in' for existing users before EasyLocalization init
   await _migrateIndonesianLocale();
-  
+
   await EasyLocalization.ensureInitialized();
 
   // Enable test mode in debug for easier ad testing
@@ -89,11 +89,18 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     AdService.initialize();
 
     // Initialize notifications and load settings after first frame to avoid blocking UI
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Load persisted settings into the global SettingsService so listeners can react
-      SettingsService.instance.load();
+      await SettingsService.instance.load();
 
-      NotificationService.instance.initialize(_navigatorKey);
+      await NotificationService.instance.initialize(_navigatorKey);
+
+      final prayerSettings = SettingsService.instance.notifier.value;
+      if (prayerSettings.enablePrayerNotifications) {
+        NotificationService.instance
+            .schedulePrayerNotificationsForCurrentLocation(prayerSettings);
+      }
+
       // Initialize home widget service for Android/iOS home screen widgets
       HomeWidgetService.instance.initialize();
     });

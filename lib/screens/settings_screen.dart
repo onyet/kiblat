@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/ad_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:kiblat/models/prayer_settings_model.dart';
 import 'package:kiblat/services/settings_service.dart';
 import 'package:adhan/adhan.dart';
@@ -27,6 +28,10 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen>
     with SingleTickerProviderStateMixin {
+  static const MethodChannel _platformChannel = MethodChannel(
+    'id.onyet.app.kiblat/platform',
+  );
+
   bool _locationActive = false;
   bool _compassAvailable = false;
   bool _testAdMode = false;
@@ -81,7 +86,8 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   void _refreshAdStatus() {
-    final ready = AdService.instance.isInterstitialAdReady &&
+    final ready =
+        AdService.instance.isInterstitialAdReady &&
         !AdService.instance.isShowingInterstitial;
     if (ready != _isInterstitialAdReady && mounted) {
       setState(() {
@@ -101,7 +107,8 @@ class _SettingsScreenState extends State<SettingsScreen>
     // Check notification permission
     bool notifEnabled = false;
     try {
-      notifEnabled = await NotificationService.instance.areNotificationsEnabled();
+      notifEnabled = await NotificationService.instance
+          .areNotificationsEnabled();
     } catch (_) {}
 
     if (!mounted) return;
@@ -485,38 +492,52 @@ class _SettingsScreenState extends State<SettingsScreen>
                     // Time format (24h / 12h)
                     _buildStatusTile(
                       icon: Icons.access_time,
-                      title: tr('time_format') == 'time_format' ? 'Time Format' : tr('time_format'),
+                      title: tr('time_format') == 'time_format'
+                          ? 'Time Format'
+                          : tr('time_format'),
                       subtitle: (_prayerSettings?.use24Hour ?? true)
-                          ? (tr('time_format_24') == 'time_format_24' ? '24-hour' : tr('time_format_24'))
-                          : (tr('time_format_12') == 'time_format_12' ? '12-hour (AM/PM)' : tr('time_format_12')),
+                          ? (tr('time_format_24') == 'time_format_24'
+                                ? '24-hour'
+                                : tr('time_format_24'))
+                          : (tr('time_format_12') == 'time_format_12'
+                                ? '12-hour (AM/PM)'
+                                : tr('time_format_12')),
                       trailing: Switch(
                         value: _prayerSettings?.use24Hour ?? true,
                         activeThumbColor: const Color(0xFFF4C025),
                         onChanged: (v) => _toggleTimeFormat(v),
                       ),
-                      onTap: () => _toggleTimeFormat(!(_prayerSettings?.use24Hour ?? true)),
+                      onTap: () => _toggleTimeFormat(
+                        !(_prayerSettings?.use24Hour ?? true),
+                      ),
                     ),
                     const SizedBox(height: 12),
 
                     // Prayer notifications with permission status
                     _buildStatusTile(
                       icon: Icons.notifications,
-                      title: tr('prayer_notifications') == 'prayer_notifications'
+                      title:
+                          tr('prayer_notifications') == 'prayer_notifications'
                           ? 'Prayer notifications'
                           : tr('prayer_notifications'),
                       subtitle: !_notificationPermissionGranted
-                          ? (tr('notification_permission_off') == 'notification_permission_off'
-                              ? 'Notification permission is OFF. Tap to enable.'
-                              : tr('notification_permission_off'))
-                          : (tr('prayer_notifications_desc') == 'prayer_notifications_desc'
-                              ? 'Enable local notifications for prayer times'
-                              : tr('prayer_notifications_desc')),
+                          ? (tr('notification_permission_off') ==
+                                    'notification_permission_off'
+                                ? 'Notification permission is OFF. Tap to enable.'
+                                : tr('notification_permission_off'))
+                          : (tr('prayer_notifications_desc') ==
+                                    'prayer_notifications_desc'
+                                ? 'Enable local notifications for prayer times'
+                                : tr('prayer_notifications_desc')),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (!_notificationPermissionGranted)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 3,
+                              ),
                               margin: const EdgeInsets.only(right: 8),
                               decoration: BoxDecoration(
                                 color: Colors.red.withAlpha(30),
@@ -532,37 +553,57 @@ class _SettingsScreenState extends State<SettingsScreen>
                               ),
                             ),
                           Switch(
-                            value: _notificationPermissionGranted && (_prayerSettings?.enablePrayerNotifications ?? true),
+                            value:
+                                _notificationPermissionGranted &&
+                                (_prayerSettings?.enablePrayerNotifications ??
+                                    true),
                             activeThumbColor: const Color(0xFFF4C025),
                             onChanged: (v) async {
                               if (!_notificationPermissionGranted) {
                                 // Request permission first
-                                final granted = await NotificationService.instance.requestPermissions();
+                                final granted = await NotificationService
+                                    .instance
+                                    .requestPermissions();
                                 if (!mounted) return;
                                 setState(() {
                                   _notificationPermissionGranted = granted;
                                 });
                                 if (!granted) {
                                   _showInfoDialog(
-                                    tr('notification_permission_title') == 'notification_permission_title'
+                                    tr('notification_permission_title') ==
+                                            'notification_permission_title'
                                         ? 'Notification Permission'
                                         : tr('notification_permission_title'),
-                                    tr('notification_permission_msg_denied') == 'notification_permission_msg_denied'
+                                    tr('notification_permission_msg_denied') ==
+                                            'notification_permission_msg_denied'
                                         ? 'Please enable notification permission in your device settings to receive prayer time notifications.'
-                                        : tr('notification_permission_msg_denied'),
+                                        : tr(
+                                            'notification_permission_msg_denied',
+                                          ),
                                   );
                                   return;
                                 }
                               }
                               setState(() {
-                                _prayerSettings = _prayerSettings?.copyWith(enablePrayerNotifications: v) ?? PrayerSettings(enablePrayerNotifications: v);
+                                _prayerSettings =
+                                    _prayerSettings?.copyWith(
+                                      enablePrayerNotifications: v,
+                                    ) ??
+                                    PrayerSettings(
+                                      enablePrayerNotifications: v,
+                                    );
                               });
                               await _persistPrayerSettings();
                               if (!mounted) return;
-                              if (_prayerSettings?.enablePrayerNotifications ?? true) {
-                                await NotificationService.instance.schedulePrayerNotificationsForCurrentLocation(_prayerSettings!);
+                              if (_prayerSettings?.enablePrayerNotifications ??
+                                  true) {
+                                await NotificationService.instance
+                                    .schedulePrayerNotificationsForCurrentLocation(
+                                      _prayerSettings!,
+                                    );
                               } else {
-                                await NotificationService.instance.cancelAllPrayerNotifications();
+                                await NotificationService.instance
+                                    .cancelAllPrayerNotifications();
                               }
                             },
                           ),
@@ -570,33 +611,47 @@ class _SettingsScreenState extends State<SettingsScreen>
                       ),
                       onTap: () async {
                         if (!_notificationPermissionGranted) {
-                          final granted = await NotificationService.instance.requestPermissions();
+                          final granted = await NotificationService.instance
+                              .requestPermissions();
                           if (!mounted) return;
                           setState(() {
                             _notificationPermissionGranted = granted;
                           });
                           if (!granted) {
                             _showInfoDialog(
-                              tr('notification_permission_title') == 'notification_permission_title'
+                              tr('notification_permission_title') ==
+                                      'notification_permission_title'
                                   ? 'Notification Permission'
                                   : tr('notification_permission_title'),
-                              tr('notification_permission_msg_denied') == 'notification_permission_msg_denied'
+                              tr('notification_permission_msg_denied') ==
+                                      'notification_permission_msg_denied'
                                   ? 'Please enable notification permission in your device settings.'
                                   : tr('notification_permission_msg_denied'),
                             );
                           }
                           return;
                         }
-                        final newVal = !(_prayerSettings?.enablePrayerNotifications ?? true);
+                        final newVal =
+                            !(_prayerSettings?.enablePrayerNotifications ??
+                                true);
                         setState(() {
-                          _prayerSettings = _prayerSettings?.copyWith(enablePrayerNotifications: newVal) ?? PrayerSettings(enablePrayerNotifications: newVal);
+                          _prayerSettings =
+                              _prayerSettings?.copyWith(
+                                enablePrayerNotifications: newVal,
+                              ) ??
+                              PrayerSettings(enablePrayerNotifications: newVal);
                         });
                         await _persistPrayerSettings();
                         if (!mounted) return;
-                        if (_prayerSettings?.enablePrayerNotifications ?? true) {
-                          await NotificationService.instance.schedulePrayerNotificationsForCurrentLocation(_prayerSettings!);
+                        if (_prayerSettings?.enablePrayerNotifications ??
+                            true) {
+                          await NotificationService.instance
+                              .schedulePrayerNotificationsForCurrentLocation(
+                                _prayerSettings!,
+                              );
                         } else {
-                          await NotificationService.instance.cancelAllPrayerNotifications();
+                          await NotificationService.instance
+                              .cancelAllPrayerNotifications();
                         }
                       },
                     ),
@@ -607,7 +662,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                       title: tr('custom_ringtone') == 'custom_ringtone'
                           ? 'Custom Adzan Ringtone'
                           : tr('custom_ringtone'),
-                      subtitle: _prayerSettings?.customRingtoneName ??
+                      subtitle:
+                          _prayerSettings?.customRingtoneName ??
                           (tr('default_ringtone') == 'default_ringtone'
                               ? 'Default'
                               : tr('default_ringtone')),
@@ -879,19 +935,12 @@ class _SettingsScreenState extends State<SettingsScreen>
                     tr('watch_ad_support_desc') == 'watch_ad_support_desc'
                         ? 'Watch a short ad to help keep this app free'
                         : tr('watch_ad_support_desc'),
-                    style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 11,
-                    ),
+                    style: const TextStyle(color: Colors.white60, fontSize: 11),
                   ),
                 ],
               ),
             ),
-            const Icon(
-              Icons.favorite,
-              color: Color(0xFFF4C025),
-              size: 20,
-            ),
+            const Icon(Icons.favorite, color: Color(0xFFF4C025), size: 20),
           ],
         ),
       ),
@@ -927,11 +976,11 @@ class _SettingsScreenState extends State<SettingsScreen>
         content: Text(
           shown
               ? (tr('watch_ad_thanks') == 'watch_ad_thanks'
-                  ? 'Thank you for your support! ❤️'
-                  : tr('watch_ad_thanks'))
+                    ? 'Thank you for your support! ❤️'
+                    : tr('watch_ad_thanks'))
               : (tr('ad_not_completed') == 'ad_not_completed'
-                  ? 'Ad could not be shown. Thanks anyway!'
-                  : tr('ad_not_completed')),
+                    ? 'Ad could not be shown. Thanks anyway!'
+                    : tr('ad_not_completed')),
         ),
         duration: const Duration(seconds: 2),
       ),
@@ -1287,14 +1336,17 @@ class _SettingsScreenState extends State<SettingsScreen>
       timezoneId: _selectedTimezoneId == 'Device Timezone'
           ? null
           : _selectedTimezoneId,
-      enablePrayerNotifications: _prayerSettings?.enablePrayerNotifications ?? true,
+      enablePrayerNotifications:
+          _prayerSettings?.enablePrayerNotifications ?? true,
       customRingtonePath: _prayerSettings?.customRingtonePath,
       customRingtoneName: _prayerSettings?.customRingtoneName,
     );
 
     try {
       // Ensure we carry over the time format preference when saving
-      final withFormat = newSettings.copyWith(use24Hour: _prayerSettings?.use24Hour ?? newSettings.use24Hour);
+      final withFormat = newSettings.copyWith(
+        use24Hour: _prayerSettings?.use24Hour ?? newSettings.use24Hour,
+      );
 
       // Persist and notify via SettingsService so other screens can react immediately
       await SettingsService.instance.update(withFormat);
@@ -1330,7 +1382,9 @@ class _SettingsScreenState extends State<SettingsScreen>
   void _toggleTimeFormat(bool use24) {
     if (!mounted) return;
     setState(() {
-      _prayerSettings = _prayerSettings?.copyWith(use24Hour: use24) ?? PrayerSettings(use24Hour: use24);
+      _prayerSettings =
+          _prayerSettings?.copyWith(use24Hour: use24) ??
+          PrayerSettings(use24Hour: use24);
     });
     _persistPrayerSettings();
   }
@@ -1412,9 +1466,7 @@ class _SettingsScreenState extends State<SettingsScreen>
     messenger.showSnackBar(
       SnackBar(
         content: Text(
-          tr('loading_ad') == 'loading_ad'
-              ? 'Loading ad...'
-              : tr('loading_ad'),
+          tr('loading_ad') == 'loading_ad' ? 'Loading ad...' : tr('loading_ad'),
         ),
         duration: const Duration(seconds: 2),
       ),
@@ -1471,6 +1523,49 @@ class _SettingsScreenState extends State<SettingsScreen>
     final messenger = ScaffoldMessenger.of(context);
 
     try {
+      if (Platform.isAndroid) {
+        final result = await _platformChannel.invokeMapMethod<String, String>(
+          'pickNotificationSound',
+        );
+
+        if (result == null) return;
+
+        final uri = result['uri'];
+        if (uri == null || uri.isEmpty) return;
+
+        final fileName = result['name'] ?? 'Custom adzan';
+
+        if (!mounted) return;
+        setState(() {
+          _prayerSettings =
+              _prayerSettings?.copyWith(
+                customRingtonePath: uri,
+                customRingtoneName: fileName,
+              ) ??
+              PrayerSettings(
+                customRingtonePath: uri,
+                customRingtoneName: fileName,
+              );
+        });
+        await _persistPrayerSettings(showToast: false);
+
+        if (_prayerSettings?.enablePrayerNotifications ?? false) {
+          await NotificationService.instance
+              .schedulePrayerNotificationsForCurrentLocation(_prayerSettings!);
+        }
+
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              tr('ringtone_set_success') == 'ringtone_set_success'
+                  ? 'Custom adzan ringtone set: $fileName'
+                  : tr('ringtone_set_success'),
+            ),
+          ),
+        );
+        return;
+      }
+
       final result = await FilePicker.platform.pickFiles(
         type: FileType.audio,
         allowMultiple: false,
@@ -1497,13 +1592,15 @@ class _SettingsScreenState extends State<SettingsScreen>
 
       if (!mounted) return;
       setState(() {
-        _prayerSettings = _prayerSettings?.copyWith(
-          customRingtonePath: destPath,
-          customRingtoneName: fileName,
-        ) ?? PrayerSettings(
-          customRingtonePath: destPath,
-          customRingtoneName: fileName,
-        );
+        _prayerSettings =
+            _prayerSettings?.copyWith(
+              customRingtonePath: destPath,
+              customRingtoneName: fileName,
+            ) ??
+            PrayerSettings(
+              customRingtonePath: destPath,
+              customRingtoneName: fileName,
+            );
       });
       await _persistPrayerSettings(showToast: false);
 
@@ -1539,7 +1636,8 @@ class _SettingsScreenState extends State<SettingsScreen>
   Future<void> _resetRingtone() async {
     if (!mounted) return;
     setState(() {
-      _prayerSettings = _prayerSettings?.copyWith(clearCustomRingtone: true) ??
+      _prayerSettings =
+          _prayerSettings?.copyWith(clearCustomRingtone: true) ??
           PrayerSettings();
     });
     await _persistPrayerSettings(showToast: false);
