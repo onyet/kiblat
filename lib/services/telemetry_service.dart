@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:kiblat/services/settings_service.dart';
 
 /// Lightweight telemetry helper for QA and debugging.
 /// Currently logs to console. Can be extended to integrate analytics later.
@@ -8,6 +9,8 @@ class TelemetryService {
   TelemetryService._();
 
   void logEvent(String name, [Map<String, dynamic>? params]) {
+    final settings = SettingsService.instance.notifier.value;
+    if (settings.isProUser) return; // Zero telemetry for Pro
     debugPrint('[Telemetry] $name ${params ?? {}}');
   }
 

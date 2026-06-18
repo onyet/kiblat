@@ -11,6 +11,7 @@ class HomeCompass extends StatelessWidget {
   final double qiblaDeg;
   final double distanceKm;
   final bool isLocationReady;
+  final String theme;
 
   const HomeCompass({
     super.key,
@@ -18,6 +19,7 @@ class HomeCompass extends StatelessWidget {
     required this.qiblaDeg,
     required this.distanceKm,
     required this.isLocationReady,
+    this.theme = 'classic',
   });
 
   String _dirFromDegree(double deg) {
@@ -36,6 +38,60 @@ class HomeCompass extends StatelessWidget {
           ..maximumFractionDigits = 1;
     final String formattedDistance = distFmt.format(distanceKm);
 
+    // Resolve theme colors
+    final Color primaryColor;
+    final Color secondaryColor;
+    final Color circularBorder1;
+    final Color circularBorder2;
+    final Color shadowColor;
+    final Color distanceBg;
+    final Color distanceText;
+    final Color northColor;
+
+    switch (theme) {
+      case 'gold':
+        primaryColor = const Color(0xFFD4AF37); // Gold
+        secondaryColor = const Color(0xFFD4AF37).withOpacity(0.5);
+        circularBorder1 = const Color(0xFFD4AF37).withOpacity(0.25);
+        circularBorder2 = const Color(0xFFD4AF37).withOpacity(0.4);
+        shadowColor = const Color(0xFFD4AF37).withOpacity(0.15);
+        distanceBg = const Color(0xFF1F1B0F);
+        distanceText = const Color(0xFFFCF6BA);
+        northColor = const Color(0xFFD4AF37);
+        break;
+      case 'dark':
+        primaryColor = Colors.white;
+        secondaryColor = Colors.white.withOpacity(0.2);
+        circularBorder1 = Colors.white.withOpacity(0.05);
+        circularBorder2 = Colors.white.withOpacity(0.1);
+        shadowColor = Colors.white.withOpacity(0.05);
+        distanceBg = const Color(0xFF121212);
+        distanceText = Colors.white60;
+        northColor = Colors.white;
+        break;
+      case 'cyber':
+        primaryColor = const Color(0xFF00E6FF); // Cyber Cyan
+        secondaryColor = const Color(0xFF00FF87).withOpacity(0.5); // Cyber Green
+        circularBorder1 = const Color(0xFF00E6FF).withOpacity(0.2);
+        circularBorder2 = const Color(0xFF00E6FF).withOpacity(0.4);
+        shadowColor = const Color(0xFF00E6FF).withOpacity(0.15);
+        distanceBg = const Color(0xFF081C1F);
+        distanceText = const Color(0xFF00FF87);
+        northColor = const Color(0xFF00E6FF);
+        break;
+      case 'classic':
+      default:
+        primaryColor = const Color(0xFFF4C025); // Classic Yellow/Gold
+        secondaryColor = Colors.white24;
+        circularBorder1 = Colors.white10;
+        circularBorder2 = Colors.white12;
+        shadowColor = const Color(0xFFF4C025).withOpacity(0.06);
+        distanceBg = const Color(0xFF121008);
+        distanceText = const Color(0xFFCBCB90);
+        northColor = const Color(0xFFF4C025);
+        break;
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -48,10 +104,10 @@ class HomeCompass extends StatelessWidget {
               height: 320,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white10),
+                border: Border.all(color: circularBorder1),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color.fromARGB(16, 244, 192, 37),
+                    color: shadowColor,
                     blurRadius: 40,
                   ),
                 ],
@@ -63,7 +119,7 @@ class HomeCompass extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: Colors.white12,
+                  color: circularBorder2,
                   style: BorderStyle.solid,
                 ),
               ),
@@ -83,7 +139,7 @@ class HomeCompass extends StatelessWidget {
                       height: 240,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white10),
+                        border: Border.all(color: circularBorder1),
                       ),
                     ),
                     Positioned(
@@ -91,7 +147,7 @@ class HomeCompass extends StatelessWidget {
                       child: Text(
                         tr('north'),
                         style: TextStyle(
-                          color: const Color(0xFFF4C025),
+                          color: northColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
@@ -102,7 +158,7 @@ class HomeCompass extends StatelessWidget {
                       child: Text(
                         tr('south'),
                         style: TextStyle(
-                          color: Colors.white24,
+                          color: secondaryColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
@@ -113,7 +169,7 @@ class HomeCompass extends StatelessWidget {
                       child: Text(
                         tr('west'),
                         style: TextStyle(
-                          color: Colors.white24,
+                          color: secondaryColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
@@ -124,7 +180,7 @@ class HomeCompass extends StatelessWidget {
                       child: Text(
                         tr('east'),
                         style: TextStyle(
-                          color: Colors.white24,
+                          color: secondaryColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
@@ -137,7 +193,7 @@ class HomeCompass extends StatelessWidget {
                         width: 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: primaryColor,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -152,12 +208,12 @@ class HomeCompass extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const SizedBox(
+                    SizedBox(
                       width: 48,
                       height: 48,
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
-                        color: Color(0xFFF4C025),
+                        color: primaryColor,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -235,7 +291,7 @@ class HomeCompass extends StatelessWidget {
                       children: [
                         CustomPaint(
                           size: const Size(28, 34),
-                          painter: ArrowPainter(color: const Color(0xFFF4C025)),
+                          painter: ArrowPainter(color: primaryColor),
                         ),
                         const SizedBox(height: 6),
                         Container(
@@ -244,7 +300,7 @@ class HomeCompass extends StatelessWidget {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                const Color(0xFFF4C025),
+                                primaryColor,
                                 Colors.transparent,
                               ],
                             ),
@@ -267,8 +323,8 @@ class HomeCompass extends StatelessWidget {
             'degrees_label',
             namedArgs: {'deg': qiblaDeg.toStringAsFixed(0), 'dir': dir},
           ),
-          style: const TextStyle(
-            color: Color(0xFFF4C025),
+          style: TextStyle(
+            color: primaryColor,
             fontSize: 40,
             fontWeight: FontWeight.bold,
           ),
@@ -277,14 +333,14 @@ class HomeCompass extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFF121008),
+            color: distanceBg,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: Colors.white10),
+            border: Border.all(color: circularBorder1),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.straight, color: Color(0xFFF4C025), size: 18),
+              Icon(Icons.straight, color: primaryColor, size: 18),
               const SizedBox(width: 8),
               // show formatted distance when location is ready, otherwise show label + spinner
               if (isLocationReady) ...[
@@ -293,16 +349,16 @@ class HomeCompass extends StatelessWidget {
                     'distance_to_mecca_fmt',
                     namedArgs: {'dist': formattedDistance},
                   ),
-                  style: const TextStyle(
-                    color: Color(0xFFCBCB90),
+                  style: TextStyle(
+                    color: distanceText,
                     fontSize: 14,
                   ),
                 ),
               ] else ...[
                 Text(
                   tr('distance_to_mecca'),
-                  style: const TextStyle(
-                    color: Color(0xFFCBCB90),
+                  style: TextStyle(
+                    color: distanceText,
                     fontSize: 14,
                   ),
                 ),

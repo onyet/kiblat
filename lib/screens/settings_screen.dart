@@ -13,11 +13,15 @@ import 'package:kiblat/utils/timezone_util.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:kiblat/screens/main_shell.dart';
 import 'dart:io';
 import 'dart:async';
 
 import '../services/location_service.dart';
 import 'package:kiblat/services/notification_service.dart';
+import 'package:kiblat/services/billing_service.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:kiblat/utils/theme_util.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -56,6 +60,12 @@ class _SettingsScreenState extends State<SettingsScreen>
   void initState() {
     super.initState();
     _refreshStatus();
+
+    BillingService.instance.isPendingPurchase.addListener(_onBillingChanged);
+    BillingService.instance.productsNotifier.addListener(_onBillingChanged);
+    BillingService.instance.isStoreAvailable.addListener(_onBillingChanged);
+    BillingService.instance.billingError.addListener(_onBillingErrorChanged);
+    BillingService.instance.onPurchaseSuccess = _onBillingSuccess;
 
     _animController = AnimationController(
       vsync: this,
@@ -154,7 +164,46 @@ class _SettingsScreenState extends State<SettingsScreen>
     _adCheckTimer?.cancel();
     _animController.dispose();
     _adjustmentController.dispose();
+    BillingService.instance.isPendingPurchase.removeListener(_onBillingChanged);
+    BillingService.instance.productsNotifier.removeListener(_onBillingChanged);
+    BillingService.instance.isStoreAvailable.removeListener(_onBillingChanged);
+    BillingService.instance.billingError.removeListener(_onBillingErrorChanged);
+    if (BillingService.instance.onPurchaseSuccess == _onBillingSuccess) {
+      BillingService.instance.onPurchaseSuccess = null;
+    }
     super.dispose();
+  }
+
+  void _onBillingChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _onBillingErrorChanged() {
+    final error = BillingService.instance.billingError.value;
+    if (error != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Billing error: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _onBillingSuccess() {
+    if (mounted) {
+      setState(() {
+        _prayerSettings = SettingsService.instance.notifier.value;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pembelian Kiblat Pro Sukses! 🎉'),
+          backgroundColor: Color(0xFF4CAF50),
+        ),
+      );
+    }
   }
 
   Future<void> _loadTestMode() async {
@@ -220,8 +269,14 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final settings = _prayerSettings ?? SettingsService.instance.notifier.value;
+    final isLight = AppTheme.isLight(settings, context);
+    final textColor = AppTheme.getTextColor(settings, context);
+    final borderColor = AppTheme.getBorderColor(settings, context);
+    final accentColor = AppTheme.getAccentColor(settings, context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF050505),
+      backgroundColor: AppTheme.getBackgroundColor(settings, context),
       body: SafeArea(
         child: Column(
           children: [
@@ -231,10 +286,10 @@ class _SettingsScreenState extends State<SettingsScreen>
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: const Color.fromRGBO(255, 255, 255, 0.05),
+                    color: borderColor,
                   ),
                 ),
-                color: const Color(0xFF050505),
+                color: AppTheme.getBackgroundColor(settings, context),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -243,14 +298,14 @@ class _SettingsScreenState extends State<SettingsScreen>
                     width: 40,
                     height: 40,
                     child: Material(
-                      color: const Color.fromRGBO(255, 255, 255, 0.05),
+                      color: isLight ? Colors.black.withOpacity(0.04) : const Color.fromRGBO(255, 255, 255, 0.05),
                       borderRadius: BorderRadius.circular(8),
                       child: InkWell(
                         onTap: () => Navigator.of(context).pop(),
                         borderRadius: BorderRadius.circular(8),
-                        child: const Icon(
+                        child: Icon(
                           Icons.chevron_left,
-                          color: Colors.white,
+                          color: textColor,
                           size: 24,
                         ),
                       ),
@@ -258,8 +313,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                   ),
                   Text(
                     tr('settings'),
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: textColor,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -288,18 +343,13 @@ class _SettingsScreenState extends State<SettingsScreen>
                           scale: _scaleAnim.value,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Color.fromRGBO(
-                                244,
-                                192,
-                                37,
-                                _opacityAnim.value,
-                              ),
+                              color: accentColor.withOpacity(_opacityAnim.value),
                               borderRadius: BorderRadius.circular(999),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Icon(
                                 Icons.mosque,
-                                color: Colors.white70,
+                                color: isLight ? textColor.withOpacity(0.8) : Colors.white70,
                                 size: 36,
                               ),
                             ),
@@ -312,15 +362,18 @@ class _SettingsScreenState extends State<SettingsScreen>
                   const SizedBox(height: 6),
 
                   // Voluntary ad support button - only visible when ad is ready
-                  if (_isInterstitialAdReady) ...[
+                  if (_isInterstitialAdReady && !(_prayerSettings?.isProUser ?? false)) ...[
                     _buildWatchAdCard(),
                     const SizedBox(height: 14),
                   ],
 
+                  _buildProCard(),
+                  const SizedBox(height: 16),
+
                   Text(
                     tr('configuration'),
-                    style: const TextStyle(
-                      color: Color(0xFFF4C025),
+                    style: TextStyle(
+                      color: accentColor,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
@@ -372,8 +425,8 @@ class _SettingsScreenState extends State<SettingsScreen>
 
                   Text(
                     tr('general'),
-                    style: const TextStyle(
-                      color: Color(0xFFF4C025),
+                    style: TextStyle(
+                      color: accentColor,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
@@ -392,6 +445,35 @@ class _SettingsScreenState extends State<SettingsScreen>
                   ),
                   const SizedBox(height: 8),
 
+                  // Tampilan Awal Aplikasi
+                  _buildActionButton(
+                    title: 'Tampilan Awal Aplikasi',
+                    subtitle: (_prayerSettings?.defaultLaunchScreen == 'prayer_times')
+                        ? 'Jadwal Shalat'
+                        : 'Kompas Kiblat',
+                    icon: Icons.home_outlined,
+                    onTap: _showDefaultLaunchScreenDialog,
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Tema Aplikasi (Pro)
+                  _buildActionButton(
+                    title: 'Tema Aplikasi',
+                    subtitle: _themeDisplay(_prayerSettings?.compassTheme ?? 'classic'),
+                    icon: Icons.palette_outlined,
+                    onTap: _showThemeSelectionDialog,
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Mode Tampilan (Pro)
+                  _buildActionButton(
+                    title: 'Mode Tampilan',
+                    subtitle: _displayModeDisplay(_prayerSettings?.displayMode ?? 'dark'),
+                    icon: Icons.brightness_6_outlined,
+                    onTap: _showDisplayModeSelectionDialog,
+                  ),
+                  const SizedBox(height: 8),
+
                   // Test Ad Mode toggle (QA) - only visible in debug builds
                   if (kDebugMode) ...[
                     _buildStatusTile(
@@ -400,7 +482,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                       subtitle: tr('ad_test_mode_desc'),
                       trailing: Switch(
                         value: _testAdMode,
-                        activeThumbColor: Color(0xFFF4C025),
+                        activeThumbColor: accentColor,
                         onChanged: _toggleTestMode,
                       ),
                       onTap: () => _toggleTestMode(!_testAdMode),
@@ -413,8 +495,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                     tr('prayer_schedule') == 'prayer_schedule'
                         ? 'Prayer Schedule'
                         : tr('prayer_schedule'),
-                    style: const TextStyle(
-                      color: Color(0xFFF4C025),
+                    style: TextStyle(
+                      color: accentColor,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
@@ -506,7 +588,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                                 : tr('time_format_12')),
                       trailing: Switch(
                         value: _prayerSettings?.use24Hour ?? true,
-                        activeThumbColor: const Color(0xFFF4C025),
+                        activeThumbColor: accentColor,
                         onChanged: (v) => _toggleTimeFormat(v),
                       ),
                       onTap: () => _toggleTimeFormat(
@@ -559,7 +641,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                                 _notificationPermissionGranted &&
                                 (_prayerSettings?.enablePrayerNotifications ??
                                     true),
-                            activeThumbColor: const Color(0xFFF4C025),
+                            activeThumbColor: accentColor,
                             onChanged: (v) async {
                               if (!_notificationPermissionGranted) {
                                 // Request permission first
@@ -685,7 +767,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           : tr('sunnah_times_desc'),
                       trailing: Switch(
                         value: _prayerSettings?.showSunnahTimes ?? true,
-                        activeThumbColor: const Color(0xFFF4C025),
+                        activeThumbColor: accentColor,
                         onChanged: _toggleShowSunnahTimes,
                       ),
                       onTap: () => _toggleShowSunnahTimes(
@@ -703,7 +785,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           : tr('show_dhuha_desc'),
                       trailing: Switch(
                         value: _prayerSettings?.showDhuha ?? true,
-                        activeThumbColor: const Color(0xFFF4C025),
+                        activeThumbColor: accentColor,
                         onChanged: (v) {
                           setState(
                             () => _prayerSettings =
@@ -737,7 +819,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           : tr('show_tahajjud_desc'),
                       trailing: Switch(
                         value: _prayerSettings?.showTahajjud ?? true,
-                        activeThumbColor: const Color(0xFFF4C025),
+                        activeThumbColor: accentColor,
                         onChanged: (v) {
                           setState(
                             () => _prayerSettings =
@@ -764,8 +846,8 @@ class _SettingsScreenState extends State<SettingsScreen>
 
                   Text(
                     tr('others') == 'others' ? 'LAINNYA' : tr('others'),
-                    style: const TextStyle(
-                      color: Color(0xFFF4C025),
+                    style: TextStyle(
+                      color: accentColor,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
@@ -812,9 +894,9 @@ class _SettingsScreenState extends State<SettingsScreen>
                         const SizedBox(width: 8),
                         IconButton(
                           tooltip: tr('view_on_github'),
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.code,
-                            color: Color(0xFFF4C025),
+                            color: accentColor,
                           ),
                           onPressed: () => _openUrl(
                             Uri.parse('https://github.com/onyet/kiblat'),
@@ -839,15 +921,22 @@ class _SettingsScreenState extends State<SettingsScreen>
     Widget? trailing,
     VoidCallback? onTap,
   }) {
+    final settings = _prayerSettings ?? SettingsService.instance.notifier.value;
+    final cardColor = AppTheme.getCardColor(settings, context);
+    final textColor = AppTheme.getTextColor(settings, context);
+    final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+    final borderColor = AppTheme.getBorderColor(settings, context);
+    final accentColor = AppTheme.getAccentColor(settings, context);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0x1AFFFFFF),
+          color: cardColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0x0DFFFFFF)),
+          border: Border.all(color: borderColor),
         ),
         child: Row(
           children: [
@@ -855,10 +944,10 @@ class _SettingsScreenState extends State<SettingsScreen>
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: const Color(0x14F4C025),
+                color: accentColor.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: const Color(0xFFF4C025)),
+              child: Icon(icon, color: accentColor),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -867,15 +956,15 @@ class _SettingsScreenState extends State<SettingsScreen>
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: textColor,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(color: Colors.white60, fontSize: 12),
+                    style: TextStyle(color: secTextColor, fontSize: 12),
                   ),
                 ],
               ),
@@ -888,19 +977,24 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   Widget _buildWatchAdCard() {
+    final settings = _prayerSettings ?? SettingsService.instance.notifier.value;
+    final accentColor = AppTheme.getAccentColor(settings, context);
+    final textColor = AppTheme.getTextColor(settings, context);
+    final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+
     return InkWell(
       onTap: _handleWatchAd,
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0x33F4C025), Color(0x0DF4C025)],
+          gradient: LinearGradient(
+            colors: [accentColor.withOpacity(0.2), accentColor.withOpacity(0.05)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0x33F4C025)),
+          border: Border.all(color: accentColor.withOpacity(0.2)),
         ),
         child: Row(
           children: [
@@ -908,12 +1002,12 @@ class _SettingsScreenState extends State<SettingsScreen>
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: const Color(0x29F4C025),
+                color: accentColor.withOpacity(0.16),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.play_circle_outline,
-                color: Color(0xFFF4C025),
+                color: accentColor,
                 size: 26,
               ),
             ),
@@ -926,8 +1020,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                     tr('watch_ad_support') == 'watch_ad_support'
                         ? 'Support Developer'
                         : tr('watch_ad_support'),
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: textColor,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
@@ -937,12 +1031,12 @@ class _SettingsScreenState extends State<SettingsScreen>
                     tr('watch_ad_support_desc') == 'watch_ad_support_desc'
                         ? 'Watch a short ad to help keep this app free'
                         : tr('watch_ad_support_desc'),
-                    style: const TextStyle(color: Colors.white60, fontSize: 11),
+                    style: TextStyle(color: secTextColor, fontSize: 11),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.favorite, color: Color(0xFFF4C025), size: 20),
+            Icon(Icons.favorite, color: accentColor, size: 20),
           ],
         ),
       ),
@@ -989,16 +1083,20 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 
-  Widget _actionButton(String label, VoidCallback onTap) => TextButton(
-    onPressed: onTap,
-    child: Text(
-      label,
-      style: const TextStyle(
-        color: Color(0xFFF4C025),
-        fontWeight: FontWeight.w600,
+  Widget _actionButton(String label, VoidCallback onTap) {
+    final settings = _prayerSettings ?? SettingsService.instance.notifier.value;
+    final accentColor = AppTheme.getAccentColor(settings, context);
+    return TextButton(
+      onPressed: onTap,
+      child: Text(
+        label,
+        style: TextStyle(
+          color: accentColor,
+          fontWeight: FontWeight.w600,
+        ),
       ),
-    ),
-  );
+    );
+  }
 
   Widget _statusChip(String label, Color bg) {
     final bgColor = bg.withAlpha((0.12 * 255).round());
@@ -1010,8 +1108,8 @@ class _SettingsScreenState extends State<SettingsScreen>
       ),
       child: Text(
         label,
-        style: const TextStyle(
-          color: Colors.greenAccent,
+        style: TextStyle(
+          color: bg == Colors.green ? Colors.greenAccent : Colors.redAccent,
           fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
@@ -1025,14 +1123,21 @@ class _SettingsScreenState extends State<SettingsScreen>
     required IconData icon,
     VoidCallback? onTap,
   }) {
+    final settings = _prayerSettings ?? SettingsService.instance.notifier.value;
+    final isLight = AppTheme.isLight(settings, context);
+    final cardColor = AppTheme.getCardColor(settings, context);
+    final textColor = AppTheme.getTextColor(settings, context);
+    final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+    final borderColor = AppTheme.getBorderColor(settings, context);
+
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0x1AFFFFFF),
+          color: cardColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0x0DFFFFFF)),
+          border: Border.all(color: borderColor),
         ),
         child: Row(
           children: [
@@ -1040,10 +1145,10 @@ class _SettingsScreenState extends State<SettingsScreen>
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: const Color(0x0DFFFFFF),
+                color: isLight ? Colors.black.withOpacity(0.04) : const Color(0x0DFFFFFF),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: Colors.white70),
+              child: Icon(icon, color: secTextColor),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1052,20 +1157,20 @@ class _SettingsScreenState extends State<SettingsScreen>
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: textColor,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(color: Colors.white60, fontSize: 12),
+                    style: TextStyle(color: secTextColor, fontSize: 12),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.white30),
+            Icon(Icons.chevron_right, color: secTextColor.withOpacity(0.4)),
           ],
         ),
       ),
@@ -1342,6 +1447,9 @@ class _SettingsScreenState extends State<SettingsScreen>
           _prayerSettings?.enablePrayerNotifications ?? true,
       customRingtonePath: _prayerSettings?.customRingtonePath,
       customRingtoneName: _prayerSettings?.customRingtoneName,
+      isProUser: _prayerSettings?.isProUser ?? false,
+      defaultLaunchScreen: _prayerSettings?.defaultLaunchScreen ?? 'compass',
+      compassTheme: _prayerSettings?.compassTheme ?? 'classic',
     );
 
     try {
@@ -1406,6 +1514,16 @@ class _SettingsScreenState extends State<SettingsScreen>
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            ListTile(
+              leading: const Icon(Icons.star, color: Color(0xFFF4C025)),
+              title: const Text('Muadzin Premium (Pro)'),
+              subtitle: const Text('Pilih suara Adzan terbaik di dunia'),
+              onTap: () {
+                Navigator.of(ctx, rootNavigator: true).pop();
+                _showPremiumAdzanDialog();
+              },
+            ),
+            const Divider(),
             if (_prayerSettings?.customRingtoneName != null) ...[
               ListTile(
                 leading: const Icon(Icons.music_note, color: Color(0xFFF4C025)),
@@ -1418,6 +1536,18 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
               const Divider(),
             ],
+            ListTile(
+              leading: const Icon(Icons.notifications_active, color: Color(0xFFF4C025)),
+              title: const Text('Uji Notifikasi'),
+              subtitle: const Text('Tes pemutaran suara notifikasi Adzan saat ini'),
+              onTap: () {
+                Navigator.of(ctx, rootNavigator: true).pop();
+                if (_prayerSettings != null) {
+                  NotificationService.instance.triggerTestNotification(_prayerSettings!);
+                }
+              },
+            ),
+            const Divider(),
             ListTile(
               leading: const Icon(Icons.upload_file, color: Color(0xFFF4C025)),
               title: Text(
@@ -1464,8 +1594,9 @@ class _SettingsScreenState extends State<SettingsScreen>
   Future<void> _handleCustomRingtoneUpload() async {
     final messenger = ScaffoldMessenger.of(context);
     final adService = AdService.instance;
+    final isPro = _prayerSettings?.isProUser ?? false;
 
-    if (AdService.bypassRewardedGate) {
+    if (AdService.bypassRewardedGate || isPro) {
       await _pickAndSaveRingtone();
       return;
     }
@@ -1663,6 +1794,30 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 
+  Future<void> _showPrivacyPolicyDialog() async {
+    final url = Uri.parse('https://onyet.github.io/privacy-police.html');
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('privacy_policy')),
+        content: Text(url.toString()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+            child: Text(tr('dismiss')),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx, rootNavigator: true).pop();
+              await _openUrl(url);
+            },
+            child: Text(tr('open')),
+          )
+        ],
+      ),
+    );
+  }
+
   Future<void> _showContactDialog() async {
     const whatsapp = 'https://wa.me/6282221874400';
     const email = 'mailto:onyetcorp@gmail.com';
@@ -1714,27 +1869,898 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 
-  Future<void> _showPrivacyPolicyDialog() async {
-    final url = Uri.parse('https://onyet.github.io/privacy-police.html');
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(tr('privacy_policy')),
-        content: Text(url.toString()),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
-            child: Text(tr('dismiss')),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(ctx, rootNavigator: true).pop();
-              await _openUrl(url);
-            },
-            child: Text(tr('open')),
+  Widget _buildProCard() {
+    final isPro = _prayerSettings?.isProUser ?? false;
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isPro
+              ? [const Color(0xFF0F1E12), const Color(0xFF071009)]
+              : [const Color(0xFF1F1B0F), const Color(0xFF100E08)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isPro ? const Color(0xFF4CAF50).withOpacity(0.5) : const Color(0xFFD4AF37).withOpacity(0.5),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isPro ? Colors.green.withOpacity(0.1) : const Color(0xFFD4AF37).withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isPro ? Icons.verified : Icons.stars,
+                color: isPro ? const Color(0xFF4CAF50) : const Color(0xFFD4AF37),
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                isPro ? 'Kiblat Pro Aktif' : 'Tingkatkan ke Kiblat Pro',
+                style: TextStyle(
+                  color: isPro ? const Color(0xFF4CAF50) : const Color(0xFFD4AF37),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              const Spacer(),
+              if (isPro)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4CAF50).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    'PRIVAT & OFFLINE',
+                    style: TextStyle(
+                      color: Color(0xFF4CAF50),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            isPro
+                ? 'Terima kasih atas dukungan Anda! Aplikasi ini berjalan bebas dari iklan, tanpa telemetri/pelacakan apa pun, dan semua fitur terbuka penuh 100% offline.'
+                : 'Nikmati pencarian kiblat yang lebih khusyuk: bebas iklan total (privasi tinggi), tanpa telemetri, buka suara Adzan premium, dan tema kompas eksklusif.',
+            style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
+          ),
+          const SizedBox(height: 12),
+          if (!isPro) ...[
+            if (BillingService.instance.isPendingPurchase.value)
+              const Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: Color(0xFFD4AF37),
+                    strokeWidth: 2.5,
+                  ),
+                ),
+              )
+            else ...[
+              SizedBox(
+                width: double.infinity,
+                height: 40,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD4AF37),
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: BillingService.instance.isStoreAvailable.value
+                      ? () => BillingService.instance.buyPro()
+                      : null,
+                  child: Text(
+                    BillingService.instance.isStoreAvailable.value
+                        ? 'Beli Kiblat Pro ${BillingService.instance.productsNotifier.value.isNotEmpty ? "(${BillingService.instance.productsNotifier.value.first.price})" : ""}'
+                        : 'Beli Pro (Store Tidak Tersedia)',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (kDebugMode) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                          side: const BorderSide(color: Colors.white24),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: EdgeInsets.zero,
+                        ),
+                        onPressed: BillingService.instance.isStoreAvailable.value
+                            ? () => BillingService.instance.restorePurchases()
+                            : null,
+                        child: const Text(
+                          'Pulihkan Pembelian',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white54,
+                          side: const BorderSide(color: Colors.white10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: EdgeInsets.zero,
+                        ),
+                        onPressed: () => _toggleProStatus(true),
+                        child: const Text(
+                          'Simulasi Gratis',
+                          style: TextStyle(fontSize: 11),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                SizedBox(
+                  width: double.infinity,
+                  height: 38,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white70,
+                      side: const BorderSide(color: Colors.white24),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: BillingService.instance.isStoreAvailable.value
+                        ? () => BillingService.instance.restorePurchases()
+                        : null,
+                    child: const Text(
+                      'Pulihkan Pembelian',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ] else ...[
+            if (kDebugMode) ...[
+              SizedBox(
+                width: double.infinity,
+                height: 38,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: Colors.white70,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: const BorderSide(color: Colors.white24),
+                    ),
+                  ),
+                  onPressed: () => _toggleProStatus(false),
+                  child: const Text(
+                    'Nonaktifkan Pro (Simulasi)',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _toggleProStatus(bool isPro) async {
+    var updated = _prayerSettings?.copyWith(isProUser: isPro) ?? PrayerSettings(isProUser: isPro);
+    if (!isPro) {
+      updated = updated.copyWith(compassTheme: 'classic');
+    }
+    await SettingsService.instance.update(updated);
+
+    if (isPro) {
+      AdService.instance.dispose();
+    } else {
+      await AdService.initialize();
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _prayerSettings = updated;
+    });
+  }
+
+  void _showDefaultLaunchScreenDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        final settings = _prayerSettings ?? SettingsService.instance.notifier.value;
+        final cardColor = AppTheme.getCardColor(settings, context);
+        final textColor = AppTheme.getTextColor(settings, context);
+        final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+        final accentColor = AppTheme.getAccentColor(settings, context);
+
+        return AlertDialog(
+          backgroundColor: cardColor,
+          title: Text(
+            'Pilih Tampilan Awal Aplikasi',
+            style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<String>(
+                title: Text(
+                  EasyLocalization.of(context) != null ? tr('launch_compass_title') : 'Kompas Kiblat (Fokus Utama)',
+                  style: TextStyle(color: textColor),
+                ),
+                subtitle: Text(
+                  EasyLocalization.of(context) != null ? tr('launch_compass_desc') : 'Membuka kompas pencari arah kiblat secara langsung',
+                  style: TextStyle(color: secTextColor, fontSize: 12),
+                ),
+                value: 'compass',
+                groupValue: _prayerSettings?.defaultLaunchScreen ?? 'compass',
+                activeColor: accentColor,
+                onChanged: (val) async {
+                  Navigator.of(ctx).pop();
+                  if (val != null) {
+                    final updated = _prayerSettings?.copyWith(defaultLaunchScreen: val) ?? PrayerSettings(defaultLaunchScreen: val);
+                    await SettingsService.instance.update(updated);
+                    setState(() => _prayerSettings = updated);
+                    // Immediately switch to Kompas tab
+                    MainShell.switchTab(0);
+                  }
+                },
+              ),
+              RadioListTile<String>(
+                title: Text(
+                  EasyLocalization.of(context) != null ? tr('launch_prayer_title') : 'Jadwal Shalat Lengkap',
+                  style: TextStyle(color: textColor),
+                ),
+                subtitle: Text(
+                  EasyLocalization.of(context) != null ? tr('launch_prayer_desc') : 'Membuka jadwal shalat lengkap saat aplikasi pertama dibuka',
+                  style: TextStyle(color: secTextColor, fontSize: 12),
+                ),
+                value: 'prayer_times',
+                groupValue: _prayerSettings?.defaultLaunchScreen ?? 'compass',
+                activeColor: accentColor,
+                onChanged: (val) async {
+                  Navigator.of(ctx).pop();
+                  if (val != null) {
+                    final updated = _prayerSettings?.copyWith(defaultLaunchScreen: val) ?? PrayerSettings(defaultLaunchScreen: val);
+                    await SettingsService.instance.update(updated);
+                    setState(() => _prayerSettings = updated);
+                    // Immediately switch to Jadwal tab
+                    MainShell.switchTab(1);
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(tr('dismiss'), style: TextStyle(color: secTextColor)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showPremiumAdzanDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        final isPro = _prayerSettings?.isProUser ?? false;
+        return _PremiumAdzanDialog(
+          isPro: isPro,
+          selectedRingtonePath: _prayerSettings?.customRingtonePath,
+          onSelect: (name, asset) {
+            _setPremiumAdzan(name, asset);
+          },
+          onShowProPrompt: (feature, description) {
+            _showProPromptDialog(feature: feature, description: description);
+          },
+        );
+      },
+    );
+  }
+
+  void _showProPromptDialog({required String feature, required String description}) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        final settings = _prayerSettings ?? SettingsService.instance.notifier.value;
+        final cardColor = AppTheme.getCardColor(settings, context);
+        final textColor = AppTheme.getTextColor(settings, context);
+        final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+        final accentColor = AppTheme.getAccentColor(settings, context);
+        final borderColor = AppTheme.getBorderColor(settings, context);
+
+        return AlertDialog(
+          backgroundColor: cardColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+            side: BorderSide(color: accentColor, width: 1.5),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.stars, color: accentColor, size: 28),
+              const SizedBox(width: 10),
+              Text(
+                'Tingkatkan ke Kiblat Pro',
+                style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Fitur ini memerlukan Kiblat Pro:',
+                  style: TextStyle(color: textColor.withOpacity(0.8), fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '• $feature',
+                  style: TextStyle(color: accentColor, fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  description,
+                  style: TextStyle(color: secTextColor, fontSize: 13, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                Divider(color: borderColor),
+                const SizedBox(height: 10),
+                Text(
+                  'Keunggulan Privasi & Fitur Pro:',
+                  style: TextStyle(color: textColor.withOpacity(0.8), fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+                const SizedBox(height: 8),
+                Text('✅ Bebas Iklan Total (Meningkatkan Privasi dari Ad Networks)', style: TextStyle(color: secTextColor, fontSize: 12)),
+                const SizedBox(height: 4),
+                Text('✅ Tanpa Telemetri (Data Penggunaan 100% Privat/Offline)', style: TextStyle(color: secTextColor, fontSize: 12)),
+                const SizedBox(height: 4),
+                Text('✅ Akses Suara Adzan Premium Offline Tanpa Iklan', style: TextStyle(color: secTextColor, fontSize: 12)),
+                const SizedBox(height: 4),
+                Text('✅ Buka 3 Tema Estetik Kompas Kiblat', style: TextStyle(color: secTextColor, fontSize: 12)),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+              child: Text('Batal', style: TextStyle(color: secTextColor)),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFBF953F), Color(0xFFFCF6BA), Color(0xFFBF953F)],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: () async {
+                  Navigator.of(ctx, rootNavigator: true).pop();
+                  if (kDebugMode) {
+                    await _toggleProStatus(true);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Selamat! Anda sekarang menggunakan Kiblat Pro (Simulasi) 🎉'),
+                          backgroundColor: Color(0xFFD4AF37),
+                        ),
+                      );
+                    }
+                  } else {
+                    if (BillingService.instance.isStoreAvailable.value) {
+                      await BillingService.instance.buyPro();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Pembelian dalam aplikasi saat ini tidak tersedia.'),
+                        ),
+                      );
+                    }
+                  }
+                },
+                child: Text(
+                  kDebugMode ? 'Aktifkan Pro (Gratis)' : 'Beli Kiblat Pro',
+                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _setPremiumAdzan(String name, String assetBaseName) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      String path;
+      if (Platform.isAndroid) {
+        path = 'android.resource://id.onyet.app.kiblat/raw/$assetBaseName';
+      } else if (Platform.isIOS) {
+        final libDir = await getLibraryDirectory();
+        final soundsDir = Directory('${libDir.path}/Sounds');
+        if (!await soundsDir.exists()) {
+          await soundsDir.create(recursive: true);
+        }
+        final destPath = '${soundsDir.path}/$assetBaseName.mp3';
+        final file = File(destPath);
+        if (!await file.exists()) {
+          final byteData = await rootBundle.load('assets/audio/$assetBaseName.mp3');
+          await file.writeAsBytes(byteData.buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+        }
+        path = '$assetBaseName.mp3';
+      } else {
+        path = 'assets/audio/$assetBaseName.mp3';
+      }
+
+      final updated = _prayerSettings?.copyWith(
+        customRingtonePath: path,
+        customRingtoneName: name,
+      ) ?? PrayerSettings(
+        customRingtonePath: path,
+        customRingtoneName: name,
+      );
+
+      await SettingsService.instance.update(updated);
+
+      if (mounted) {
+        setState(() {
+          _prayerSettings = updated;
+        });
+      }
+
+      await NotificationService.instance.schedulePrayerNotificationsForCurrentLocation(updated);
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Berhasil menyetel $name sebagai suara notifikasi adzan'),
+          backgroundColor: const Color(0xFFD4AF37),
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Gagal menyetel adzan premium: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  String _themeDisplay(String theme) {
+    switch (theme) {
+      case 'gold':
+        return 'Gold Arabesque (Pro)';
+      case 'dark':
+        return 'Minimalist Dark (Pro)';
+      case 'cyber':
+        return 'Cyber Qibla (Pro)';
+      case 'classic':
+      default:
+        return 'Classic (Free)';
+    }
+  }
+
+  void _showThemeSelectionDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        final settings = _prayerSettings ?? SettingsService.instance.notifier.value;
+        final isPro = settings.isProUser;
+        final currentTheme = settings.compassTheme;
+        final cardColor = AppTheme.getCardColor(settings, context);
+        final textColor = AppTheme.getTextColor(settings, context);
+        final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+        final accentColor = AppTheme.getAccentColor(settings, context);
+
+        return AlertDialog(
+          backgroundColor: cardColor,
+          title: Text(
+            'Pilih Tema Aplikasi',
+            style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<String>(
+                title: Text('Classic (Free)', style: TextStyle(color: textColor)),
+                subtitle: Text('Tema klasik warna kuning keemasan khas', style: TextStyle(color: secTextColor, fontSize: 12)),
+                value: 'classic',
+                groupValue: currentTheme,
+                activeColor: accentColor,
+                onChanged: (val) async {
+                  Navigator.of(ctx).pop();
+                  if (val != null) {
+                    final updated = _prayerSettings?.copyWith(compassTheme: val) ?? PrayerSettings(compassTheme: val);
+                    await SettingsService.instance.update(updated);
+                    setState(() {
+                      _prayerSettings = updated;
+                    });
+                  }
+                },
+              ),
+              RadioListTile<String>(
+                title: Text('Gold Arabesque (Pro)', style: TextStyle(color: textColor)),
+                subtitle: Text('Desain arabesque premium berwarna emas murni', style: TextStyle(color: secTextColor, fontSize: 12)),
+                value: 'gold',
+                groupValue: currentTheme,
+                activeColor: accentColor,
+                onChanged: (val) async {
+                  Navigator.of(ctx).pop();
+                  if (val != null) {
+                    if (!isPro) {
+                      _showProPromptDialog(
+                        feature: 'Tema Gold Arabesque',
+                        description: 'Tingkatkan ke Pro untuk menggunakan tema kompas premium eksklusif Gold Arabesque.',
+                      );
+                    } else {
+                      final updated = _prayerSettings?.copyWith(compassTheme: val) ?? PrayerSettings(compassTheme: val);
+                      await SettingsService.instance.update(updated);
+                      setState(() {
+                        _prayerSettings = updated;
+                      });
+                    }
+                  }
+                },
+              ),
+              RadioListTile<String>(
+                title: Text('Minimalist Dark (Pro)', style: TextStyle(color: textColor)),
+                subtitle: Text('Desain gelap minimalis dan bersih untuk malam hari', style: TextStyle(color: secTextColor, fontSize: 12)),
+                value: 'dark',
+                groupValue: currentTheme,
+                activeColor: accentColor,
+                onChanged: (val) async {
+                  Navigator.of(ctx).pop();
+                  if (val != null) {
+                    if (!isPro) {
+                      _showProPromptDialog(
+                        feature: 'Tema Minimalist Dark',
+                        description: 'Tingkatkan ke Pro untuk menggunakan tema kompas premium eksklusif Minimalist Dark.',
+                      );
+                    } else {
+                      final updated = _prayerSettings?.copyWith(compassTheme: val) ?? PrayerSettings(compassTheme: val);
+                      await SettingsService.instance.update(updated);
+                      setState(() {
+                        _prayerSettings = updated;
+                      });
+                    }
+                  }
+                },
+              ),
+              RadioListTile<String>(
+                title: Text('Cyber Qibla (Pro)', style: TextStyle(color: textColor)),
+                subtitle: Text('Gaya futuristik dengan aksen cyan dan neon', style: TextStyle(color: secTextColor, fontSize: 12)),
+                value: 'cyber',
+                groupValue: currentTheme,
+                activeColor: accentColor,
+                onChanged: (val) async {
+                  Navigator.of(ctx).pop();
+                  if (val != null) {
+                    if (!isPro) {
+                      _showProPromptDialog(
+                        feature: 'Tema Cyber Qibla',
+                        description: 'Tingkatkan ke Pro untuk menggunakan tema kompas premium eksklusif Cyber Qibla.',
+                      );
+                    } else {
+                      final updated = _prayerSettings?.copyWith(compassTheme: val) ?? PrayerSettings(compassTheme: val);
+                      await SettingsService.instance.update(updated);
+                      setState(() {
+                        _prayerSettings = updated;
+                      });
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(tr('dismiss'), style: TextStyle(color: secTextColor)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _displayModeDisplay(String mode) {
+    switch (mode) {
+      case 'light':
+        return 'Terang (Pro)';
+      case 'system':
+        return 'Ikuti Sistem (Pro)';
+      case 'dark':
+      default:
+        return 'Gelap (Free)';
+    }
+  }
+
+  void _showDisplayModeSelectionDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        final settings = _prayerSettings ?? SettingsService.instance.notifier.value;
+        final isPro = settings.isProUser;
+        final currentMode = settings.displayMode;
+        final cardColor = AppTheme.getCardColor(settings, context);
+        final textColor = AppTheme.getTextColor(settings, context);
+        final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+        final accentColor = AppTheme.getAccentColor(settings, context);
+
+        return AlertDialog(
+          backgroundColor: cardColor,
+          title: Text(
+            'Pilih Mode Tampilan',
+            style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<String>(
+                title: Text('Gelap (Free)', style: TextStyle(color: textColor)),
+                subtitle: Text('Gaya gelap hemat daya baterai', style: TextStyle(color: secTextColor, fontSize: 12)),
+                value: 'dark',
+                groupValue: currentMode,
+                activeColor: accentColor,
+                onChanged: (val) async {
+                  Navigator.of(ctx).pop();
+                  if (val != null) {
+                    final updated = _prayerSettings?.copyWith(displayMode: val) ?? PrayerSettings(displayMode: val);
+                    await SettingsService.instance.update(updated);
+                    setState(() {
+                      _prayerSettings = updated;
+                    });
+                  }
+                },
+              ),
+              RadioListTile<String>(
+                title: Text('Terang (Pro)', style: TextStyle(color: textColor)),
+                subtitle: Text('Gaya terang dengan latar belakang bersih', style: TextStyle(color: secTextColor, fontSize: 12)),
+                value: 'light',
+                groupValue: currentMode,
+                activeColor: accentColor,
+                onChanged: (val) async {
+                  Navigator.of(ctx).pop();
+                  if (val != null) {
+                    if (!isPro) {
+                      _showProPromptDialog(
+                        feature: 'Mode Tampilan Terang',
+                        description: 'Tingkatkan ke Pro untuk mengaktifkan Mode Tampilan Terang.',
+                      );
+                    } else {
+                      final updated = _prayerSettings?.copyWith(displayMode: val) ?? PrayerSettings(displayMode: val);
+                      await SettingsService.instance.update(updated);
+                      setState(() {
+                        _prayerSettings = updated;
+                      });
+                    }
+                  }
+                },
+              ),
+              RadioListTile<String>(
+                title: Text('Ikuti Sistem (Pro)', style: TextStyle(color: textColor)),
+                subtitle: Text('Mode tampilan mengikuti pengaturan sistem perangkat Anda', style: TextStyle(color: secTextColor, fontSize: 12)),
+                value: 'system',
+                groupValue: currentMode,
+                activeColor: accentColor,
+                onChanged: (val) async {
+                  Navigator.of(ctx).pop();
+                  if (val != null) {
+                    if (!isPro) {
+                      _showProPromptDialog(
+                        feature: 'Mode Tampilan Ikuti Sistem',
+                        description: 'Tingkatkan ke Pro agar mode tampilan otomatis mengikuti sistem perangkat.',
+                      );
+                    } else {
+                      final updated = _prayerSettings?.copyWith(displayMode: val) ?? PrayerSettings(displayMode: val);
+                      await SettingsService.instance.update(updated);
+                      setState(() {
+                        _prayerSettings = updated;
+                      });
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(tr('dismiss'), style: TextStyle(color: secTextColor)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _PremiumAdzanDialog extends StatefulWidget {
+  final bool isPro;
+  final String? selectedRingtonePath;
+  final Function(String name, String asset) onSelect;
+  final Function(String feature, String description) onShowProPrompt;
+
+  const _PremiumAdzanDialog({
+    required this.isPro,
+    required this.selectedRingtonePath,
+    required this.onSelect,
+    required this.onShowProPrompt,
+  });
+
+  @override
+  State<_PremiumAdzanDialog> createState() => _PremiumAdzanDialogState();
+}
+
+class _PremiumAdzanDialogState extends State<_PremiumAdzanDialog> {
+  late final AudioPlayer _audioPlayer;
+  String? _playingAsset;
+  PlayerState _playerState = PlayerState.stopped;
+  StreamSubscription? _playerStateSubscription;
+
+  final List<Map<String, String>> _adzans = const [
+    {'name': 'Adzan Makkah (Masjidil Haram)', 'asset': 'adzan_makkah'},
+    {'name': 'Adzan Madinah (Masjid Nabawi)', 'asset': 'adzan_madinah'},
+    {'name': 'Adzan Al-Aqsa (Yerusalem)', 'asset': 'adzan_al_aqsa'},
+    {'name': 'Adzan Mesir (Bayati Style)', 'asset': 'adzan_mesir'},
+    {'name': 'Adzan Yusuf Islam', 'asset': 'adzan_yusuf_islam'},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _audioPlayer = AudioPlayer();
+    _playerStateSubscription = _audioPlayer.onPlayerStateChanged.listen((state) {
+      if (mounted) {
+        setState(() {
+          _playerState = state;
+          if (state == PlayerState.completed || state == PlayerState.stopped) {
+            _playingAsset = null;
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _playerStateSubscription?.cancel();
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _playPause(String assetName) async {
+    try {
+      if (_playingAsset == assetName && _playerState == PlayerState.playing) {
+        await _audioPlayer.stop();
+        setState(() {
+          _playingAsset = null;
+          _playerState = PlayerState.stopped;
+        });
+      } else {
+        await _audioPlayer.stop();
+        setState(() {
+          _playingAsset = assetName;
+          _playerState = PlayerState.playing;
+        });
+        await _audioPlayer.play(AssetSource('audio/$assetName.mp3'));
+      }
+    } catch (e) {
+      debugPrint("Error playing preview: $e");
+    }
+  }
+
+  bool _isCurrentlySelected(String assetName) {
+    if (widget.selectedRingtonePath == null) return false;
+    return widget.selectedRingtonePath!.contains(assetName);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = SettingsService.instance.notifier.value;
+    final cardColor = AppTheme.getCardColor(settings, context);
+    final textColor = AppTheme.getTextColor(settings, context);
+    final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+    final accentColor = AppTheme.getAccentColor(settings, context);
+
+    return AlertDialog(
+      backgroundColor: cardColor,
+      title: Text(
+        'Muadzin Premium (Pro)',
+        style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+      ),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: _adzans.length,
+          itemBuilder: (context, index) {
+            final adzan = _adzans[index];
+            final assetName = adzan['asset']!;
+            final name = adzan['name']!;
+            final isPlayingThis = _playingAsset == assetName && _playerState == PlayerState.playing;
+            final isSelected = _isCurrentlySelected(assetName);
+
+            return ListTile(
+              leading: Icon(
+                isSelected ? Icons.check_circle : Icons.music_note,
+                color: isSelected ? accentColor : secTextColor.withOpacity(0.6),
+              ),
+              title: Text(
+                name,
+                style: TextStyle(
+                  color: isSelected ? accentColor : textColor,
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              trailing: IconButton(
+                icon: Icon(
+                  isPlayingThis ? Icons.stop_circle : Icons.play_circle_fill,
+                  color: isPlayingThis ? Colors.redAccent : accentColor,
+                  size: 28,
+                ),
+                onPressed: () => _playPause(assetName),
+              ),
+              onTap: () {
+                if (!widget.isPro) {
+                  Navigator.of(context).pop();
+                  widget.onShowProPrompt(
+                    'Dukungan Muadzin Premium',
+                    'Tingkatkan ke Pro untuk menyetel suara Adzan termerdu dari berbagai belahan dunia secara offline.',
+                  );
+                } else {
+                  Navigator.of(context).pop();
+                  widget.onSelect(name, assetName);
+                }
+              },
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(tr('dismiss'), style: TextStyle(color: secTextColor)),
+        ),
+      ],
     );
   }
 }

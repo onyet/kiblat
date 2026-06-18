@@ -15,6 +15,9 @@ import 'package:kiblat/services/prayer_service.dart' as ps;
 import 'package:kiblat/models/prayer_settings_model.dart';
 import 'package:kiblat/services/settings_service.dart';
 import 'package:kiblat/services/home_widget_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:kiblat/utils/theme_util.dart';
+import 'package:kiblat/screens/main_shell.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool skipPermissionCheck; // useful for tests
@@ -37,6 +40,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  bool _hasAutoRedirected = false; // kept for compat but no longer used
   // Example heading in degrees. Will be updated by device compass.
   double headingDeg = 125.0;
   double qiblaDeg = 0.0; // absolute bearing to Kaaba
@@ -51,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen>
     Duration.zero,
   );
   Timer? _prayerTimer;
+  Timer? _promoTimer;
 
   double? _latitude;
   double? _longitude;
@@ -141,11 +146,14 @@ class _HomeScreenState extends State<HomeScreen>
         _fetchAndSetLocation();
       });
     }
+
+    _promoTimer = Timer(const Duration(seconds: 3), _checkAndShowPromoDialog);
   }
 
   @override
   void dispose() {
     _prayerTimer?.cancel();
+    _promoTimer?.cancel();
     _headingSub?.cancel();
     _compassController?.dispose();
     SettingsService.instance.notifier.removeListener(_onSettingsChanged);
@@ -202,7 +210,7 @@ class _HomeScreenState extends State<HomeScreen>
       });
       // Refresh next prayer once we have location and settings
       _refreshNextPrayer();
-      
+
       // Update home screen widget with new location data
       HomeWidgetService.instance.updateQiblaData(
         qiblaDegree: res.qiblaDeg,
@@ -333,12 +341,16 @@ class _HomeScreenState extends State<HomeScreen>
     // Settings changed (e.g., time format or calculation params) — refresh prayer times
     // so UI updates immediately to the new format
     _refreshNextPrayer();
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     // Format distance according to current locale when ready (handled by HomeCompass)
     // `dir` and `formattedDistance` are computed inside `HomeCompass`.
+    final settings = SettingsService.instance.notifier.value;
 
     return PopScope(
       canPop: false,
@@ -347,7 +359,7 @@ class _HomeScreenState extends State<HomeScreen>
         await _handleAppClose();
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF050505),
+        backgroundColor: AppTheme.getBackgroundColor(settings, context),
         body: SafeArea(
           child: Column(
             children: [
@@ -368,6 +380,7 @@ class _HomeScreenState extends State<HomeScreen>
                     qiblaDeg: qiblaDeg,
                     distanceKm: distanceKm,
                     isLocationReady: _isLocationReady,
+                    theme: SettingsService.instance.notifier.value.compassTheme,
                   ),
                 ),
               ),
@@ -390,13 +403,8 @@ class _HomeScreenState extends State<HomeScreen>
                 isImminent: false, // prefer listenable for live updates
                 isImminentListenable: _isImminentNotifier,
                 onViewFullSchedule: () {
-                  Navigator.of(context).pushNamed(
-                    '/prayer_times',
-                    arguments: {
-                      'locationLabel': _locationLabel,
-                      'qiblaDeg': qiblaDeg,
-                    },
-                  );
+                  // Switch to Jadwal tab in MainShell instead of pushing a new route
+                  MainShell.switchTab(1);
                 },
               ),
             ],
@@ -411,4 +419,98 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _handleAppClose() async {
     await showExitAndMaybeShowAd(context);
   }
+
+  Future<void> _checkAndShowPromoDialog() async {
+    if (!mounted) return;
+
+    final settings = SettingsService.instance.notifier.value;
+    if (settings.isProUser) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final lastShown = prefs.getInt('last_pro_promo_shown_time') ?? 0;
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    const cooldown = 24 * 60 * 60 * 1000;
+    if (now - lastShown < cooldown) return;
+
+    final randomChance = DateTime.now().millisecond % 4 == 0;
+    if (!randomChance) return;
+
+    await prefs.setInt('last_pro_promo_shown_time', now);
+
+    if (!mounted) return;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF0F0F0F),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+            side: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
+          ),
+          title: Row(
+            children: const [
+              Icon(Icons.stars, color: Color(0xFFD4AF37), size: 28),
+              SizedBox(width: 10),
+              Text(
+                'Tingkatkan ke Kiblat Pro',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'Dapatkan Pengalaman Terbaik:',
+                  style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+                SizedBox(height: 10),
+                Text('✅ Bebas Iklan Total (Meningkatkan Privasi dari Ad Networks)', style: TextStyle(color: Colors.white60, fontSize: 12)),
+                SizedBox(height: 6),
+                Text('✅ Tanpa Telemetri (Data Penggunaan 100% Privat & Offline)', style: TextStyle(color: Colors.white60, fontSize: 12)),
+                SizedBox(height: 6),
+                Text('✅ Akses Suara Adzan Premium Offline Tanpa Internet', style: TextStyle(color: Colors.white60, fontSize: 12)),
+                SizedBox(height: 6),
+                Text('✅ Buka 3 Tema Estetik Kompas Kiblat Baru', style: TextStyle(color: Colors.white60, fontSize: 12)),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Nanti Saja', style: TextStyle(color: Colors.white60)),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFBF953F), Color(0xFFFCF6BA), Color(0xFFBF953F)],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context).pushNamed('/settings');
+                },
+                child: const Text(
+                  'Lihat Detail Pro',
+                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  } // end build
 }

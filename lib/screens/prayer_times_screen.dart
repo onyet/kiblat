@@ -7,16 +7,12 @@ import 'package:kiblat/services/location_service.dart';
 import 'package:kiblat/services/settings_service.dart';
 import 'package:kiblat/utils/hijri_converter.dart';
 import 'package:kiblat/widgets/sunnah_compact.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:kiblat/utils/theme_util.dart';
+import 'package:kiblat/screens/prayer_tracker_screen.dart';
 
 class PrayerTimesScreen extends StatefulWidget {
-  final String locationLabel;
-  final double qiblaDeg;
-
-  const PrayerTimesScreen({
-    super.key,
-    required this.locationLabel,
-    required this.qiblaDeg,
-  });
+  const PrayerTimesScreen({super.key});
 
   @override
   State<PrayerTimesScreen> createState() => _PrayerTimesScreenState();
@@ -40,6 +36,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   List<ps.DailyPrayerTimes> _weekPrayers = [];
 
   PrayerSettings? _settings;
+  List<String> _completedPrayersToday = [];
+  Map<String, List<String>> _weeklyPrayerHistory = {};
 
   // Active prayer / countdown state
   Timer? _countdownTimer;
@@ -173,6 +171,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   void initState() {
     super.initState();
     _loadAll();
+    _loadPrayerTrackerData();
     // Refresh when global settings change (e.g., 24/12h format)
     SettingsService.instance.notifier.addListener(_onSettingsChanged);
   }
@@ -184,8 +183,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
   @override
   Widget build(BuildContext context) {
+    final settings = _settings ?? SettingsService.instance.notifier.value;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF050505),
+      backgroundColor: AppTheme.getBackgroundColor(settings, context),
       body: SafeArea(
         child: Column(
           children: [
@@ -216,11 +217,23 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                         child: Column(
                           children: [
                             const SizedBox(height: 40),
-                            const CircularProgressIndicator(),
+                            CircularProgressIndicator(
+                              color: AppTheme.getAccentColor(
+                                _settings ?? SettingsService.instance.notifier.value,
+                                context,
+                              ),
+                            ),
                             const SizedBox(height: 12),
-                            const Text(
-                              'Loading prayer times...',
-                              style: TextStyle(color: Colors.white60),
+                            Text(
+                              EasyLocalization.of(context) != null
+                                  ? tr('calculating')
+                                  : 'Loading prayer times...',
+                              style: TextStyle(
+                                color: AppTheme.getSecondaryTextColor(
+                                  _settings ?? SettingsService.instance.notifier.value,
+                                  context,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -247,7 +260,6 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
                       const SizedBox(height: 32),
 
-                      // Qibla direction card
                       _buildQiblaCard(),
 
                       const SizedBox(height: 40),
@@ -263,98 +275,84 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   }
 
   Widget _buildHeader() {
+    final settings = _settings ?? SettingsService.instance.notifier.value;
+    final bgColor = AppTheme.getBackgroundColor(settings, context);
+    final cardColor = AppTheme.getCardColor(settings, context);
+    final textColor = AppTheme.getTextColor(settings, context);
+    final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+    final borderColor = AppTheme.getBorderColor(settings, context);
+    final accentColor = AppTheme.getAccentColor(settings, context);
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
       decoration: BoxDecoration(
-        color: const Color(0xFF050505),
+        color: bgColor,
         border: Border(
-          bottom: BorderSide(color: const Color.fromRGBO(255, 255, 255, 0.05)),
+          bottom: BorderSide(color: borderColor),
         ),
       ),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Back button
-              SizedBox(
-                width: 40,
-                height: 40,
-                child: Material(
-                  color: const Color.fromRGBO(255, 255, 255, 0.05),
-                  borderRadius: BorderRadius.circular(8),
-                  child: InkWell(
-                    onTap: () => Navigator.of(context).pop(),
-                    borderRadius: BorderRadius.circular(8),
-                    child: const Icon(
-                      Icons.chevron_left,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                ),
-              ),
-
-              // Location (flexible)
-              Expanded(
-                child: Column(
+          // Location
+          Expanded(
+            child: Column(
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.location_on,
-                          size: 14,
-                          color: Colors.white54,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          EasyLocalization.of(context) != null
-                              ? tr('current_location').toUpperCase()
-                              : 'CURRENT LOCATION',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.4,
-                            color: const Color.fromRGBO(255, 255, 255, 0.6),
-                          ),
-                        ),
-                      ],
+                    Icon(
+                      Icons.location_on,
+                      size: 14,
+                      color: accentColor,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(width: 6),
                     Text(
-                      widget.locationLabel,
-                      style: const TextStyle(
-                        fontSize: 18,
+                      EasyLocalization.of(context) != null
+                          ? tr('current_location').toUpperCase()
+                          : 'CURRENT LOCATION',
+                      style: TextStyle(
+                        fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        letterSpacing: 1.4,
+                        color: secTextColor,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
-              ),
-
-              // Settings button (right)
-              SizedBox(
-                width: 40,
-                height: 40,
-                child: Material(
-                  color: const Color.fromRGBO(255, 255, 255, 0.05),
-                  borderRadius: BorderRadius.circular(8),
-                  child: InkWell(
-                    onTap: () => Navigator.of(context).pushNamed('/settings'),
-                    borderRadius: BorderRadius.circular(8),
-                    child: const Icon(
-                      Icons.settings,
-                      color: Colors.white,
-                      size: 20,
-                    ),
+                const SizedBox(height: 4),
+                Text(
+                  _locationLabel.isNotEmpty ? _locationLabel : '...',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: textColor,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+
+          // Settings button (right)
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: Material(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(8),
+              child: InkWell(
+                onTap: () => Navigator.of(context).pushNamed('/settings'),
+                borderRadius: BorderRadius.circular(8),
+                child: Icon(
+                  Icons.settings,
+                  color: textColor,
+                  size: 20,
                 ),
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -362,26 +360,67 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   }
 
   Widget _buildTabs() {
+    final settings = _settings ?? SettingsService.instance.notifier.value;
+    final borderColor = AppTheme.getBorderColor(settings, context);
+    final accentColor = AppTheme.getAccentColor(settings, context);
+    final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: const Color.fromRGBO(255, 255, 255, 0.05)),
+          bottom: BorderSide(color: borderColor),
         ),
       ),
       child: Row(
         children: [
           _buildTabButton('today', 0),
-          const SizedBox(width: 32),
+          const SizedBox(width: 4),
           _buildTabButton('tomorrow', 1),
-          const SizedBox(width: 32),
+          const SizedBox(width: 4),
           _buildTabButton('this_week', 2),
+          const Spacer(),
+          // Shortcut to Prayer Tracker screen
+          GestureDetector(
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const PrayerTrackerScreen(),
+              ),
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.assignment_outlined, color: accentColor, size: 14),
+                  const SizedBox(width: 4),
+                  Text(
+                    EasyLocalization.of(context) != null ? tr('catatan') : 'Catatan',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: accentColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildTabButton(String labelKey, int index) {
+    final settings = _settings ?? SettingsService.instance.notifier.value;
+    final accentColor = AppTheme.getAccentColor(settings, context);
+    final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+
     final isActive = _selectedTabIndex == index;
     final label = (EasyLocalization.of(context) != null && tr(labelKey) != labelKey)
         ? tr(labelKey)
@@ -397,15 +436,15 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
               fontWeight: FontWeight.w700,
               letterSpacing: 1.2,
               color: isActive
-                  ? const Color(0xFFD4AF37)
-                  : const Color.fromRGBO(255, 255, 255, 0.4),
+                  ? accentColor
+                  : secTextColor,
             ),
           ),
           const SizedBox(height: 8),
           Container(
             height: 2,
             width: 24,
-            color: isActive ? const Color(0xFFD4AF37) : Colors.transparent,
+            color: isActive ? accentColor : Colors.transparent,
           ),
         ],
       ),
@@ -413,6 +452,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   }
 
   Widget _buildDateSection() {
+    final settings = _settings ?? SettingsService.instance.notifier.value;
+    final accentColor = AppTheme.getAccentColor(settings, context);
+    final textColor = AppTheme.getTextColor(settings, context);
+    final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+
     final date = _selectedTabIndex == 0
         ? _todayDate
         : (_selectedTabIndex == 1 ? _tomorrowDate : _todayDate);
@@ -432,16 +476,16 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,
-                color: const Color(0xFFD4AF37),
+                color: accentColor,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               hijri.toFormattedStringArabic(),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                color: textColor,
               ),
             ),
           ],
@@ -457,7 +501,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,
-                color: const Color.fromRGBO(255, 255, 255, 0.4),
+                color: secTextColor,
               ),
             ),
             const SizedBox(height: 4),
@@ -466,7 +510,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: const Color.fromRGBO(255, 255, 255, 0.6),
+                color: secTextColor,
               ),
             ),
           ],
@@ -515,8 +559,6 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     final sunnah = day.prayers.where((p) => p.isSunnah).toList();
     final regular = day.prayers.where((p) => !p.isSunnah).toList();
 
-
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -530,6 +572,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   }
 
   Widget _buildWeekView() {
+    final settings = _settings ?? SettingsService.instance.notifier.value;
+    final textColor = AppTheme.getTextColor(settings, context);
+
     return Column(
       children: _weekPrayers.map((day) {
         final dateStr = HijriConverter.formatGregorianShort(day.date);
@@ -544,8 +589,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
           children: [
             Text(
               dateStr,
-              style: const TextStyle(
-                color: Colors.white70,
+              style: TextStyle(
+                color: textColor,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -568,6 +613,14 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     bool isActive,
     bool isSunrise,
   ) {
+    final settings = _settings ?? SettingsService.instance.notifier.value;
+    final cardColor = AppTheme.getCardColor(settings, context);
+    final textColor = AppTheme.getTextColor(settings, context);
+    final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+    final accentColor = AppTheme.getAccentColor(settings, context);
+    final borderColor = AppTheme.getBorderColor(settings, context);
+    final isLight = AppTheme.isLight(settings, context);
+
     // For sunnah times we slightly reduce opacity and add a tiny badge
     final isSunnah = prayer.isSunnah;
 
@@ -583,19 +636,15 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: isActive
-            ? const Color.fromRGBO(212, 175, 55, 0.1)
-            : isSunnah
-            ? const Color.fromRGBO(255, 255, 255, 0.02)
-            : (isSunrise
-                  ? const Color.fromRGBO(255, 255, 255, 0.02)
-                  : const Color.fromRGBO(255, 255, 255, 0.05)),
+            ? accentColor.withValues(alpha: 0.12)
+            : (isSunnah || isSunrise
+                ? cardColor.withValues(alpha: 0.6)
+                : cardColor),
         border: Border.all(
           color: isActive
-              ? const Color(0xFFD4AF37)
-              : isSunnah
-              ? const Color.fromRGBO(255, 255, 255, 0.06)
-              : const Color.fromRGBO(255, 255, 255, 0.1),
-          width: isActive ? 2 : (isSunnah ? 1 : 1),
+              ? accentColor
+              : borderColor,
+          width: isActive ? 2 : 1,
         ),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -608,14 +657,14 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isActive
-                  ? const Color(0xFFD4AF37)
-                  : const Color.fromRGBO(212, 175, 55, 0.1),
+                  ? accentColor
+                  : accentColor.withValues(alpha: 0.1),
             ),
             child: Icon(
               iconData,
               color: isActive
-                  ? const Color(0xFF050505)
-                  : const Color(0xFFD4AF37),
+                  ? (isLight ? Colors.white : const Color(0xFF050505))
+                  : accentColor,
               size: 20,
             ),
           ),
@@ -632,9 +681,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: isActive
-                        ? Colors.white
-                        : const Color.fromRGBO(255, 255, 255, 0.9),
+                    color: textColor,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -646,8 +693,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                     fontWeight: FontWeight.w600,
                     letterSpacing: 1.2,
                     color: isActive
-                        ? const Color.fromRGBO(212, 175, 55, 0.8)
-                        : const Color.fromRGBO(255, 255, 255, 0.3),
+                        ? accentColor
+                        : secTextColor,
                   ),
                 ),
               ],
@@ -664,10 +711,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                   fontSize: isActive ? 22 : 18,
                   fontWeight: FontWeight.w700,
                   color: isSunnah
-                      ? const Color.fromRGBO(255, 255, 255, 0.6)
+                      ? secTextColor
                       : (isActive
-                            ? const Color(0xFFD4AF37)
-                            : const Color.fromRGBO(255, 255, 255, 0.9)),
+                            ? accentColor
+                            : textColor),
                   letterSpacing: -0.5,
                 ),
               ),
@@ -676,10 +723,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
               if (isActive)
                 Text(
                   tr('status_active').toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFFD4AF37),
+                    color: accentColor,
                   ),
                 ),
             ],
@@ -699,7 +746,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFD4AF37),
+                color: accentColor,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
@@ -708,7 +755,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                   fontSize: 9,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.0,
-                  color: const Color(0xFF050505),
+                  color: isLight ? Colors.white : const Color(0xFF050505),
                 ),
               ),
             ),
@@ -721,8 +768,24 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   }
 
   Widget _buildQiblaCard() {
-    final qiblaDeg = _qiblaDeg ?? widget.qiblaDeg;
+    final settings = _settings ?? SettingsService.instance.notifier.value;
+    final cardColor = AppTheme.getCardColor(settings, context);
+    final textColor = AppTheme.getTextColor(settings, context);
+    final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+    final accentColor = AppTheme.getAccentColor(settings, context);
+    final isLight = AppTheme.isLight(settings, context);
+
+    final qiblaDeg = _qiblaDeg ?? 0.0;
     final qiblaDir = _getQiblaDirection(qiblaDeg);
+
+    List<Color> gradientColors;
+    if (isLight) {
+      gradientColors = [cardColor, const Color(0xFFEEEEEE)];
+    } else if (settings.compassTheme == 'cyber') {
+      gradientColors = [cardColor, const Color(0xFF050B11)];
+    } else {
+      gradientColors = [cardColor, const Color(0xFF080808)];
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
@@ -730,9 +793,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [const Color(0xFF0A0A0A), const Color(0xFF050505)],
+          colors: gradientColors,
         ),
-        border: Border.all(color: const Color.fromRGBO(212, 175, 55, 0.2)),
+        border: Border.all(color: accentColor.withValues(alpha: 0.25)),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -746,11 +809,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                   EasyLocalization.of(context) != null
                       ? tr('facing_qibla').toUpperCase()
                       : 'FACING QIBLA',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
-                    color: Color(0xFFD4AF37),
+                    color: accentColor,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -759,19 +822,19 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                     children: [
                       TextSpan(
                         text: '${qiblaDeg.toStringAsFixed(0)}°',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                          color: textColor,
                         ),
                       ),
                       TextSpan(
                         text:
-                            ' $qiblaDir from ${_locationLabel.isNotEmpty ? _locationLabel : widget.locationLabel}',
+                            ' $qiblaDir from $_locationLabel',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: const Color.fromRGBO(255, 255, 255, 0.4),
+                          color: secTextColor,
                         ),
                       ),
                     ],
@@ -787,16 +850,16 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
             width: 48,
             height: 48,
             child: Material(
-              color: const Color(0xFFD4AF37),
+              color: accentColor,
               borderRadius: BorderRadius.circular(24),
               child: InkWell(
                 onTap: () {
-                  // Navigate to compass/qibla screen
+                  Navigator.of(context).pop();
                 },
                 borderRadius: BorderRadius.circular(24),
-                child: const Icon(
+                child: Icon(
                   Icons.explore,
-                  color: Color(0xFF050505),
+                  color: isLight ? Colors.white : const Color(0xFF050505),
                   size: 24,
                 ),
               ),
@@ -906,6 +969,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   Widget _buildCountdownBanner() {
     if (_nextPrayer == null) return const SizedBox.shrink();
 
+    final settings = _settings ?? SettingsService.instance.notifier.value;
+    final accentColor = AppTheme.getAccentColor(settings, context);
+    final textColor = AppTheme.getTextColor(settings, context);
+    final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+
     final nameKey = _nextPrayer!.name.toLowerCase();
     final localized = (tr(nameKey) == nameKey)
         ? _nextPrayer!.name
@@ -916,15 +984,15 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: const Color.fromRGBO(212, 175, 55, 0.06),
+            color: accentColor.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color.fromRGBO(212, 175, 55, 0.12)),
+            border: Border.all(color: accentColor.withValues(alpha: 0.12)),
           ),
           child: Row(
             children: [
               Icon(
                 _iconForPrayer(_nextPrayer!.name),
-                color: const Color(0xFFD4AF37),
+                color: accentColor,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -939,23 +1007,16 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                           'prayer': localized,
                         },
                       ),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: textColor,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 4),
                     LinearProgressIndicator(
                       value: _progressToNext,
-                      backgroundColor: const Color.fromRGBO(
-                        255,
-                        255,
-                        255,
-                        0.04,
-                      ),
-                      valueColor: const AlwaysStoppedAnimation(
-                        Color(0xFFD4AF37),
-                      ),
+                      backgroundColor: accentColor.withValues(alpha: 0.08),
+                      valueColor: AlwaysStoppedAnimation<Color>(accentColor),
                     ),
                   ],
                 ),
@@ -963,8 +1024,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
               const SizedBox(width: 12),
               Text(
                 _nextPrayer!.timeString,
-                style: const TextStyle(
-                  color: Colors.white70,
+                style: TextStyle(
+                  color: secTextColor,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -973,6 +1034,210 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
         ),
 
         const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  String _formatDateKey(DateTime dt) {
+    return "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
+  }
+
+  Future<void> _loadPrayerTrackerData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final todayKey = _formatDateKey(DateTime.now());
+    
+    final completedToday = prefs.getStringList('prayer_tracker_$todayKey') ?? [];
+    
+    final Map<String, List<String>> history = {};
+    for (int i = 1; i <= 7; i++) {
+      final prevDate = DateTime.now().subtract(Duration(days: i));
+      final prevKey = _formatDateKey(prevDate);
+      final list = prefs.getStringList('prayer_tracker_$prevKey') ?? [];
+      history[prevKey] = list;
+    }
+    
+    if (mounted) {
+      setState(() {
+        _completedPrayersToday = completedToday;
+        _weeklyPrayerHistory = history;
+      });
+    }
+  }
+
+  Future<void> _togglePrayer(String prayerName) async {
+    final prefs = await SharedPreferences.getInstance();
+    final todayKey = _formatDateKey(DateTime.now());
+    
+    final currentList = List<String>.from(_completedPrayersToday);
+    if (currentList.contains(prayerName)) {
+      currentList.remove(prayerName);
+    } else {
+      currentList.add(prayerName);
+    }
+    
+    await prefs.setStringList('prayer_tracker_$todayKey', currentList);
+    
+    setState(() {
+      _completedPrayersToday = currentList;
+    });
+    
+    await _loadPrayerTrackerData();
+  }
+
+  Widget _buildTrackerView() {
+    final prayers = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+    final prayerDisplayNames = {
+      'fajr': 'Subuh',
+      'dhuhr': 'Dzuhur',
+      'asr': 'Ashar',
+      'maghrib': 'Maghrib',
+      'isha': 'Isya',
+    };
+    
+    final settings = SettingsService.instance.notifier.value;
+    final cardColor = AppTheme.getCardColor(settings, context);
+    final accentColor = AppTheme.getAccentColor(settings);
+    final textColor = AppTheme.getTextColor(settings, context);
+    final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+    final borderColor = AppTheme.getBorderColor(settings, context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Text(
+            'Catatan Sholat Hari Ini',
+            style: TextStyle(
+              color: textColor,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor),
+          ),
+          child: ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: prayers.length,
+            separatorBuilder: (context, index) => Divider(color: borderColor, height: 1),
+            itemBuilder: (context, index) {
+              final pKey = prayers[index];
+              final displayName = prayerDisplayNames[pKey]!;
+              final isCompleted = _completedPrayersToday.contains(pKey);
+              
+              return ListTile(
+                leading: Icon(
+                  isCompleted ? Icons.check_circle : Icons.radio_button_off,
+                  color: isCompleted ? accentColor : secTextColor,
+                  size: 26,
+                ),
+                title: Text(
+                  displayName,
+                  style: TextStyle(
+                    color: isCompleted ? textColor : textColor.withOpacity(0.7),
+                    fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 16,
+                  ),
+                ),
+                trailing: isCompleted 
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: accentColor.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Selesai',
+                        style: TextStyle(color: accentColor, fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                    )
+                  : null,
+                onTap: () => _togglePrayer(pKey),
+              );
+            },
+          ),
+        ),
+        
+        const SizedBox(height: 24),
+        
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Text(
+            'Riwayat 7 Hari Terakhir',
+            style: TextStyle(
+              color: textColor,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor),
+          ),
+          child: Column(
+            children: List.generate(7, (index) {
+              final prevDate = DateTime.now().subtract(Duration(days: index + 1));
+              final dateKey = _formatDateKey(prevDate);
+              final completed = _weeklyPrayerHistory[dateKey] ?? [];
+              final count = completed.length;
+              final formattedDate = DateFormat('EEEE, dd MMM', context.locale.toString()).format(prevDate);
+              
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      formattedDate,
+                      style: TextStyle(color: textColor, fontSize: 14),
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          '$count/5',
+                          style: TextStyle(
+                            color: count == 5 ? accentColor : secTextColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Row(
+                          children: prayers.map((pKey) {
+                            final pDone = completed.contains(pKey);
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 2),
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: pDone ? accentColor : secTextColor.withOpacity(0.2),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ),
       ],
     );
   }

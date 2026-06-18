@@ -307,15 +307,6 @@ class NotificationService {
     final Element? elem = ctx is Element ? ctx : null;
     final ctxMounted = elem?.mounted ?? false;
 
-    // Compute today's prayer times for the given location/timezone
-    final today = DateTime.now();
-    final daily = await ps.PrayerService.calculatePrayerTimes(
-      latitude: latitude,
-      longitude: longitude,
-      date: DateTime(today.year, today.month, today.day),
-      settings: settings,
-    );
-
     // Build notification details with custom sound if set
     final customSoundUri = await _usableAndroidSoundUri(
       settings.customRingtonePath,
@@ -327,58 +318,122 @@ class NotificationService {
     // We schedule notifications only for main prayers Fajr, Dhuhr, Asr, Maghrib, Isha
     final mainNames = {'Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'};
 
-    for (final prayer in daily.prayers) {
-      if (!mainNames.contains(prayer.name)) continue;
+    final today = DateTime.now();
 
-      final id = _prayerIds[prayer.name]!;
-
-      // Build localized message
-      final prayerLabel = ctxMounted
-          ? tr(prayer.name.toLowerCase(), context: elem)
-          : prayer.name;
-      final title = ctxMounted
-          ? tr('notification_prayer_title', context: elem)
-          : 'Prayer time';
-      final body = ctxMounted
-          ? tr(
-              'notification_prayer_arrived',
-              namedArgs: {'prayer': prayerLabel},
-              context: elem,
-            )
-          : '$prayerLabel time has arrived';
-
-      // Convert DateTime to tz aware time
-      final tzTime = tz.TZDateTime.from(prayer.time, tz.local);
-      // If the time already passed today, schedule starting tomorrow
-      var scheduled = tzTime;
-      if (scheduled.isBefore(tz.TZDateTime.now(tz.local))) {
-        scheduled = scheduled.add(const Duration(days: 1));
-      }
-
-      await _plugin.zonedSchedule(
-        id,
-        title,
-        body,
-        scheduled,
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            _currentChannelId,
-            'Prayer times',
-            channelDescription: 'Adzan notifications for prayer times',
-            importance: Importance.high,
-            priority: Priority.high,
-            ticker: 'prayer',
-            sound: hasCustomSound
-                ? UriAndroidNotificationSound(customSoundUri)
-                : null,
-            playSound: true,
-          ),
-          iOS: const DarwinNotificationDetails(),
-        ),
-        androidScheduleMode: androidScheduleMode,
-        matchDateTimeComponents: DateTimeComponents.time,
-        payload: prayer.name,
+    // Loop through the next 10 days (from day 0 to day 9)
+    for (int dayOffset = 0; dayOffset < 10; dayOffset++) {
+      final targetDate = today.add(Duration(days: dayOffset));
+      final daily = await ps.PrayerService.calculatePrayerTimes(
+        latitude: latitude,
+        longitude: longitude,
+        date: DateTime(targetDate.year, targetDate.month, targetDate.day),
+        settings: settings,
       );
+
+      for (final prayer in daily.prayers) {
+        if (!mainNames.contains(prayer.name)) continue;
+
+        // Assign a unique ID based on prayer ID and dayOffset (e.g. 100 for Fajr day 0, 110 for Fajr day 1)
+        final baseId = _prayerIds[prayer.name]!;
+        final id = baseId + (dayOffset * 10);
+
+        // Convert to tz.TZDateTime using wall clock values from prayer.time
+        final scheduled = tz.TZDateTime(
+          tz.local,
+          prayer.time.year,
+          prayer.time.month,
+          prayer.time.day,
+          prayer.time.hour,
+          prayer.time.minute,
+          prayer.time.second,
+        );
+
+        // If this scheduled prayer time is in the past (e.g. earlier today), skip scheduling it
+        if (scheduled.isBefore(tz.TZDateTime.now(tz.local))) {
+          continue;
+        }
+
+        // Build localized message
+        final prayerLabel = ctxMounted
+            ? tr(prayer.name.toLowerCase(), context: elem)
+            : prayer.name;
+        final title = ctxMounted
+            ? tr('notification_prayer_title', context: elem)
+            : 'Prayer time';
+        final body = ctxMounted
+            ? tr(
+                'notification_prayer_arrived',
+                namedArgs: {'prayer': prayerLabel},
+                context: elem,
+              )
+            : '$prayerLabel time has arrived';
+
+        await _plugin.zonedSchedule(
+          id,
+          title,
+          body,
+          scheduled,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              _currentChannelId,
+              'Prayer times',
+              channelDescription: 'Adzan notifications for prayer times',
+              importance: Importance.high,
+              priority: Priority.high,
+              ticker: 'prayer',
+              sound: hasCustomSound
+                  ? UriAndroidNotificationSound(customSoundUri)
+                  : null,
+              playSound: true,
+            ),
+            iOS: DarwinNotificationDetails(
+              presentSound: true,
+              sound: hasCustomSound ? settings.customRingtonePath : null,
+            ),
+          ),
+          androidScheduleMode: androidScheduleMode,
+          payload: prayer.name,
+        );
+      }
     }
+  }
+
+  Future<void> triggerTestNotification(PrayerSettings settings) async {
+    final ctx = _navigatorKey?.currentContext;
+    final title = ctx != null ? tr('notification_prayer_title') : 'Tes Notifikasi';
+    final body = 'Ini adalah tes suara Adzan: ${settings.customRingtoneName ?? 'Default'}';
+
+    await _ensureNotificationChannel(settings.customRingtonePath);
+
+    String? customSoundUri;
+    if (Platform.isAndroid && settings.customRingtonePath != null) {
+      customSoundUri = await _usableAndroidSoundUri(settings.customRingtonePath);
+    }
+
+    final hasCustomSound = settings.customRingtonePath != null && settings.customRingtonePath!.isNotEmpty;
+
+    await _plugin.show(
+      999,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _currentChannelId,
+          'Prayer times',
+          channelDescription: 'Adzan notifications for prayer times',
+          importance: Importance.high,
+          priority: Priority.high,
+          sound: hasCustomSound && customSoundUri != null
+              ? UriAndroidNotificationSound(customSoundUri)
+              : null,
+          playSound: true,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentSound: true,
+          sound: hasCustomSound ? settings.customRingtonePath : null,
+        ),
+      ),
+      payload: 'test',
+    );
   }
 }

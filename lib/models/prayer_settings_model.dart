@@ -39,6 +39,18 @@ class PrayerSettings {
   /// Human-readable name for the custom ringtone (e.g., the original filename)
   final String? customRingtoneName;
 
+  /// Status Pro pengguna (Fokus Privasi: bebas iklan & tanpa telemetri)
+  final bool isProUser;
+
+  /// Halaman awal default aplikasi ('compass' atau 'prayer_times')
+  final String defaultLaunchScreen;
+
+  /// Tema kompas ('classic', 'gold', 'dark', 'cyber')
+  final String compassTheme;
+
+  /// Mode tampilan ('dark', 'light', 'system')
+  final String displayMode;
+
   PrayerSettings({
     this.madhab = Madhab.shafi,
     this.calculationMethod = CalculationMethod.muslim_world_league,
@@ -52,6 +64,10 @@ class PrayerSettings {
     this.enablePrayerNotifications = true,
     this.customRingtonePath,
     this.customRingtoneName,
+    this.isProUser = false,
+    this.defaultLaunchScreen = 'compass',
+    this.compassTheme = 'gold',
+    this.displayMode = 'dark',
   });
 
   /// Create a copy of this settings with optional modifications
@@ -69,6 +85,10 @@ class PrayerSettings {
     String? customRingtonePath,
     String? customRingtoneName,
     bool clearCustomRingtone = false,
+    bool? isProUser,
+    String? defaultLaunchScreen,
+    String? compassTheme,
+    String? displayMode,
   }) {
     return PrayerSettings(
       madhab: madhab ?? this.madhab,
@@ -83,6 +103,10 @@ class PrayerSettings {
       enablePrayerNotifications: enablePrayerNotifications ?? this.enablePrayerNotifications,
       customRingtonePath: clearCustomRingtone ? null : (customRingtonePath ?? this.customRingtonePath),
       customRingtoneName: clearCustomRingtone ? null : (customRingtoneName ?? this.customRingtoneName),
+      isProUser: isProUser ?? this.isProUser,
+      defaultLaunchScreen: defaultLaunchScreen ?? this.defaultLaunchScreen,
+      compassTheme: compassTheme ?? this.compassTheme,
+      displayMode: displayMode ?? this.displayMode,
     );
   }
 
@@ -113,6 +137,10 @@ class PrayerSettings {
     } else {
       await prefs.remove('customRingtoneName');
     }
+    await prefs.setBool('isProUser', isProUser);
+    await prefs.setString('defaultLaunchScreen', defaultLaunchScreen);
+    await prefs.setString('compassTheme', compassTheme);
+    await prefs.setString('displayMode', displayMode);
   }
 
   /// Load settings from SharedPreferences
@@ -143,6 +171,10 @@ class PrayerSettings {
     final enablePrayerNotifications = prefs.getBool('enablePrayerNotifications') ?? true;
     final customRingtonePath = prefs.getString('customRingtonePath');
     final customRingtoneName = prefs.getString('customRingtoneName');
+    final isProUser = prefs.getBool('isProUser') ?? false;
+    final defaultLaunchScreen = prefs.getString('defaultLaunchScreen') ?? 'compass';
+    final compassTheme = prefs.getString('compassTheme') ?? 'gold';
+    final displayMode = prefs.getString('displayMode') ?? 'dark';
 
     return PrayerSettings(
       madhab: madhab,
@@ -157,6 +189,10 @@ class PrayerSettings {
       enablePrayerNotifications: enablePrayerNotifications,
       customRingtonePath: customRingtonePath,
       customRingtoneName: customRingtoneName,
+      isProUser: isProUser,
+      defaultLaunchScreen: defaultLaunchScreen,
+      compassTheme: compassTheme,
+      displayMode: displayMode,
     );
   }
 

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:kiblat/services/settings_service.dart';
+import 'package:kiblat/utils/theme_util.dart';
 
 class HomePrayerSheet extends StatefulWidget {
   final String prayerKey; // localization key e.g. 'maghrib'
@@ -177,6 +179,13 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
 
   @override
   Widget build(BuildContext context) {
+    final settings = SettingsService.instance.notifier.value;
+    final isLight = AppTheme.isLight(settings, context);
+    final cardColor = AppTheme.getCardColor(settings, context);
+    final textColor = AppTheme.getTextColor(settings, context);
+    final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+    final accentColor = AppTheme.getAccentColor(settings, context);
+
     final prayerName = tr(widget.prayerKey);
     final countdownText = tr(
       'time_to_prayer_fmt',
@@ -227,9 +236,9 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
           vertical: isCompact ? 10 : 12,
         ),
         decoration: BoxDecoration(
-          color: const Color(0xFF0A0A0A),
+          color: cardColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color.fromRGBO(212, 175, 55, 0.2)),
+          border: Border.all(color: accentColor.withOpacity(0.25)),
         ),
         child: Row(
           children: [
@@ -238,13 +247,13 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD4AF37),
+                  color: accentColor,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
                   tr('status_active').toUpperCase(),
-                  style: const TextStyle(
-                    color: Color(0xFF050505),
+                  style: TextStyle(
+                    color: isLight ? Colors.white : const Color(0xFF050505),
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                   ),
@@ -254,7 +263,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
               Text(
                 tr(widget.activePrayerKey!),
                 style: TextStyle(
-                  color: Colors.white,
+                  color: textColor,
                   fontWeight: FontWeight.w700,
                   fontSize: isCompact ? 14 : 16,
                 ),
@@ -263,7 +272,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
               Icon(
                 Icons.arrow_forward_ios,
                 size: isCompact ? 14 : 16,
-                color: const Color.fromRGBO(255, 255, 255, 0.5),
+                color: secTextColor.withOpacity(0.5),
               ),
               SizedBox(width: isCompact ? 8 : 12),
             ],
@@ -281,7 +290,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                         style: TextStyle(
-                          color: Colors.white,
+                          color: textColor,
                           fontWeight: FontWeight.w700,
                           fontSize: isCompact ? 14 : 16,
                         ),
@@ -291,7 +300,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                     Text(
                       widget.prayerTime,
                       style: TextStyle(
-                        color: Color.fromRGBO(255, 255, 255, 0.6),
+                        color: secTextColor,
                         fontSize: isCompact ? 14 : 16,
                         fontWeight: FontWeight.w500,
                       ),
@@ -303,7 +312,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
 
             Icon(
               Icons.expand_more,
-              color: const Color.fromRGBO(255, 255, 255, 0.6),
+              color: secTextColor,
             ),
           ],
         ),
@@ -340,9 +349,9 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
         ),
         padding: EdgeInsets.all(contentPadding),
         decoration: BoxDecoration(
-          color: const Color(0xFF0A0A0A),
+          color: cardColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color.fromRGBO(212, 175, 55, 0.2)),
+          border: Border.all(color: accentColor.withOpacity(0.25)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -355,7 +364,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                   child: Text(
                     tr('next_prayer').toUpperCase(),
                     style: TextStyle(
-                      color: const Color.fromRGBO(212, 175, 55, 0.6),
+                      color: accentColor.withOpacity(0.8),
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.4,
@@ -366,7 +375,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                   onTap: _toggle,
                   child: Icon(
                     Icons.expand_less,
-                    color: const Color.fromRGBO(255, 255, 255, 0.6),
+                    color: secTextColor,
                   ),
                 ),
               ],
@@ -396,7 +405,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                   children: [
                     Icon(
                       iconForPrayer(widget.prayerKey),
-                      color: const Color(0xFFD4AF37),
+                      color: accentColor,
                       size: iconSize,
                     ),
                     SizedBox(width: isCompact ? 10 : 12),
@@ -406,7 +415,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                         Text(
                           prayerName,
                           style: TextStyle(
-                            color: Colors.white,
+                            color: textColor,
                             fontWeight: FontWeight.w700,
                             fontSize: nameFontSize,
                             height: 1.0,
@@ -416,7 +425,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                         Text(
                           widget.prayerTime,
                           style: TextStyle(
-                            color: Color.fromRGBO(255, 255, 255, 0.5),
+                            color: secTextColor,
                             fontSize: timeFontSize,
                             fontWeight: FontWeight.w500,
                           ),
@@ -457,10 +466,10 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                             vertical: badgeVPadding,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color.fromRGBO(212, 175, 55, 0.12),
+                            color: accentColor.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
-                              color: const Color.fromRGBO(212, 175, 55, 0.25),
+                              color: accentColor.withOpacity(0.25),
                             ),
                           ),
                           child: Text(
@@ -469,7 +478,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                               namedArgs: {'dur': cd, 'prayer': prayerName},
                             ),
                             style: TextStyle(
-                              color: const Color(0xFFD4AF37),
+                              color: accentColor,
                               fontSize: badgeFontSize,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.5,
@@ -486,16 +495,16 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                         vertical: badgeVPadding,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color.fromRGBO(212, 175, 55, 0.12),
+                        color: accentColor.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                          color: const Color.fromRGBO(212, 175, 55, 0.25),
+                          color: accentColor.withOpacity(0.25),
                         ),
                       ),
                       child: Text(
                         countdownText,
                         style: TextStyle(
-                          color: const Color(0xFFD4AF37),
+                          color: accentColor,
                           fontSize: badgeFontSize,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.5,

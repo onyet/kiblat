@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:kiblat/services/settings_service.dart';
 
 /// Service untuk mengelola iklan AdMob
 class AdService {
@@ -74,6 +75,12 @@ class AdService {
     // If disposed, don't attempt to load or schedule future work.
     if (_isDisposed) {
       debugPrint('[AdService] Service disposed, not loading interstitial.');
+      return;
+    }
+    // Skip loading ads if user is Pro
+    final settings = SettingsService.instance.notifier.value;
+    if (settings.isProUser) {
+      debugPrint('[AdService] User is Pro, skipping interstitial ad load.');
       return;
     }
     // If an ad already exists, don't overwrite it.
@@ -151,6 +158,11 @@ class AdService {
   Future<bool> showInterstitialAd({
     Duration timeout = const Duration(seconds: 7),
   }) async {
+    final settings = SettingsService.instance.notifier.value;
+    if (settings.isProUser) {
+      debugPrint('[AdService] User is Pro, bypassing interstitial ad.');
+      return false;
+    }
     if (!_isInterstitialAdReady || _interstitialAd == null) return false;
     if (_isShowing) return false; // avoid re-entrance
 
@@ -284,6 +296,12 @@ class AdService {
       debugPrint('[AdService] Service disposed, not loading rewarded.');
       return;
     }
+    // Skip loading ads if user is Pro
+    final settings = SettingsService.instance.notifier.value;
+    if (settings.isProUser) {
+      debugPrint('[AdService] User is Pro, skipping rewarded ad load.');
+      return;
+    }
     if (_isRewardedAdLoading) {
       debugPrint('[AdService] Rewarded load already in progress, skipping.');
       return;
@@ -340,6 +358,11 @@ class AdService {
   Future<bool> showRewardedAd({
     Duration timeout = const Duration(seconds: 30),
   }) async {
+    final settings = SettingsService.instance.notifier.value;
+    if (settings.isProUser) {
+      debugPrint('[AdService] User is Pro, bypassing rewarded ad.');
+      return true; // Auto-bypass rewarded ad for Pro
+    }
     if (!_isRewardedAdReady || _rewardedAd == null) return false;
     if (_isShowingRewarded) return false;
 

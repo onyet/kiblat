@@ -1,7 +1,7 @@
 name: kiblat
 description: "App to find the Qibla direction"
 publish_to: 'none'
-version: 2.1.0+6
+version: 2.1.0+7
 
 environment:
   sdk: ^3.10.4
@@ -17,6 +17,7 @@ dependencies:
   flutter_compass: ^0.8.1
   google_maps_flutter: ^2.2.0
   google_mobile_ads: ^5.3.0
+  in_app_purchase: 3.3.0
   url_launcher: ^6.1.14
   shared_preferences: ^2.1.0
   adhan: ^2.0.0
@@ -27,6 +28,7 @@ dependencies:
   home_widget: ^0.7.0
   file_picker: ^8.0.0+1
   path_provider: ^2.1.0
+  audioplayers: ^6.0.0
 
 dev_dependencies:
   flutter_test:
@@ -39,3 +41,4 @@ flutter:
   assets:
     - assets/images/logo.png
     - assets/translations/
+    - assets/audio/

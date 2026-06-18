@@ -40,14 +40,14 @@ void main() {
     expect(find.text('Tahajjud'), findsOneWidget);
 
     // Expanded content not visible initially
-    expect(find.text('MORNING PRAYER'), findsNothing);
+    expect(find.text('Morning prayer'), findsNothing);
 
     // Tap the chip to expand (choose the chip, not the expanded card)
     await tester.tap(find.text('Dhuha').at(0));
     await tester.pumpAndSettle();
 
     // Now the expanded section should be visible
-    expect(find.text('MORNING PRAYER'), findsOneWidget);
+    expect(find.text('Morning prayer'), findsOneWidget);
 
     // Label should change (chevron rotation label toggled)
     expect(find.textContaining('View Sunnah'), findsNothing);
@@ -60,6 +60,6 @@ void main() {
     // Tap again to collapse (tap the chip again, index 0)
     await tester.tap(find.text('Dhuha').at(0));
     await tester.pumpAndSettle();
-    expect(find.text('MORNING PRAYER'), findsNothing);
+    expect(find.text('Morning prayer'), findsNothing);
   });
 }

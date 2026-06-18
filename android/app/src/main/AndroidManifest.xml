@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Exact alarm permission for precise prayer time notifications -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Google Play Billing permission for Pro features purchase -->
+    <uses-permission android:name="com.android.vending.BILLING" />
     <application
         android:label="Kiblat"
         android:name="${applicationName}"

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:kiblat/services/settings_service.dart';
+import 'package:kiblat/utils/theme_util.dart';
 
 /// Small top bar widget displaying current location and a settings button.
 class HomeTopBar extends StatelessWidget {
@@ -14,6 +16,10 @@ class HomeTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settings = SettingsService.instance.notifier.value;
+    final textColor = AppTheme.getTextColor(settings, context);
+    final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Row(
@@ -26,17 +32,17 @@ class HomeTopBar extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.location_on,
-                      color: Colors.white70,
+                      color: secTextColor,
                       size: 18,
                     ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         tr('current_location'),
-                        style: const TextStyle(
-                          color: Colors.white70,
+                        style: TextStyle(
+                          color: secTextColor,
                           fontSize: 12,
                         ),
                         maxLines: 1,
@@ -48,8 +54,8 @@ class HomeTopBar extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   locationLabel,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: textColor,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -60,7 +66,7 @@ class HomeTopBar extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.settings, color: Colors.white70),
+            icon: Icon(Icons.settings, color: secTextColor),
             onPressed: onSettingsTap,
           ),
         ],

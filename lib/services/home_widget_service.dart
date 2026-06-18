@@ -174,28 +174,44 @@ class HomeWidgetService {
             nextPrayerTime = fardPrayers.first.timeString;
           }
 
-          await Future.wait([
-            HomeWidget.saveWidgetData<double>('qibla_degree', qiblaDeg),
-            HomeWidget.saveWidgetData<String>(
-              'qibla_direction',
-              qiblaDirection,
-            ),
-            HomeWidget.saveWidgetData<String>('location_name', locationName),
-            HomeWidget.saveWidgetData<String>('current_prayer', currentPrayer),
-            HomeWidget.saveWidgetData<String>(
-              'current_prayer_time',
-              currentPrayerTime,
-            ),
-            HomeWidget.saveWidgetData<String>('next_prayer', nextPrayer),
-            HomeWidget.saveWidgetData<String>(
-              'next_prayer_time',
-              nextPrayerTime,
-            ),
-            HomeWidget.saveWidgetData<String>(
-              'last_updated',
-              '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
-            ),
-          ]);
+          if (!settings.isProUser) {
+            await Future.wait([
+              HomeWidget.saveWidgetData<double>('qibla_degree', 0.0),
+              HomeWidget.saveWidgetData<String>('qibla_direction', "PRO"),
+              HomeWidget.saveWidgetData<String>('location_name', "Aktifkan Kiblat Pro"),
+              HomeWidget.saveWidgetData<String>('current_prayer', "🔒"),
+              HomeWidget.saveWidgetData<String>('current_prayer_time', "Pro"),
+              HomeWidget.saveWidgetData<String>('next_prayer', "🔒"),
+              HomeWidget.saveWidgetData<String>('next_prayer_time', "Pro"),
+              HomeWidget.saveWidgetData<String>(
+                'last_updated',
+                '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+              ),
+            ]);
+          } else {
+            await Future.wait([
+              HomeWidget.saveWidgetData<double>('qibla_degree', qiblaDeg),
+              HomeWidget.saveWidgetData<String>(
+                'qibla_direction',
+                qiblaDirection,
+              ),
+              HomeWidget.saveWidgetData<String>('location_name', locationName),
+              HomeWidget.saveWidgetData<String>('current_prayer', currentPrayer),
+              HomeWidget.saveWidgetData<String>(
+                'current_prayer_time',
+                currentPrayerTime,
+              ),
+              HomeWidget.saveWidgetData<String>('next_prayer', nextPrayer),
+              HomeWidget.saveWidgetData<String>(
+                'next_prayer_time',
+                nextPrayerTime,
+              ),
+              HomeWidget.saveWidgetData<String>(
+                'last_updated',
+                '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+              ),
+            ]);
+          }
           await HomeWidget.updateWidget(
             name: androidWidgetName,
             androidName: androidWidgetName,
@@ -322,22 +338,36 @@ class HomeWidgetService {
             : '--:--';
       }
 
-      // Save data to widget storage
-      await Future.wait([
-        HomeWidget.saveWidgetData<double>(keyQiblaDegree, qiblaDeg),
-        HomeWidget.saveWidgetData<String>(keyQiblaDirection, qiblaDirection),
-        HomeWidget.saveWidgetData<String>(keyLocationName, locationName),
-        HomeWidget.saveWidgetData<String>(keyCurrentPrayer, currentPrayer),
-        HomeWidget.saveWidgetData<String>(
-          keyCurrentPrayerTime,
-          currentPrayerTime,
-        ),
-        HomeWidget.saveWidgetData<String>(keyNextPrayer, nextPrayer),
-        HomeWidget.saveWidgetData<String>(keyNextPrayerTime, nextPrayerTime),
-        HomeWidget.saveWidgetData<String>(keyLastUpdated, _formatTime(now)),
-        HomeWidget.saveWidgetData<double>(keyLatitude, lat),
-        HomeWidget.saveWidgetData<double>(keyLongitude, lon),
-      ]);
+      if (!settings.isProUser) {
+        await Future.wait([
+          HomeWidget.saveWidgetData<double>(keyQiblaDegree, 0.0),
+          HomeWidget.saveWidgetData<String>(keyQiblaDirection, "PRO"),
+          HomeWidget.saveWidgetData<String>(keyLocationName, "Aktifkan Kiblat Pro"),
+          HomeWidget.saveWidgetData<String>(keyCurrentPrayer, "🔒"),
+          HomeWidget.saveWidgetData<String>(keyCurrentPrayerTime, "Pro"),
+          HomeWidget.saveWidgetData<String>(keyNextPrayer, "🔒"),
+          HomeWidget.saveWidgetData<String>(keyNextPrayerTime, "Pro"),
+          HomeWidget.saveWidgetData<String>(keyLastUpdated, _formatTime(now)),
+          HomeWidget.saveWidgetData<double>(keyLatitude, 0.0),
+          HomeWidget.saveWidgetData<double>(keyLongitude, 0.0),
+        ]);
+      } else {
+        await Future.wait([
+          HomeWidget.saveWidgetData<double>(keyQiblaDegree, qiblaDeg),
+          HomeWidget.saveWidgetData<String>(keyQiblaDirection, qiblaDirection),
+          HomeWidget.saveWidgetData<String>(keyLocationName, locationName),
+          HomeWidget.saveWidgetData<String>(keyCurrentPrayer, currentPrayer),
+          HomeWidget.saveWidgetData<String>(
+            keyCurrentPrayerTime,
+            currentPrayerTime,
+          ),
+          HomeWidget.saveWidgetData<String>(keyNextPrayer, nextPrayer),
+          HomeWidget.saveWidgetData<String>(keyNextPrayerTime, nextPrayerTime),
+          HomeWidget.saveWidgetData<String>(keyLastUpdated, _formatTime(now)),
+          HomeWidget.saveWidgetData<double>(keyLatitude, lat),
+          HomeWidget.saveWidgetData<double>(keyLongitude, lon),
+        ]);
+      }
 
       // Request widget update
       await _updateWidget();
