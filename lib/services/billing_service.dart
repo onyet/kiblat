@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:kiblat/services/settings_service.dart';
 import 'package:kiblat/services/ad_service.dart';
 
@@ -10,7 +13,14 @@ class BillingService {
 
   static final BillingService instance = BillingService._internal();
 
-  static const String proProductId = 'kiblat_pro_lifetime';
+  static const String proProductId = 'kiblat_lifetime_pro';
+
+  static const MethodChannel _platformChannel = MethodChannel(
+    'id.onyet.app.kiblat/platform',
+  );
+
+  static const String _playStorePublicKey =
+      'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqkvjCZwLuhVs2FxlefOuCbBbJg3pCvqqMFR+pAELs4ewwPNf/zwJa64WsD7WpIcIVpiiFnjYFY6dA9RmAQN1oEvR+vuWhxC/gWcaCMGWQX2GJYUONPxxBjN4PqZV10cuE+iNNzopyPiGJ4/GRvyYOV6v7yoKwT1S1iDM2XyUzhQimXnqqqspe12zoganNqShXV21K2ZVWsVkiqiIptez1utF4daJdt+9RmTFSR6zMqEvdkyK+rmWmLrlJkJQdV54MUI38jxdfe77wHAOjVhXzv6GuxFXsihkk2qB5miX4yEknOi5t3cVYG7OWBRjRQd1zb5dKMS7gtXQvvBnrjcZZwIDAQAB';
 
   final InAppPurchase _iap = InAppPurchase.instance;
   StreamSubscription<List<PurchaseDetails>>? _subscription;
@@ -128,21 +138,53 @@ class BillingService {
       } else {
         isPendingPurchase.value = false;
 
+        bool isValid = true;
+
         if (purchaseDetails.status == PurchaseStatus.purchased ||
             purchaseDetails.status == PurchaseStatus.restored) {
           // Verify purchase (100% offline local validation to respect user privacy)
-          final settings = SettingsService.instance.notifier.value;
-          final updated = settings.copyWith(isProUser: true);
-          await SettingsService.instance.update(updated);
+          if (Platform.isAndroid) {
+            try {
+              if (purchaseDetails is GooglePlayPurchaseDetails) {
+                final signedData = purchaseDetails.billingClientPurchase.originalJson;
+                final signature = purchaseDetails.billingClientPurchase.signature;
 
-          // Pro is active, dispose AdMob immediately to remove all banner and tracking ads
-          AdService.instance.dispose();
-
-          if (onPurchaseSuccess != null) {
-            onPurchaseSuccess!();
+                final bool? result = await _platformChannel.invokeMethod<bool>(
+                  'verifySignature',
+                  {
+                    'signedData': signedData,
+                    'signature': signature,
+                    'publicKey': _playStorePublicKey,
+                  },
+                );
+                isValid = result ?? false;
+              } else {
+                debugPrint('[BillingService] Warning: Purchase is not GooglePlayPurchaseDetails on Android!');
+                isValid = false;
+              }
+            } catch (e) {
+              debugPrint('[BillingService] Local signature verification failed with exception: $e');
+              isValid = false;
+            }
           }
 
-          debugPrint('[BillingService] Purchase successful / restored!');
+          if (isValid) {
+            final settings = SettingsService.instance.notifier.value;
+            final updated = settings.copyWith(isProUser: true);
+            await SettingsService.instance.update(updated);
+
+            // Pro is active, dispose AdMob immediately to remove all banner and tracking ads
+            AdService.instance.dispose();
+
+            if (onPurchaseSuccess != null) {
+              onPurchaseSuccess!();
+            }
+
+            debugPrint('[BillingService] Purchase successful / restored!');
+          } else {
+            debugPrint('[BillingService] Purchase signature verification failed!');
+            billingError.value = 'Purchase verification failed: invalid signature';
+          }
         } else if (purchaseDetails.status == PurchaseStatus.error) {
           debugPrint('[BillingService] Purchase error: ${purchaseDetails.error}');
           billingError.value = purchaseDetails.error?.message ?? 'Transaction failed';
@@ -152,9 +194,23 @@ class BillingService {
         }
 
         // Complete the purchase with the platform store (critical for Google Play)
-        if (purchaseDetails.pendingCompletePurchase) {
+        if (isValid && purchaseDetails.pendingCompletePurchase) {
           await _iap.completePurchase(purchaseDetails);
         }
+      }
+    }
+  }
+
+  /// Switch app icon dynamically (only supported on Android via activity-alias)
+  Future<void> updateAppIcon(bool isPro) async {
+    if (Platform.isAndroid) {
+      try {
+        await _platformChannel.invokeMethod('changeIcon', {
+          'iconName': isPro ? 'pro' : 'default',
+        });
+        debugPrint('[BillingService] App icon update requested: ${isPro ? 'pro' : 'default'}');
+      } catch (e) {
+        debugPrint('[BillingService] Failed to update app icon: $e');
       }
     }
   }

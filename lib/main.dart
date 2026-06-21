@@ -98,6 +98,15 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
 
       final prayerSettings = SettingsService.instance.notifier.value;
 
+      // Sync app icon with current pro status on startup
+      unawaited(BillingService.instance.updateAppIcon(prayerSettings.isProUser));
+
+      // Listen for settings changes to update app icon dynamically (e.g. simulation or purchase success)
+      SettingsService.instance.notifier.addListener(() {
+        final settings = SettingsService.instance.notifier.value;
+        unawaited(BillingService.instance.updateAppIcon(settings.isProUser));
+      });
+
       // Only initialize AdMob for non-pro users (Privacy First)
       if (!prayerSettings.isProUser) {
         await AdService.initialize();

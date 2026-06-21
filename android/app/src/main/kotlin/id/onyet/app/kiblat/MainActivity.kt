@@ -1,7 +1,9 @@
 package id.onyet.app.kiblat
 
 import android.app.Activity
+import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -9,6 +11,12 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.util.TimeZone
+import java.security.KeyFactory
+import java.security.PublicKey
+import java.security.Signature
+import java.security.spec.X509EncodedKeySpec
+import android.util.Base64
+import android.util.Log
 
 class MainActivity : FlutterActivity() {
     private var pendingAudioResult: MethodChannel.Result? = null
@@ -23,8 +31,63 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 "getLocalTimezone" -> result.success(TimeZone.getDefault().id)
                 "pickNotificationSound" -> pickNotificationSound(result)
+                "verifySignature" -> {
+                    val signedData = call.argument<String>("signedData")
+                    val signature = call.argument<String>("signature")
+                    val publicKey = call.argument<String>("publicKey")
+                    if (signedData == null || signature == null || publicKey == null) {
+                        result.error("invalid_arguments", "Arguments cannot be null", null)
+                    } else {
+                        val isValid = Security.verifyPurchase(publicKey, signedData, signature)
+                        result.success(isValid)
+                    }
+                }
+                "changeIcon" -> {
+                    val iconName = call.argument<String>("iconName")
+                    if (iconName == null) {
+                        result.error("invalid_arguments", "iconName cannot be null", null)
+                    } else {
+                        changeAppIcon(iconName)
+                        result.success(true)
+                    }
+                }
                 else -> result.notImplemented()
             }
+        }
+    }
+
+    private fun changeAppIcon(iconName: String) {
+        val pm = packageManager
+        val packageName = packageName
+        val defaultAlias = ComponentName(this, "$packageName.MainActivityDefault")
+        val proAlias = ComponentName(this, "$packageName.MainActivityPro")
+
+        if (iconName == "pro") {
+            // Enable Pro, disable default
+            pm.setComponentEnabledSetting(
+                proAlias,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                PackageManager.DONT_KILL_APP
+            )
+            pm.setComponentEnabledSetting(
+                defaultAlias,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP
+            )
+            Log.d("MainActivity", "Switched app icon to PRO")
+        } else {
+            // Enable default, disable Pro
+            pm.setComponentEnabledSetting(
+                defaultAlias,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                PackageManager.DONT_KILL_APP
+            )
+            pm.setComponentEnabledSetting(
+                proAlias,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP
+            )
+            Log.d("MainActivity", "Switched app icon to DEFAULT")
         }
     }
 
@@ -99,5 +162,53 @@ class MainActivity : FlutterActivity() {
 
     companion object {
         private const val REQUEST_AUDIO_PICKER = 7001
+    }
+}
+
+object Security {
+    private const val TAG = "IABPlayVerification"
+    private const val KEY_FACTORY_ALGORITHM = "RSA"
+    private const val SIGNATURE_ALGORITHM = "SHA1withRSA"
+
+    fun verifyPurchase(base64PublicKey: String, signedData: String, signature: String): Boolean {
+        if (signedData.isEmpty() || base64PublicKey.isEmpty() || signature.isEmpty()) {
+            Log.e(TAG, "Purchase verification failed: missing data.")
+            return false
+        }
+        val key = generatePublicKey(base64PublicKey) ?: return false
+        return verify(key, signedData, signature)
+    }
+
+    private fun generatePublicKey(encodedPublicKey: String): PublicKey? {
+        return try {
+            val decodedKey = Base64.decode(encodedPublicKey, Base64.DEFAULT)
+            val keyFactory = KeyFactory.getInstance(KEY_FACTORY_ALGORITHM)
+            keyFactory.generatePublic(X509EncodedKeySpec(decodedKey))
+        } catch (e: Exception) {
+            Log.e(TAG, "Invalid key specification: $e")
+            null
+        }
+    }
+
+    private fun verify(publicKey: PublicKey, signedData: String, signature: String): Boolean {
+        val signatureBytes: ByteArray = try {
+            Base64.decode(signature, Base64.DEFAULT)
+        } catch (e: IllegalArgumentException) {
+            Log.e(TAG, "Base64 decoding failed.")
+            return false
+        }
+        try {
+            val signatureAlgorithm = Signature.getInstance(SIGNATURE_ALGORITHM)
+            signatureAlgorithm.initVerify(publicKey)
+            signatureAlgorithm.update(signedData.toByteArray())
+            if (!signatureAlgorithm.verify(signatureBytes)) {
+                Log.e(TAG, "Signature verification failed.")
+                return false
+            }
+            return true
+        } catch (e: Exception) {
+            Log.e(TAG, "Verify exception: $e")
+        }
+        return false
     }
 }
