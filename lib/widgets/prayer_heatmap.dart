@@ -52,42 +52,51 @@ class PrayerHeatmap extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                tr('prayer_heatmap'),
+                tr('prayer_heatmap').toUpperCase(),
                 style: TextStyle(
                   color: text,
-                  fontSize: 14,
+                  fontSize: 12,
                   fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
                 ),
               ),
               Row(
                 children: [
-                  Text("Less", style: TextStyle(color: text.withValues(alpha: 0.5), fontSize: 10)),
-                  const SizedBox(width: 4),
                   _legendBox(0, accent, isLight),
                   _legendBox(2, accent, isLight),
                   _legendBox(4, accent, isLight),
                   _legendBox(5, accent, isLight),
-                  const SizedBox(width: 4),
-                  Text("More", style: TextStyle(color: text.withValues(alpha: 0.5), fontSize: 10)),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           SizedBox(
             height: 100, // 7 rows of boxes
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              reverse: true, // Show most recent on the right
-              child: CustomPaint(
-                size: Size((365 / 7).ceil() * 14.0, 98),
-                painter: HeatmapPainter(
-                  intensities: intensities,
-                  accentColor: accent,
-                  isLight: isLight,
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                reverse: true, // Show most recent on the right
+                physics: const BouncingScrollPhysics(),
+                child: CustomPaint(
+                  size: Size((365 / 7).ceil() * 14.0, 98),
+                  painter: HeatmapPainter(
+                    intensities: intensities,
+                    accentColor: accent,
+                    isLight: isLight,
+                  ),
                 ),
               ),
             ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(tr('filter_1_year'), style: TextStyle(color: text.withValues(alpha: 0.4), fontSize: 10, fontWeight: FontWeight.bold)),
+              Text(tr('today'), style: TextStyle(color: accent.withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.bold)),
+            ],
           ),
         ],
       ),

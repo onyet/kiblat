@@ -41,14 +41,13 @@ class HomeLocationController {
     final label = await _reverseGeo(pos.latitude, pos.longitude);
     final qibla = LocationService.qiblaBearing(pos.latitude, pos.longitude);
     final dist = LocationService.distanceToKaabaKm(pos.latitude, pos.longitude);
-    final cached = label.contains('(cached)');
     return LocationResult(
       qiblaDeg: qibla,
       distanceKm: dist,
       label: label,
       lat: pos.latitude,
       lon: pos.longitude,
-      fromCache: cached,
+      fromCache: false, // simplified as we don't need to distinguish visually anymore
     );
   }
 

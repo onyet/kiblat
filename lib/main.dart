@@ -3,18 +3,21 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'screens/welcome_screen.dart';
-import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/main_shell.dart';
+import 'screens/permission_onboarding_screen.dart';
 import 'navigation/page_transitions.dart';
 import 'services/ad_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:kiblat/services/settings_service.dart';
 import 'package:kiblat/services/notification_service.dart';
 import 'package:kiblat/services/home_widget_service.dart';
 import 'package:kiblat/services/billing_service.dart';
+import 'package:kiblat/services/geonames_service.dart';
+import 'package:kiblat/services/location_service.dart';
 import 'package:kiblat/models/prayer_settings_model.dart';
 import 'package:kiblat/utils/theme_util.dart';
 
@@ -33,7 +36,8 @@ Future<void> _migrateIndonesianLocale() async {
 }
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   // Migrate old 'id' locale to 'in' for existing users before EasyLocalization init
   await _migrateIndonesianLocale();
@@ -53,6 +57,15 @@ Future<void> main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
+  // Only initialize AdMob for non-pro users (Privacy First)
+  // We check the persisted Pro status here if possible, or just initialize anyway.
+  // Initializing multiple times is fine per AdService logic.
+  final prefs = await SharedPreferences.getInstance();
+  final isPro = prefs.getBool('isProUser') ?? false;
+  if (!isPro) {
+    unawaited(AdService.initialize());
+  }
 
   runApp(
     EasyLocalization(
@@ -78,6 +91,8 @@ Future<void> main() async {
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
 
+  static late final Future<void> initFuture;
+
   @override
   State<MainApp> createState() => _MainAppState();
 }
@@ -90,21 +105,37 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // Initialize notifications and load settings after first frame to avoid blocking UI
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
+    // Start background initialization immediately
+    MainApp.initFuture = _runInitialization();
+
+    // Remove the native splash screen as soon as the first Flutter frame is drawn
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FlutterNativeSplash.remove();
+    });
+  }
+
+  Future<void> _runInitialization() async {
+    try {
+      // Initialize offline geocoding database
+      await GeoNamesService.instance.initialize();
+
       // Load persisted settings into the global SettingsService so listeners can react
       await SettingsService.instance.load();
       await BillingService.instance.initialize();
 
       final prayerSettings = SettingsService.instance.notifier.value;
 
-      // Sync app icon with current pro status on startup
-      unawaited(BillingService.instance.updateAppIcon(prayerSettings.isProUser));
+      // Note: App icon sync on startup removed because it triggers Android process termination 
+      // to refresh launcher cache. Icon is now only updated upon explicit Pro status change.
 
-      // Listen for settings changes to update app icon dynamically (e.g. simulation or purchase success)
+      // Listen for settings changes to update app icon dynamically (only when changed)
+      bool lastProState = prayerSettings.isProUser;
       SettingsService.instance.notifier.addListener(() {
         final settings = SettingsService.instance.notifier.value;
-        unawaited(BillingService.instance.updateAppIcon(settings.isProUser));
+        if (settings.isProUser != lastProState) {
+          lastProState = settings.isProUser;
+          unawaited(BillingService.instance.updateAppIcon(settings.isProUser));
+        }
       });
 
       // Only initialize AdMob for non-pro users (Privacy First)
@@ -121,9 +152,11 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         );
       }
 
-      // Initialize home widget service for Android/iOS home screen widgets
+      // Initialize home widget service
       unawaited(HomeWidgetService.instance.initialize());
-    });
+    } catch (e) {
+      debugPrint('Initialization error: $e');
+    }
   }
 
   @override
@@ -169,14 +202,14 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             primaryColor: AppTheme.getAccentColor(prayerSettings),
             scaffoldBackgroundColor: AppTheme.getBackgroundColor(prayerSettings, context),
             cardColor: AppTheme.getCardColor(prayerSettings, context),
-            useMaterial3: false,
+            useMaterial3: true,
             // ── Component themes so ALL widgets inherit the active accent ──
             colorScheme: ColorScheme(
               brightness: isLight ? Brightness.light : Brightness.dark,
               primary: AppTheme.getAccentColor(prayerSettings),
-              onPrimary: isLight ? Colors.white : Colors.black,
+              onPrimary: Colors.white,
               secondary: AppTheme.getAccentColor(prayerSettings),
-              onSecondary: isLight ? Colors.white : Colors.black,
+              onSecondary: Colors.white,
               error: Colors.redAccent,
               onError: Colors.white,
               surface: AppTheme.getCardColor(prayerSettings, context),
@@ -192,8 +225,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.getAccentColor(prayerSettings),
-                foregroundColor: isLight ? Colors.black : Colors.black,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
               ),
             ),
             textButtonTheme: TextButtonThemeData(
@@ -205,6 +239,15 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.getAccentColor(prayerSettings),
                 side: BorderSide(color: AppTheme.getAccentColor(prayerSettings)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            cardTheme: CardThemeData(
+              color: AppTheme.getCardColor(prayerSettings, context),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: AppTheme.getBorderColor(prayerSettings, context)),
               ),
             ),
             chipTheme: ChipThemeData(
@@ -237,6 +280,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
               case '/welcome':
                 page = const WelcomeScreen();
                 break;
+              case '/permission_onboarding':
+                page = const PermissionOnboardingScreen();
+                break;
               case '/home':
                 page = MainShell(key: MainShell.shellKey);
                 break;
@@ -248,6 +294,8 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             }
 
             if (settings.name == '/welcome') {
+              return PageTransitions.fadeSlideTransition((_) => page);
+            } else if (settings.name == '/permission_onboarding') {
               return PageTransitions.fadeSlideTransition((_) => page);
             } else if (settings.name == '/home') {
               return PageTransitions.fadeSlideTransition((_) => page);
@@ -271,10 +319,12 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _controller;
+  late final AnimationController _progressController;
   late final Animation<double> _scaleAnimation;
   late final Animation<double> _fadeAnimation;
+  late final TickerFuture _progressTicker;
 
   @override
   void initState() {
@@ -282,6 +332,11 @@ class _SplashScreenState extends State<SplashScreen>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
+    );
+
+    _progressController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
     );
 
     _scaleAnimation = Tween<double>(
@@ -295,18 +350,34 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
     _controller.forward();
+    _progressTicker = _progressController.forward();
 
     // Pre-warm the animation curves to avoid first-frame lag
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _warmUpAnimations();
     });
 
-    // After animation completes and a small delay, navigate depending on build and first-run
-    Future.delayed(const Duration(milliseconds: 1400), () {
-      if (mounted) {
-        _navigateAfterSplash();
-      }
-    });
+    _startTransitionTimer();
+  }
+
+  Future<void> _startTransitionTimer() async {
+    // 1. Wait for MainApp's background services initialization to complete (ignore errors)
+    try {
+      await MainApp.initFuture;
+    } catch (e) {
+      debugPrint('Error in background init: $e');
+    }
+    
+    // 2. Wait for the progress bar animation to complete (min 1500ms for visual polish)
+    try {
+      await _progressTicker;
+    } catch (e) {
+      debugPrint('Error in progress ticker: $e');
+    }
+
+    if (mounted) {
+      _navigateAfterSplash();
+    }
   }
 
   /// Pre-compile animation curves to reduce first-transition lag
@@ -320,60 +391,127 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     _controller.dispose();
+    _progressController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(scale: _scaleAnimation, child: _buildLogo()),
-        ),
-      ),
+    return ValueListenableBuilder<PrayerSettings>(
+      valueListenable: SettingsService.instance.notifier,
+      builder: (context, settings, child) {
+        final isLight = AppTheme.isLight(settings, context);
+        final bgColor = isLight ? Colors.white : const Color(0xFF0F0F0F);
+        
+        return Scaffold(
+          backgroundColor: bgColor,
+          body: Stack(
+            children: [
+              Center(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: _buildLogo(settings),
+                  ),
+                ),
+              ),
+              // Gradient or decorative element to ensure it's not "blank"
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        colors: [
+                          const Color(0xFFD4AF37).withValues(alpha: isLight ? 0.05 : 0.02),
+                          Colors.transparent,
+                        ],
+                        radius: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildLogo() {
+  Widget _buildLogo(PrayerSettings settings) {
+    final accentColor = AppTheme.getAccentColor(settings, context);
+    final isLight = AppTheme.isLight(settings, context);
+    final titleColor = isLight ? const Color(0xFFB58A0D) : const Color(0xFFD4AF37);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Image.asset('assets/images/logo.png', width: 120, height: 120),
         const SizedBox(height: 12),
-        const Text(
+        Text(
           'Kiblat',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: titleColor,
+          ),
+        ),
+        const SizedBox(height: 28),
+        // Premium horizontal progress bar
+        Container(
+          width: 160,
+          height: 4,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(2),
+            boxShadow: [
+              BoxShadow(
+                color: accentColor.withValues(alpha: 0.25),
+                blurRadius: 8,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: AnimatedBuilder(
+              animation: _progressController,
+              builder: (context, child) {
+                return LinearProgressIndicator(
+                  value: _progressController.value,
+                  backgroundColor: accentColor.withValues(alpha: 0.1),
+                  valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                );
+              },
+            ),
+          ),
         ),
       ],
     );
   }
 
   Future<void> _navigateAfterSplash() async {
-    // In debug builds, always show the welcome screen for testing
-    if (kDebugMode) {
-      if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/welcome');
-      return;
-    }
-
-    // In production, show Welcome only on first run
+    // Determine the next screen based on settings
+    String nextRoute = '/home';
     try {
       final prefs = await SharedPreferences.getInstance();
+      // Ensure we clear any stale state if needed, but normally null means first run
       final seen = prefs.getBool('seen_welcome') ?? false;
+      debugPrint('Splash navigation: seen_welcome = $seen');
       if (!seen) {
-        await prefs.setBool('seen_welcome', true);
-        if (!mounted) return;
-        Navigator.of(context).pushReplacementNamed('/welcome');
+        nextRoute = '/welcome';
       } else {
-        if (!mounted) return;
-        Navigator.of(context).pushReplacementNamed('/home');
+        // If welcome screen was already seen, verify silently if GPS permission is granted
+        final hasGps = await LocationService.isPermissionGranted();
+        if (!hasGps) {
+          nextRoute = '/permission_onboarding';
+        }
       }
     } catch (e) {
-      // On error, fallback to welcome screen
-      if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/welcome');
+      debugPrint('Splash navigation pref error: $e');
     }
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacementNamed(nextRoute);
   }
 }

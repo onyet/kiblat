@@ -24,11 +24,13 @@ class AdService {
 
   /// AdMob App ID: ca-app-pub-7967860040352202~1740407670
   /// Interstitial Ad Unit ID untuk close app
-  static bool testMode = false;
+  static bool _testMode = false;
+
+  static bool get testMode => kDebugMode && _testMode;
 
   static void setTestMode(bool enabled) {
-    testMode = enabled;
-    debugPrint('[AdService] testMode set: $testMode');
+    _testMode = enabled;
+    debugPrint('[AdService] testMode set: $_testMode (effective: $testMode)');
   }
 
   static bool get bypassRewardedGate => kDebugMode && testMode;
@@ -61,14 +63,41 @@ class AdService {
     throw UnsupportedError('Platform tidak didukung');
   }
 
+  static String get prayerLogBannerUnitId {
+    if (testMode) {
+      return Platform.isAndroid ? 'ca-app-pub-3940256099942544/6300978111' : 'ca-app-pub-3940256099942544/2934735716';
+    }
+    return 'ca-app-pub-7967860040352202/4176479928';
+  }
+
+  static String get settingsBannerUnitId {
+    if (testMode) {
+      return Platform.isAndroid ? 'ca-app-pub-3940256099942544/6300978111' : 'ca-app-pub-3940256099942544/2934735716';
+    }
+    return 'ca-app-pub-7967860040352202/6716003030';
+  }
+
+  static String get prayerTimesBannerUnitId {
+    if (testMode) {
+      return Platform.isAndroid ? 'ca-app-pub-3940256099942544/6300978111' : 'ca-app-pub-3940256099942544/2934735716';
+    }
+    return 'ca-app-pub-7967860040352202/3192103683';
+  }
+
+  static bool _isInitialized = false;
+
   /// Inisialisasi Mobile Ads SDK
   static Future<void> initialize() async {
+    if (_isInitialized) return;
     debugPrint('[AdService] Initializing MobileAds (testMode=$testMode)');
+    instance._isDisposed = false;
     await MobileAds.instance.initialize();
-    // Muat iklan setelah inisialisasi
-    instance.loadInterstitialAd();
-    instance.loadRewardedAd();
+    _isInitialized = true;
+    // Note: loadInterstitialAd and loadRewardedAd are now called lazily
+    // to save resources on low-end devices during startup.
   }
+
+  static bool get isInitialized => _isInitialized;
 
   /// Memuat iklan interstitial
   void loadInterstitialAd() {
@@ -163,7 +192,13 @@ class AdService {
       debugPrint('[AdService] User is Pro, bypassing interstitial ad.');
       return false;
     }
-    if (!_isInterstitialAdReady || _interstitialAd == null) return false;
+    
+    // Lazy load if not ready
+    if (!_isInterstitialAdReady || _interstitialAd == null) {
+      loadInterstitialAd();
+      return false;
+    }
+    
     if (_isShowing) return false; // avoid re-entrance
 
     final ad = _interstitialAd!;
@@ -363,7 +398,13 @@ class AdService {
       debugPrint('[AdService] User is Pro, bypassing rewarded ad.');
       return true; // Auto-bypass rewarded ad for Pro
     }
-    if (!_isRewardedAdReady || _rewardedAd == null) return false;
+    
+    // Lazy load if not ready
+    if (!_isRewardedAdReady || _rewardedAd == null) {
+      loadRewardedAd();
+      return false;
+    }
+
     if (_isShowingRewarded) return false;
 
     final ad = _rewardedAd!;

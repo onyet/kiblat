@@ -238,7 +238,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: accentColor.withOpacity(0.25)),
+          border: Border.all(color: accentColor.withValues(alpha: 0.25)),
         ),
         child: Row(
           children: [
@@ -272,7 +272,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
               Icon(
                 Icons.arrow_forward_ios,
                 size: isCompact ? 14 : 16,
-                color: secTextColor.withOpacity(0.5),
+                color: secTextColor.withValues(alpha: 0.5),
               ),
               SizedBox(width: isCompact ? 8 : 12),
             ],
@@ -351,7 +351,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: accentColor.withOpacity(0.25)),
+          border: Border.all(color: accentColor.withValues(alpha: 0.25)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -364,7 +364,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                   child: Text(
                     tr('next_prayer').toUpperCase(),
                     style: TextStyle(
-                      color: accentColor.withOpacity(0.8),
+                      color: accentColor.withValues(alpha: 0.8),
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.4,
@@ -388,6 +388,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
               switchInCurve: Curves.easeOutBack,
               switchOutCurve: Curves.easeIn,
               layoutBuilder: (currentChild, previousChildren) => Stack(
+                alignment: Alignment.center,
                 children: [
                   ...previousChildren,
                   if (currentChild != null) currentChild,
@@ -408,9 +409,10 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                       color: accentColor,
                       size: iconSize,
                     ),
-                    SizedBox(width: isCompact ? 10 : 12),
+                    const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           prayerName,
@@ -418,10 +420,9 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                             color: textColor,
                             fontWeight: FontWeight.w700,
                             fontSize: nameFontSize,
-                            height: 1.0,
+                            height: 1.1,
                           ),
                         ),
-                        SizedBox(height: isCompact ? 3 : 4),
                         Text(
                           widget.prayerTime,
                           style: TextStyle(
@@ -466,10 +467,10 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                             vertical: badgeVPadding,
                           ),
                           decoration: BoxDecoration(
-                            color: accentColor.withOpacity(0.12),
+                            color: accentColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
-                              color: accentColor.withOpacity(0.25),
+                              color: accentColor.withValues(alpha: 0.25),
                             ),
                           ),
                           child: Text(
@@ -495,10 +496,10 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                         vertical: badgeVPadding,
                       ),
                       decoration: BoxDecoration(
-                        color: accentColor.withOpacity(0.12),
+                        color: accentColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                          color: accentColor.withOpacity(0.25),
+                          color: accentColor.withValues(alpha: 0.25),
                         ),
                       ),
                       child: Text(
@@ -516,25 +517,17 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
 
             SizedBox(height: betweenBadgeAndButton),
 
-            // Full-width gradient button
+            // Full-width button
             SizedBox(
               width: double.infinity,
               height: buttonHeight,
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFFBF953F),
-                      const Color(0xFFFCF6BA),
-                      const Color(0xFFBF953F),
-                    ],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
+                  color: accentColor,
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color.fromRGBO(212, 175, 55, 0.3),
+                      color: accentColor.withValues(alpha: 0.3),
                       blurRadius: 20,
                       spreadRadius: -2,
                       offset: const Offset(0, 4),
@@ -552,9 +545,9 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                       children: [
                         Text(
                           tr('view_full_schedule').toUpperCase(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w900,
-                            color: Colors.black,
+                            color: isLight ? Colors.white : Colors.black,
                             fontSize: 13,
                             letterSpacing: 1.0,
                           ),
@@ -563,7 +556,7 @@ class _HomePrayerSheetState extends State<HomePrayerSheet>
                         Icon(
                           Icons.calendar_today,
                           size: isCompact ? 16 : 18,
-                          color: Colors.black,
+                          color: isLight ? Colors.white : Colors.black,
                         ),
                       ],
                     ),

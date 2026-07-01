@@ -1,30 +1,29 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:geolocator/geolocator.dart';
 import '../services/location_service.dart';
 import '../widgets/exit_helper.dart';
-import '../services/telemetry_service.dart';
 import 'home_topbar.dart';
 import 'home_compass_widget.dart';
 import 'home_compass_controller.dart';
 import 'home_location_controller.dart';
 import 'home_dialogs.dart';
 import 'home_prayer_sheet.dart';
+import 'ar_qibla_screen.dart';
 import 'package:kiblat/services/prayer_service.dart' as ps;
 import 'package:kiblat/models/prayer_settings_model.dart';
 import 'package:kiblat/services/settings_service.dart';
 import 'package:kiblat/services/home_widget_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kiblat/utils/theme_util.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:kiblat/screens/main_shell.dart';
+import 'package:kiblat/widgets/ad_countdown_overlay.dart';
 
 class HomeScreen extends StatefulWidget {
-  final bool skipPermissionCheck; // useful for tests
-  final dynamic
-  locationController; // accepts HomeLocationController or similar for injection
-  final dynamic
-  compassController; // optional injection for tests (CompassHeadingController)
+  final bool skipPermissionCheck; 
+  final dynamic locationController;
+  final dynamic compassController;
 
   const HomeScreen({
     super.key,
@@ -40,20 +39,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  bool _hasAutoRedirected = false; // kept for compat but no longer used
-  // Example heading in degrees. Will be updated by device compass.
-  double headingDeg = 125.0;
-  double qiblaDeg = 0.0; // absolute bearing to Kaaba
+  final ValueNotifier<double> _headingNotifier = ValueNotifier(125.0);
+  double qiblaDeg = 0.0;
   double distanceKm = 0.0;
-  bool _isLocationReady =
-      false; // true when qibla bearing and distance are calculated
+  bool _isLocationReady = false;
+  bool _isRefreshingLocation = false;
 
-  // Next prayer info
   ps.PrayerTime? _nextPrayer;
-  // Notifier for per-second countdown updates to avoid rebuilding the entire HomeScreen
-  final ValueNotifier<Duration> _timeToNextNotifier = ValueNotifier(
-    Duration.zero,
-  );
+  final ValueNotifier<Duration> _timeToNextNotifier = ValueNotifier(Duration.zero);
   Timer? _prayerTimer;
   Timer? _promoTimer;
 
@@ -63,22 +56,13 @@ class _HomeScreenState extends State<HomeScreen>
   ps.PrayerTime? _prevPrayer;
   bool _isPrevActive = false;
 
-  // Whether the next prayer is imminent (e.g., less than 10 minutes away)
   final ValueNotifier<bool> _isImminentNotifier = ValueNotifier(false);
 
   StreamSubscription<double?>? _headingSub;
+  StreamSubscription<bool>? _staleSub;
   CompassHeadingController? _compassController;
-  String _locationLabel = 'London, UK';
-
-  String _formatDuration(Duration d) {
-    if (d.isNegative) return '00:00:00';
-    final h = d.inHours;
-    final m = d.inMinutes.remainder(60);
-    final s = d.inSeconds.remainder(60);
-    if (h > 0) return '${h}h ${m}m';
-    if (m > 0) return '${m}m ${s}s';
-    return '${s}s';
-  }
+  String _locationLabel = '...';
+  bool _isCompassStale = false;
 
   @override
   void initState() {
@@ -87,13 +71,10 @@ class _HomeScreenState extends State<HomeScreen>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
-    // small pop animation
     _controller.forward();
 
-    // React to settings changes (time format etc.) so we can refresh times immediately
     SettingsService.instance.notifier.addListener(_onSettingsChanged);
 
-    // Compass availability
     if (!LocationService.hasCompass()) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -104,49 +85,31 @@ class _HomeScreenState extends State<HomeScreen>
         );
       });
     } else {
-      // Start compass controller and listen to smoothed heading stream
-      _compassController =
-          (widget.compassController as CompassHeadingController?) ??
-          CompassHeadingController();
+      _compassController = (widget.compassController as CompassHeadingController?) ?? CompassHeadingController();
       _headingSub = _compassController!.smoothedStream.listen((val) {
-        setState(() {
-          headingDeg = val;
-        });
+        _headingNotifier.value = val;
+      });
+      _staleSub = _compassController!.staleStream.listen((isStale) {
+        if (mounted) setState(() => _isCompassStale = isStale);
       });
     }
 
-    // Check and request location permission first (skippable for tests)
     if (widget.skipPermissionCheck) {
       _fetchAndSetLocation();
     } else {
-      LocationService.checkAndRequestPermission().then((granted) {
-        if (!granted) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted) return;
-            showErrorAlert(
-              context,
-              title: tr('location_permission_title'),
-              message: tr('location_permission_msg'),
-              actions: [
-                DialogAction(tr('open_settings'), (ctx) async {
-                  Navigator.of(ctx, rootNavigator: true).pop();
-                  await LocationService.openAppSettings();
-                }),
-                DialogAction(
-                  tr('dismiss'),
-                  (ctx) => Navigator.of(ctx, rootNavigator: true).pop(),
-                ),
-              ],
-            );
-          });
-          return;
+      // Small delay to ensure UI is stable before potentially showing permission dialog
+      Future.delayed(const Duration(milliseconds: 500), () async {
+        final granted = await LocationService.checkAndRequestPermission();
+        if (granted) {
+          _fetchAndSetLocation();
+        } else {
+          // If not granted, still try to show cached data
+          _fetchAndSetLocation();
         }
-
-        // Permissions granted - fetch location on a background async method
-        _fetchAndSetLocation();
       });
     }
 
+    // Show Pro promo after 3 seconds
     _promoTimer = Timer(const Duration(seconds: 3), _checkAndShowPromoDialog);
   }
 
@@ -155,7 +118,9 @@ class _HomeScreenState extends State<HomeScreen>
     _prayerTimer?.cancel();
     _promoTimer?.cancel();
     _headingSub?.cancel();
+    _staleSub?.cancel();
     _compassController?.dispose();
+    _headingNotifier.dispose();
     SettingsService.instance.notifier.removeListener(_onSettingsChanged);
     _timeToNextNotifier.dispose();
     _isImminentNotifier.dispose();
@@ -163,116 +128,94 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 
-  Future<void> _fetchAndSetLocation() async {
+  Future<void> _fetchAndSetLocation({bool forceRefresh = false}) async {
+    if (forceRefresh) {
+      if (mounted) setState(() => _isRefreshingLocation = true);
+    }
+    
+    // 1. Try to load cached data first to give user something immediate
+    if (!_isLocationReady || forceRefresh) {
+      final cached = await LocationService.getLastLocation();
+      if (cached != null && mounted && !_isLocationReady) {
+        setState(() {
+          _locationLabel = cached['label'];
+          _latitude = cached['lat'];
+          _longitude = cached['lon'];
+          qiblaDeg = LocationService.qiblaBearing(_latitude!, _longitude!);
+          distanceKm = LocationService.distanceToKaabaKm(_latitude!, _longitude!);
+          _isLocationReady = true;
+        });
+        _refreshNextPrayer();
+      }
+    }
+
     final controller = widget.locationController ?? HomeLocationController();
     try {
       final res = await (controller as dynamic).fetchLocation();
       if (!mounted) return;
 
-      if (res.label.isEmpty) {
-        setState(() {
-          _locationLabel =
-              '${res.lat.toStringAsFixed(3)}, ${res.lon.toStringAsFixed(3)}';
-          qiblaDeg = res.qiblaDeg;
-          distanceKm = res.distanceKm;
-          _latitude = res.lat;
-          _longitude = res.lon;
-          _isLocationReady = true;
-        });
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          _showGeocodeFailureOptions(
-            Position(
-              latitude: res.lat,
-              longitude: res.lon,
-              timestamp: DateTime.now(),
-              accuracy: 1.0,
-              altitude: 0.0,
-              altitudeAccuracy: 0.0,
-              heading: 0.0,
-              headingAccuracy: 0.0,
-              speed: 0.0,
-              speedAccuracy: 0.0,
-            ),
-          );
-        });
-        return;
-      }
-
       setState(() {
-        _locationLabel = res.label;
+        _locationLabel = res.label.isEmpty 
+            ? '${res.lat.toStringAsFixed(3)}, ${res.lon.toStringAsFixed(3)}' 
+            : res.label;
         qiblaDeg = res.qiblaDeg;
         distanceKm = res.distanceKm;
         _latitude = res.lat;
         _longitude = res.lon;
         _isLocationReady = true;
+        _isRefreshingLocation = false;
       });
-      // Refresh next prayer once we have location and settings
+      
       _refreshNextPrayer();
-
-      // Update home screen widget with new location data
       HomeWidgetService.instance.updateQiblaData(
         qiblaDegree: res.qiblaDeg,
-        locationName: res.label,
+        locationName: _locationLabel,
         latitude: res.lat,
         longitude: res.lon,
       );
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLocationReady = false;
-      });
 
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        showErrorAlert(
-          context,
-          title: tr('location_unavailable_title'),
-          message: tr('location_unavailable_msg'),
-          actions: [
-            DialogAction(tr('open_location_settings'), (ctx) async {
-              Navigator.of(ctx, rootNavigator: true).pop();
-              await LocationService.openLocationSettings();
-            }),
-            DialogAction(
-              tr('dismiss'),
-              (ctx) => Navigator.of(ctx, rootNavigator: true).pop(),
-            ),
-          ],
+      if (forceRefresh) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(tr('location_updated')),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
-      });
+      }
+    } catch (e) {
+      debugPrint('Location fetch failed: $e');
+      if (!mounted) return;
+      
+      // If we don't have location yet and primary fetch failed, try cached one last time
+      if (!_isLocationReady) {
+        final cached = await LocationService.getLastLocation();
+        if (cached != null) {
+          setState(() {
+            _locationLabel = cached['label'];
+            _latitude = cached['lat'];
+            _longitude = cached['lon'];
+            qiblaDeg = LocationService.qiblaBearing(_latitude!, _longitude!);
+            distanceKm = LocationService.distanceToKaabaKm(_latitude!, _longitude!);
+            _isLocationReady = true;
+          });
+          _refreshNextPrayer();
+        } else {
+          setState(() {
+            _isLocationReady = false;
+            _isRefreshingLocation = false;
+          });
+        }
+      } else {
+        setState(() => _isRefreshingLocation = false);
+      }
     }
   }
 
-  // -- Error dialog helpers replaced by `home_dialogs` module --
-  void _showGeocodeFailureOptions(Position pos) async {
-    await showGeocodeFailureOptions(
-      context,
-      pos,
-      onUseCached: (label, lat, lon) {
-        setState(() {
-          _locationLabel = '$label (cached)';
-          qiblaDeg = LocationService.qiblaBearing(lat, lon);
-          distanceKm = LocationService.distanceToKaabaKm(lat, lon);
-          _latitude = lat;
-          _longitude = lon;
-          _isLocationReady = true;
-        });
-        TelemetryService.instance.logEvent('used_cached_location');
-
-        // When user picks cached location, refresh next prayer
-        _refreshNextPrayer();
-      },
-    );
-  }
-
-  /// Refresh next prayer info using PrayerService and PrayerSettings
   Future<void> _refreshNextPrayer() async {
-    if (!_isLocationReady) return;
+    if (!_isLocationReady || _latitude == null || _longitude == null) return;
     try {
       final settings = await PrayerSettings.load();
-      if (_latitude == null || _longitude == null) return;
       final pair = await ps.PrayerService.getPrevAndNextPrayerTimes(
         latitude: _latitude!,
         longitude: _longitude!,
@@ -284,233 +227,287 @@ class _HomeScreenState extends State<HomeScreen>
       setState(() {
         _nextPrayer = pair['next'];
         _prevPrayer = pair['previous'];
-
-        // compute active flag
         final now = DateTime.now();
-        _isPrevActive =
-            (_prevPrayer != null &&
-            _nextPrayer != null &&
-            now.isAfter(_prevPrayer!.time) &&
-            now.isBefore(_nextPrayer!.time));
+        _isPrevActive = (_prevPrayer != null && _nextPrayer != null && 
+                         now.isAfter(_prevPrayer!.time) && now.isBefore(_nextPrayer!.time));
       });
 
-      // Update home screen widget with prayer data
-      if (_prevPrayer != null || _nextPrayer != null) {
-        HomeWidgetService.instance.updatePrayerData(
-          currentPrayer: _prevPrayer?.name ?? '',
-          currentPrayerTime: _prevPrayer?.timeString ?? '--:--',
-          nextPrayer: _nextPrayer?.name ?? '',
-          nextPrayerTime: _nextPrayer?.timeString ?? '--:--',
-        );
-      }
-
-      // Initialize the countdown notifier with the current remaining time and start periodic updater
       _updateTimeToNextNotifier();
       _prayerTimer?.cancel();
       _prayerTimer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (!mounted) return;
         _updateTimeToNextNotifier();
       });
-    } catch (e) {
-      // ignore errors; we can retry when location/settings change
-    }
+    } catch (_) {}
   }
 
   void _updateTimeToNextNotifier() {
-    if (_nextPrayer == null) {
-      _timeToNextNotifier.value = Duration.zero;
-      _isImminentNotifier.value = false;
-      return;
-    }
-
+    if (_nextPrayer == null) return;
     final now = DateTime.now();
     if (now.isAfter(_nextPrayer!.time)) {
-      // Next prayer passed, try refresh
       _refreshNextPrayer();
       return;
     }
-
     final remaining = _nextPrayer!.time.difference(now);
     _timeToNextNotifier.value = remaining;
-    _isImminentNotifier.value =
-        remaining > Duration.zero && remaining <= const Duration(minutes: 10);
+    _isImminentNotifier.value = remaining > Duration.zero && remaining <= const Duration(minutes: 10);
   }
 
-  /// Called when global settings are updated
   void _onSettingsChanged() {
-    // Settings changed (e.g., time format or calculation params) — refresh prayer times
-    // so UI updates immediately to the new format
     _refreshNextPrayer();
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Format distance according to current locale when ready (handled by HomeCompass)
-    // `dir` and `formattedDistance` are computed inside `HomeCompass`.
-    final settings = SettingsService.instance.notifier.value;
-
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-        await _handleAppClose();
-      },
-      child: Scaffold(
-        backgroundColor: AppTheme.getBackgroundColor(settings, context),
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Top bar (extracted to HomeTopBar)
-              HomeTopBar(
-                locationLabel: _locationLabel,
-                onSettingsTap: () =>
-                    Navigator.of(context).pushNamed('/settings'),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Compass (extracted to HomeCompass)
-              Expanded(
-                child: Center(
-                  child: HomeCompass(
-                    headingDeg: headingDeg,
-                    qiblaDeg: qiblaDeg,
-                    distanceKm: distanceKm,
-                    isLocationReady: _isLocationReady,
-                    theme: SettingsService.instance.notifier.value.compassTheme,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-              // Prayer schedule card
-              HomePrayerSheet(
-                prayerKey: _nextPrayer?.name.toLowerCase() ?? 'maghrib',
-                prayerTime: _nextPrayer?.timeString ?? '--:--',
-                // Provide the notifier so HomePrayerSheet can rebuild only the badge
-                timeToNextListenable: _timeToNextNotifier,
-                countdownDur: _nextPrayer != null
-                    ? _formatDuration(
-                        _nextPrayer!.time.difference(DateTime.now()),
-                      )
-                    : '--:--',
-                activePrayerKey: _prevPrayer?.name.toLowerCase(),
-                isActive: _isPrevActive,
-                isImminent: false, // prefer listenable for live updates
-                isImminentListenable: _isImminentNotifier,
-                onViewFullSchedule: () {
-                  // Switch to Jadwal tab in MainShell instead of pushing a new route
-                  MainShell.switchTab(1);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Handle app close - use centralized helper (confirmation + loading + ad + exit)
-  // ignore: use_build_context_synchronously
-  Future<void> _handleAppClose() async {
-    await showExitAndMaybeShowAd(context);
+    if (mounted) setState(() {});
   }
 
   Future<void> _checkAndShowPromoDialog() async {
     if (!mounted) return;
-
     final settings = SettingsService.instance.notifier.value;
     if (settings.isProUser) return;
 
     final prefs = await SharedPreferences.getInstance();
-    final lastShown = prefs.getInt('last_pro_promo_shown_time') ?? 0;
+    final lastShown = prefs.getInt('last_pro_promo_time') ?? 0;
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    const cooldown = 24 * 60 * 60 * 1000;
-    if (now - lastShown < cooldown) return;
-
-    final randomChance = DateTime.now().millisecond % 4 == 0;
-    if (!randomChance) return;
-
-    await prefs.setInt('last_pro_promo_shown_time', now);
+    if (now - lastShown < 24 * 60 * 60 * 1000) return;
+    await prefs.setInt('last_pro_promo_time', now);
 
     if (!mounted) return;
+    _showProPromo();
+  }
 
-    showDialog<void>(
+  void _showProPromo() {
+    showDialog(
       context: context,
-      barrierDismissible: true,
       builder: (ctx) {
+        final settings = SettingsService.instance.notifier.value;
+        final isLight = AppTheme.isLight(settings, context);
+        final accent = AppTheme.getAccentColor(settings, context);
+        final card = AppTheme.getCardColor(settings, context);
+        final text = AppTheme.getTextColor(settings, context);
+        final secText = AppTheme.getSecondaryTextColor(settings, context);
+
         return AlertDialog(
-          backgroundColor: const Color(0xFF0F0F0F),
+          backgroundColor: card,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-            side: const BorderSide(color: Color(0xFFD4AF37), width: 1.5),
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: accent, width: 1.5),
           ),
           title: Row(
-            children: const [
-              Icon(Icons.stars, color: Color(0xFFD4AF37), size: 28),
-              SizedBox(width: 10),
-              Text(
-                'Tingkatkan ke Kiblat Pro',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-              ),
+            children: [
+              Icon(Icons.stars, color: accent, size: 28),
+              const SizedBox(width: 10),
+              Text(tr('upgrade_pro'), 
+                style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.bold)),
             ],
           ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Dapatkan Pengalaman Terbaik:',
-                  style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13),
-                ),
-                SizedBox(height: 10),
-                Text('✅ Bebas Iklan Total (Meningkatkan Privasi dari Ad Networks)', style: TextStyle(color: Colors.white60, fontSize: 12)),
-                SizedBox(height: 6),
-                Text('✅ Tanpa Telemetri (Data Penggunaan 100% Privat & Offline)', style: TextStyle(color: Colors.white60, fontSize: 12)),
-                SizedBox(height: 6),
-                Text('✅ Akses Suara Adzan Premium Offline Tanpa Internet', style: TextStyle(color: Colors.white60, fontSize: 12)),
-                SizedBox(height: 6),
-                Text('✅ Buka 3 Tema Estetik Kompas Kiblat Baru', style: TextStyle(color: Colors.white60, fontSize: 12)),
-              ],
-            ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(tr('pro_desc'), 
+                style: TextStyle(color: secText, fontSize: 13, height: 1.4)),
+              const SizedBox(height: 16),
+              _promoFeature('✅ ${tr('pro_prompt_benefit_ads')}', secText),
+              _promoFeature('✅ AR Qibla View (Premium)', secText),
+              _promoFeature('✅ ${tr('pro_prompt_benefit_themes')}', secText),
+            ],
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Nanti Saja', style: TextStyle(color: Colors.white60)),
+              onPressed: () => Navigator.pop(ctx), 
+              child: Text(tr('dismiss'), style: TextStyle(color: secText.withValues(alpha: 0.5)))
             ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFBF953F), Color(0xFFFCF6BA), Color(0xFFBF953F)],
-                ),
-                borderRadius: BorderRadius.circular(10),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accent, 
+                foregroundColor: isLight ? Colors.white : Colors.black,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  Navigator.of(context).pushNamed('/settings');
-                },
-                child: const Text(
-                  'Lihat Detail Pro',
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                ),
-              ),
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pushNamed(context, '/settings');
+              },
+              child: Text(tr('view_details_pro'), style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         );
       },
     );
-  } // end build
+  }
+
+  Widget _promoFeature(String text, Color color) => Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(text, style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: 12)),
+  );
+
+  void _handleArTap() async {
+    final settings = SettingsService.instance.notifier.value;
+    if (settings.isProUser) {
+      final prefs = await SharedPreferences.getInstance();
+      final bool skipWarning = prefs.getBool('skip_ar_warning') ?? false;
+
+      if (!skipWarning) {
+        bool dontShowAgain = false;
+        // RAM Warning for potentially low-end devices
+        final bool? proceed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => StatefulBuilder(
+            builder: (context, setStateDialog) {
+              final s = SettingsService.instance.notifier.value;
+              final accent = AppTheme.getAccentColor(s, context);
+              
+              return AlertDialog(
+                title: Text(tr('ar_warning_title')),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(tr('ar_warning_msg')),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Checkbox(
+                            value: dontShowAgain,
+                            activeColor: accent,
+                            onChanged: (val) {
+                              setStateDialog(() => dontShowAgain = val ?? false);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setStateDialog(() => dontShowAgain = !dontShowAgain),
+                            child: Text(
+                              tr('dont_show_again'),
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr('cancel'))),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (dontShowAgain) {
+                        prefs.setBool('skip_ar_warning', true);
+                      }
+                      Navigator.pop(ctx, true);
+                    }, 
+                    child: Text(tr('proceed'))
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+
+        if (proceed != true) return;
+      }
+
+      final status = await Permission.camera.request();
+      if (status.isGranted) {
+        if (!mounted) return;
+        Navigator.push(context, MaterialPageRoute(builder: (_) => ArQiblaScreen(qiblaBearing: qiblaDeg)));
+      } else {
+        if (!mounted) return;
+        showErrorAlert(
+          context,
+          title: tr('camera_permission_title'),
+          message: tr('camera_permission_msg'),
+        );
+      }
+    } else {
+      _showProPromo();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = SettingsService.instance.notifier.value;
+    return AdCountdownOverlay(
+      screenName: 'home',
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+          await showExitAndMaybeShowAd(context);
+        },
+        child: Scaffold(
+          backgroundColor: AppTheme.getBackgroundColor(settings, context),
+          body: SafeArea(
+            child: Column(
+              children: [
+                HomeTopBar(
+                  locationLabel: _locationLabel,
+                  showArIcon: true,
+                  onArTap: _handleArTap,
+                  onRefreshTap: () => _fetchAndSetLocation(forceRefresh: true),
+                  isRefreshing: _isRefreshingLocation,
+                  onSettingsTap: () => Navigator.of(context).pushNamed('/settings'),
+                ),
+                if (_isCompassStale)
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.sync_problem, color: Colors.orange, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            tr('calibration_hint'),
+                            style: const TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: Center(
+                    child: ValueListenableBuilder<double>(
+                      valueListenable: _headingNotifier,
+                      builder: (context, heading, _) {
+                        return HomeCompass(
+                          headingDeg: heading,
+                          qiblaDeg: qiblaDeg,
+                          distanceKm: distanceKm,
+                          isLocationReady: _isLocationReady,
+                          theme: settings.compassTheme,
+                          isLight: AppTheme.isLight(settings, context),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                HomePrayerSheet(
+                  prayerKey: _nextPrayer?.name.toLowerCase() ?? 'maghrib',
+                  prayerTime: _nextPrayer?.timeString ?? '--:--',
+                  timeToNextListenable: _timeToNextNotifier,
+                  countdownDur: '--:--',
+                  activePrayerKey: _prevPrayer?.name.toLowerCase(),
+                  isActive: _isPrevActive,
+                  isImminentListenable: _isImminentNotifier,
+                  onViewFullSchedule: () => MainShell.switchTab(1),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

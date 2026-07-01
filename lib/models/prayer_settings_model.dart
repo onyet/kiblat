@@ -51,6 +51,12 @@ class PrayerSettings {
   /// Mode tampilan ('dark', 'light', 'system')
   final String displayMode;
 
+  /// Advanced Reminders (Pro): offset in minutes before/after adzan (negative for before)
+  final int reminderOffset;
+
+  /// Whether to enable advanced reminders
+  final bool enableAdvancedReminders;
+
   PrayerSettings({
     this.madhab = Madhab.shafi,
     this.calculationMethod = CalculationMethod.muslim_world_league,
@@ -67,7 +73,9 @@ class PrayerSettings {
     this.isProUser = false,
     this.defaultLaunchScreen = 'compass',
     this.compassTheme = 'gold',
-    this.displayMode = 'dark',
+    this.displayMode = 'light',
+    this.reminderOffset = -10, // Default 10 min before
+    this.enableAdvancedReminders = false,
   });
 
   /// Create a copy of this settings with optional modifications
@@ -89,6 +97,8 @@ class PrayerSettings {
     String? defaultLaunchScreen,
     String? compassTheme,
     String? displayMode,
+    int? reminderOffset,
+    bool? enableAdvancedReminders,
   }) {
     return PrayerSettings(
       madhab: madhab ?? this.madhab,
@@ -107,6 +117,8 @@ class PrayerSettings {
       defaultLaunchScreen: defaultLaunchScreen ?? this.defaultLaunchScreen,
       compassTheme: compassTheme ?? this.compassTheme,
       displayMode: displayMode ?? this.displayMode,
+      reminderOffset: reminderOffset ?? this.reminderOffset,
+      enableAdvancedReminders: enableAdvancedReminders ?? this.enableAdvancedReminders,
     );
   }
 
@@ -141,6 +153,8 @@ class PrayerSettings {
     await prefs.setString('defaultLaunchScreen', defaultLaunchScreen);
     await prefs.setString('compassTheme', compassTheme);
     await prefs.setString('displayMode', displayMode);
+    await prefs.setInt('reminderOffset', reminderOffset);
+    await prefs.setBool('enableAdvancedReminders', enableAdvancedReminders);
   }
 
   /// Load settings from SharedPreferences
@@ -174,7 +188,9 @@ class PrayerSettings {
     final isProUser = prefs.getBool('isProUser') ?? false;
     final defaultLaunchScreen = prefs.getString('defaultLaunchScreen') ?? 'compass';
     final compassTheme = prefs.getString('compassTheme') ?? 'gold';
-    final displayMode = prefs.getString('displayMode') ?? 'dark';
+    final displayMode = prefs.getString('displayMode') ?? 'light';
+    final reminderOffset = prefs.getInt('reminderOffset') ?? -10;
+    final enableAdvancedReminders = prefs.getBool('enableAdvancedReminders') ?? false;
 
     return PrayerSettings(
       madhab: madhab,
@@ -193,6 +209,8 @@ class PrayerSettings {
       defaultLaunchScreen: defaultLaunchScreen,
       compassTheme: compassTheme,
       displayMode: displayMode,
+      reminderOffset: reminderOffset,
+      enableAdvancedReminders: enableAdvancedReminders,
     );
   }
 

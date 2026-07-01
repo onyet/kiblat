@@ -18,10 +18,12 @@ Hey! Kiblat is a tiny, chill Flutter app that points you to the Kaaba and now al
 
 ## What's New — Release Highlights
 
-- **Prayer Times** added: local prayer schedule, reminders, and prayer details.
-- **Home refreshed:** quick glance shows Qibla + next prayer time.
-- **Prayer settings:** pick calculation method, timezone handling, notification prefs.
-- **Small improvements:** translations, accessibility, and snappier UI.
+- **Kiblat Pro** added: Lifetime purchase to remove ads and unlock exclusive features.
+- **Dynamic Icons:** Exclusive gold PRO badge for premium users.
+- **Advanced Reminders:** Custom offsets for prayer alerts.
+- **Prayer Heatmap:** Visualize your prayer consistency over the last year.
+- **Location History:** (Pro) Keep track of where you've performed your prayers.
+- **Theme Engine:** Dynamic switching based on time and new Cyber/Dark themes.
 
 ---
 

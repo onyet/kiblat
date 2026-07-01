@@ -1,53 +1,47 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="id.onyet.app.kiblat">
 
-    <!-- Permissions for location -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <!-- Android 13+ requires runtime permission for posting notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- Lets scheduled notifications survive device reboot/package updates -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <!-- Exact alarm permission for precise prayer time notifications -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <!-- Google Play Billing permission for Pro features purchase -->
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="com.android.vending.BILLING" />
+
     <application
         android:label="Kiblat"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
-        <!-- Google Maps API Key (from .env via manifestPlaceholders) -->
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:fullBackupContent="false">
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${googleApiKey}" />
-        <!-- AdMob App ID -->
+
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-7967860040352202~1740407670" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
-            android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
-            <!-- Specifies an Android theme to apply to this Activity as soon as
-                 the Android process has started. This theme is visible to the user
-                 while the Flutter UI initializes. After that, this theme continues
-                 to determine the Window background behind the Flutter UI. -->
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
-              android:resource="@style/NormalTheme"
-              />
+              android:resource="@style/NormalTheme" />
         </activity>
 
         <activity-alias
-            android:name="id.onyet.app.kiblat.MainActivityDefault"
+            android:name=".MainActivityDefault"
             android:targetActivity=".MainActivity"
             android:icon="@mipmap/ic_launcher"
             android:label="Kiblat"
-            android:theme="@style/LaunchTheme"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -57,11 +51,10 @@
         </activity-alias>
 
         <activity-alias
-            android:name="id.onyet.app.kiblat.MainActivityPro"
+            android:name=".MainActivityPro"
             android:targetActivity=".MainActivity"
             android:icon="@mipmap/ic_launcher_pro"
             android:label="Kiblat"
-            android:theme="@style/LaunchTheme"
             android:enabled="false"
             android:exported="true">
             <intent-filter>
@@ -69,13 +62,11 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity-alias>
-        <!-- Don't delete the meta-data below.
-             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
 
-        <!-- flutter_local_notifications scheduled-notification receivers -->
         <receiver
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
             android:exported="false" />
@@ -90,8 +81,7 @@
             </intent-filter>
         </receiver>
             
-        <!-- Kiblat Home Screen Widget -->
-        <receiver 
+        <receiver
             android:name=".KiblatWidgetProvider"
             android:exported="true">
             <intent-filter>
@@ -102,11 +92,7 @@
                 android:resource="@xml/kiblat_widget_info" />
         </receiver>
     </application>
-    <!-- Required to query activities that can process text, see:
-         https://developer.android.com/training/package-visibility and
-         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
 
-         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>

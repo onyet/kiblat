@@ -5,6 +5,7 @@ import 'package:kiblat/utils/theme_util.dart';
 import 'package:kiblat/screens/home_screen.dart';
 import 'package:kiblat/screens/prayer_times_screen.dart';
 import 'package:kiblat/screens/prayer_tracker_screen.dart';
+import 'package:kiblat/screens/tasbih/tasbih_screen.dart';
 
 /// Shell widget that hosts the main navigation with a BottomNavigationBar.
 /// Tabs:
@@ -13,8 +14,8 @@ import 'package:kiblat/screens/prayer_tracker_screen.dart';
 ///  2 – 📔 Catatan (PrayerTrackerScreen)
 class MainShell extends StatefulWidget {
   /// Allows external callers (e.g., SettingsScreen) to switch tabs.
-  static final GlobalKey<_MainShellState> shellKey =
-      GlobalKey<_MainShellState>();
+  static final GlobalKey<MainShellState> shellKey =
+      GlobalKey<MainShellState>();
 
   /// Switch to a tab from anywhere in the app tree.
   static void switchTab(int index) {
@@ -24,16 +25,17 @@ class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
   @override
-  State<MainShell> createState() => _MainShellState();
+  State<MainShell> createState() => MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class MainShellState extends State<MainShell> {
   int _currentIndex = 0;
   // Keep screens alive between tab switches using IndexedStack
   final _screens = const [
     HomeScreen(),
     PrayerTimesScreen(),
     PrayerTrackerScreen(),
+    TasbihScreen(),
   ];
 
   @override
@@ -115,6 +117,15 @@ class _MainShellState extends State<MainShell> {
                       activeIcon: Icons.assignment,
                       labelKey: 'catatan',
                       fallback: 'Catatan',
+                      accentColor: accentColor,
+                      secTextColor: secTextColor,
+                    ),
+                    _buildNavItem(
+                      index: 3,
+                      icon: Icons.radio_button_checked,
+                      activeIcon: Icons.radio_button_checked,
+                      labelKey: 'tasbih',
+                      fallback: 'Tasbih',
                       accentColor: accentColor,
                       secTextColor: secTextColor,
                     ),

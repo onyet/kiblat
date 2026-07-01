@@ -1,10 +1,8 @@
 import 'dart:io';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart' as p;
 
-/// A utility script to download GeoNames city data and populate geonames.db
+/// A utility script to populate geonames.db
 /// Run this with: dart tools/import_geonames.dart
 void main() async {
   // Init sqflite for desktop
@@ -12,6 +10,7 @@ void main() async {
   var databaseFactory = databaseFactoryFfi;
 
   final dbPath = p.join(Directory.current.path, 'assets', 'geonames.db');
+  // ignore: avoid_print
   print('Creating database at $dbPath...');
 
   // Ensure assets directory exists
@@ -33,12 +32,8 @@ void main() async {
   ''');
   await db.execute('CREATE INDEX idx_lat_lon ON cities (lat, lon)');
 
-  print('Downloading city data (cities with > 15000 population)...');
-  // Note: In a real scenario, you'd download the .zip from GeoNames and parse the .txt
-  // For this example, let's use a smaller JSON source or explain the process.
-  
-  print('Please provide a GeoNames compatible data source.');
-  print('Commonly: https://download.geonames.org/export/dump/cities15000.zip');
+  // ignore: avoid_print
+  print('Populating sample data...');
   
   // Example hardcoded entry for testing
   await db.insert('cities', {
@@ -49,6 +44,7 @@ void main() async {
     'lon': 106.8456
   });
 
-  print('Database created with 1 sample city. Add more data as needed.');
+  // ignore: avoid_print
+  print('Database created with sample data.');
   await db.close();
 }

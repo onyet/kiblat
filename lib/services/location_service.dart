@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:geocoding/geocoding.dart';
+import 'package:flutter/foundation.dart';
+import 'package:geocoding/geocoding.dart' as google_geocoding;
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'telemetry_service.dart';
+import 'geonames_service.dart';
 
 class LocationService {
   static Future<bool> checkAndRequestPermission() async {
@@ -18,6 +20,12 @@ class LocationService {
         permission == LocationPermission.whileInUse;
   }
 
+  static Future<bool> isPermissionGranted() async {
+    final permission = await Geolocator.checkPermission();
+    return permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
+  }
+
   static Future<Position> getCurrentPosition() async {
     bool ok = await Geolocator.isLocationServiceEnabled();
     if (!ok) {
@@ -25,22 +33,63 @@ class LocationService {
     }
     final granted = await checkAndRequestPermission();
     if (!granted) throw Exception('Location permission not granted');
-    return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.best,
-    );
+
+    // 1. Try to get last known position first (fast)
+    final lastKnown = await Geolocator.getLastKnownPosition();
+    if (lastKnown != null) {
+      // Return last known immediately if it's fresh (less than 1 minute old)
+      final age = DateTime.now().difference(lastKnown.timestamp);
+      if (age.inMinutes < 1) {
+        return lastKnown;
+      }
+    }
+
+    // 2. Request current position with a timeout
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium, // Best can hang on some devices
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+    } catch (e) {
+      // 3. Fallback to last known if request timed out
+      if (lastKnown != null) return lastKnown;
+      rethrow;
+    }
   }
 
   static Future<String> reverseGeocode(double lat, double lon) async {
+    // 1. Try Offline GeoNames SQLite first
     try {
-      final places = await placemarkFromCoordinates(lat, lon);
+      final offlineLabel = await GeoNamesService.instance.findNearestCity(lat, lon);
+      if (offlineLabel != null && offlineLabel.isNotEmpty) {
+        return offlineLabel;
+      }
+    } catch (e) {
+      debugPrint('Offline geocode lookup failed: $e');
+    }
+
+    // 2. If offline fails (no data), try GeoNames API and cache result
+    try {
+      final apiLabel = await GeoNamesService.instance.fetchFromApiAndCache(lat, lon);
+      if (apiLabel != null && apiLabel.isNotEmpty) {
+        return apiLabel;
+      }
+    } catch (e) {
+      debugPrint('GeoNames API geocode failed: $e');
+    }
+
+    // 3. Last fallback: Google/Apple Geocoding (original method)
+    try {
+      final places = await google_geocoding.placemarkFromCoordinates(lat, lon);
       if (places.isNotEmpty) {
         final p = places.first;
         return '${p.locality ?? ''}${p.locality != null && p.country != null ? ', ' : ''}${p.country ?? ''}';
       }
-      return '';
-    } catch (_) {
-      return '';
-    }
+    } catch (_) {}
+
+    return '';
   }
 
   /// Calculate bearing (degrees from true north) from (lat, lon) to the Kaaba
@@ -125,6 +174,40 @@ class LocationService {
     return null;
   }
 
+  /// Save location for a specific prayer log (Pro Feature)
+  static Future<void> savePrayerLocation(
+    String dateKey,
+    String prayerKey,
+    double lat,
+    double lon,
+    String label,
+  ) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'prayer_loc_${dateKey}_$prayerKey';
+      await prefs.setString(key, '$label|$lat|$lon');
+    } catch (_) {}
+  }
+
+  /// Get location for a specific prayer log
+  static Future<Map<String, String>?> getPrayerLocation(
+    String dateKey,
+    String prayerKey,
+  ) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'prayer_loc_${dateKey}_$prayerKey';
+      final val = prefs.getString(key);
+      if (val != null) {
+        final parts = val.split('|');
+        if (parts.length == 3) {
+          return {'label': parts[0], 'lat': parts[1], 'lon': parts[2]};
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
   /// Attempt reverse geocoding with a timeout, save successful result to cache,
   /// and fall back to cached value if network/geocoding fails.
   static Future<String> reverseGeocodeWithCache(
@@ -150,7 +233,7 @@ class LocationService {
       TelemetryService.instance.logEvent('reverse_geocode_used_cache', {
         'cached_label': cached['label'],
       });
-      return '${cached['label']} (cached)';
+      return cached['label'];
     }
 
     return '';
@@ -159,6 +242,16 @@ class LocationService {
   /// Whether the device provides compass readings through flutter_compass.
   static bool hasCompass() {
     return FlutterCompass.events != null;
+  }
+
+  /// Checks if heading data is "stale" (hasn't changed despite accelerometer movement).
+  /// This is a heuristic. Returns true if we suspect the sensor is stuck.
+  static bool isCompassStale(double lastHeading, double newHeading, double movementMagnitude) {
+    // If heading hasn't changed at all but device is moving significantly
+    if (lastHeading == newHeading && movementMagnitude > 0.5) {
+      return true;
+    }
+    return false;
   }
 
   /// Open app settings to let user grant permissions

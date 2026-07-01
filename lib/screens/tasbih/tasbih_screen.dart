@@ -3,6 +3,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:kiblat/services/settings_service.dart';
 import 'package:kiblat/utils/theme_util.dart';
 import 'package:flutter/services.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:kiblat/services/ad_service.dart';
+import 'dart:async';
+import 'dart:math' as math;
 
 class TasbihScreen extends StatefulWidget {
   const TasbihScreen({super.key});
@@ -11,13 +15,99 @@ class TasbihScreen extends StatefulWidget {
   State<TasbihScreen> createState() => _TasbihScreenState();
 }
 
-class _TasbihScreenState extends State<TasbihScreen> {
+class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderStateMixin {
   int _counter = 0;
   int _target = 33;
   int _totalCount = 0;
 
+  late final AnimationController _animController;
+  late final Animation<double> _scaleAnimation;
+  late final Animation<double> _glowAnimation;
+
+  BannerAd? _bannerAd;
+  bool _bannerLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.90).chain(CurveTween(curve: Curves.easeOut)), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 0.90, end: 1.0).chain(CurveTween(curve: Curves.elasticOut)), weight: 50),
+    ]).animate(_animController);
+    
+    _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
+    );
+
+    _loadBannerAd();
+    SettingsService.instance.notifier.addListener(_onSettingsChanged);
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    SettingsService.instance.notifier.removeListener(_onSettingsChanged);
+    _bannerAd?.dispose();
+    super.dispose();
+  }
+
+  void _onSettingsChanged() {
+    final settings = SettingsService.instance.notifier.value;
+    if (settings.isProUser) {
+      if (_bannerAd != null) {
+        setState(() => _disposeBannerAd());
+      }
+    } else {
+      _loadBannerAd();
+    }
+  }
+
+  void _loadBannerAd() async {
+    final settings = SettingsService.instance.notifier.value;
+    if (settings.isProUser) {
+      _disposeBannerAd();
+      return;
+    }
+
+    if (_bannerAd != null) return;
+
+    if (!AdService.isInitialized) {
+      await AdService.initialize();
+    }
+
+    _bannerAd = BannerAd(
+      adUnitId: AdService.settingsBannerUnitId,
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          if (mounted) setState(() => _bannerLoaded = true);
+        },
+        onAdFailedToLoad: (ad, err) {
+          ad.dispose();
+          _bannerAd = null;
+          if (mounted) setState(() => _bannerLoaded = false);
+          Future.delayed(const Duration(seconds: 30), () {
+            if (mounted) _loadBannerAd();
+          });
+        },
+      ),
+    )..load();
+  }
+
+  void _disposeBannerAd() {
+    _bannerAd?.dispose();
+    _bannerAd = null;
+    _bannerLoaded = false;
+  }
+
   void _increment() {
-    HapticFeedback.mediumImpact();
+    HapticFeedback.lightImpact();
+    _animController.forward(from: 0);
     setState(() {
       _counter++;
       _totalCount++;
@@ -29,6 +119,7 @@ class _TasbihScreenState extends State<TasbihScreen> {
   }
 
   void _reset() {
+    HapticFeedback.mediumImpact();
     setState(() {
       _counter = 0;
       _totalCount = 0;
@@ -37,127 +128,262 @@ class _TasbihScreenState extends State<TasbihScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final settings = SettingsService.instance.notifier.value;
-    final bgColor = AppTheme.getBackgroundColor(settings, context);
-    final textColor = AppTheme.getTextColor(settings, context);
-    final accentColor = AppTheme.getAccentColor(settings, context);
-    final cardColor = AppTheme.getCardColor(settings, context);
+    return ValueListenableBuilder(
+      valueListenable: SettingsService.instance.notifier,
+      builder: (context, settings, _) {
+        final bgColor = AppTheme.getBackgroundColor(settings, context);
+        final textColor = AppTheme.getTextColor(settings, context);
+        final accentColor = AppTheme.getAccentColor(settings, context);
+        final cardColor = AppTheme.getCardColor(settings, context);
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.chevron_left, color: textColor, size: 30),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          'Tasbih Digital Pro',
-          style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh, color: textColor),
-            onPressed: _reset,
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const Spacer(),
-            
-            // Target selector
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [33, 99, 100].map((t) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: ChoiceChip(
-                  label: Text('$t'),
-                  selected: _target == t,
-                  onSelected: (selected) {
-                    if (selected) setState(() => _target = t);
-                  },
-                  selectedColor: accentColor,
-                  labelStyle: TextStyle(
-                    color: _target == t ? Colors.black : textColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              )).toList(),
+        return Scaffold(
+          backgroundColor: bgColor,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            title: Text(
+              tr('tasbih_digital'),
+              style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
             ),
-
-            const SizedBox(height: 40),
-
-            // Counter Display
-            GestureDetector(
-              onTap: _increment,
-              child: Container(
-                width: 280,
-                height: 280,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: cardColor,
-                  boxShadow: [
-                    BoxShadow(
-                      color: accentColor.withValues(alpha: 0.2),
-                      blurRadius: 30,
-                      spreadRadius: 5,
-                    ),
-                  ],
-                  border: Border.all(color: accentColor.withValues(alpha: 0.5), width: 4),
-                ),
-                child: Column(
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: Icon(Icons.refresh, color: textColor),
+                onPressed: _reset,
+              ),
+            ],
+          ),
+          body: SafeArea(
+            child: Column(
+              children: [
+                const Spacer(),
+                
+                // Target selector
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '$_counter',
-                      style: TextStyle(
-                        fontSize: 80,
-                        fontWeight: FontWeight.w900,
-                        color: accentColor,
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                    Text(
-                      '/ $_target',
-                      style: TextStyle(
-                        fontSize: 20,
-                        color: textColor.withValues(alpha: 0.5),
+                  children: [33, 99, 100].map((t) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: ChoiceChip(
+                      label: Text('$t'),
+                      selected: _target == t,
+                      onSelected: (selected) {
+                        if (selected) {
+                          HapticFeedback.selectionClick();
+                          setState(() => _target = t);
+                        }
+                      },
+                      selectedColor: accentColor,
+                      labelStyle: TextStyle(
+                        color: _target == t ? Colors.black : textColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ],
+                  )).toList(),
                 ),
-              ),
-            ),
 
-            const SizedBox(height: 40),
+                const SizedBox(height: 50),
 
-            Text(
-              'Total: $_totalCount',
-              style: TextStyle(
-                color: textColor.withValues(alpha: 0.7),
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+                // Counter Display with Progress Ring
+                GestureDetector(
+                  onTap: _increment,
+                  child: ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Background Glow
+                        AnimatedBuilder(
+                          animation: _glowAnimation,
+                          builder: (context, child) {
+                            return Container(
+                              width: 280,
+                              height: 280,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: accentColor.withValues(alpha: 0.15 + (_glowAnimation.value * 0.15)),
+                                    blurRadius: 40 + (_glowAnimation.value * 20),
+                                    spreadRadius: 5 + (_glowAnimation.value * 10),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                        
+                        // Progress Ring
+                        SizedBox(
+                          width: 300,
+                          height: 300,
+                          child: CustomPaint(
+                            painter: TasbihProgressPainter(
+                              progress: _counter / _target,
+                              color: accentColor,
+                              backgroundColor: accentColor.withValues(alpha: 0.1),
+                            ),
+                          ),
+                        ),
 
-            const Spacer(),
-            
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Text(
-                'Ketuk lingkaran untuk menghitung.\nGetaran aktif setiap hitungan dan target.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: textColor.withValues(alpha: 0.4), fontSize: 12),
-              ),
+                        // Main Button
+                        Container(
+                          width: 240,
+                          height: 240,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: cardColor,
+                            border: Border.all(color: accentColor.withValues(alpha: 0.3), width: 2),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '$_counter',
+                                style: TextStyle(
+                                  fontSize: 80,
+                                  fontWeight: FontWeight.w900,
+                                  color: accentColor,
+                                  fontFamily: 'monospace',
+                                  letterSpacing: -2,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: accentColor.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '/ $_target',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: textColor.withValues(alpha: 0.6),
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 50),
+
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        tr('total_count').toUpperCase(),
+                        style: TextStyle(
+                          color: textColor.withValues(alpha: 0.4),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "$_totalCount",
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Spacer(),
+                
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text(
+                    tr('tasbih_instruction'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: textColor.withValues(alpha: 0.4), fontSize: 12, height: 1.5),
+                  ),
+                ),
+
+                if (!settings.isProUser && _bannerAd != null)
+                  Container(
+                    alignment: Alignment.center,
+                    width: _bannerAd!.size.width.toDouble(),
+                    height: _bannerAd!.size.height.toDouble(),
+                    child: _bannerLoaded 
+                        ? AdWidget(ad: _bannerAd!) 
+                        : const SizedBox.shrink(),
+                  ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
+  }
+}
+
+class TasbihProgressPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  final Color backgroundColor;
+
+  TasbihProgressPainter({
+    required this.progress,
+    required this.color,
+    required this.backgroundColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width / 2, size.height / 2) - 10;
+    
+    // Background circle
+    final bgPaint = Paint()
+      ..color = backgroundColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 12
+      ..strokeCap = StrokeCap.round;
+    
+    canvas.drawCircle(center, radius, bgPaint);
+
+    // Progress arc
+    final progressPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 12
+      ..strokeCap = StrokeCap.round;
+
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    canvas.drawArc(rect, -math.pi / 2, 2 * math.pi * progress, false, progressPaint);
+    
+    // Add dots for every 10 counts or markers
+    final markerPaint = Paint()
+      ..color = color.withValues(alpha: 0.5)
+      ..style = PaintingStyle.fill;
+      
+    for (int i = 0; i < 33; i++) {
+      final angle = -math.pi / 2 + (2 * math.pi * (i / 33));
+      final x = center.dx + (radius) * math.cos(angle);
+      final y = center.dy + (radius) * math.sin(angle);
+      
+      if (i % 11 == 0) {
+        canvas.drawCircle(Offset(x, y), 3, markerPaint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant TasbihProgressPainter oldDelegate) {
+    return oldDelegate.progress != progress || oldDelegate.color != color;
   }
 }

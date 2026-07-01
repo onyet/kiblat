@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 /// A custom painter that renders a pseudo-3D directional arrow.
@@ -20,7 +19,7 @@ class Ar3DArrowPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.3)
+      ..color = Colors.black.withValues(alpha: 0.3)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
 
     canvas.save();
@@ -48,7 +47,7 @@ class Ar3DArrowPainter extends CustomPainter {
       end: Alignment.bottomCenter,
       colors: [
         color,
-        color.withOpacity(0.7),
+        color.withValues(alpha: 0.7),
       ],
     );
 
@@ -62,7 +61,7 @@ class Ar3DArrowPainter extends CustomPainter {
     leftFace.lineTo(-radius * 0.45, radius * 0.35); // Extrusion
     leftFace.lineTo(0, -radius - 5);
     leftFace.close();
-    canvas.drawPath(leftFace, Paint()..color = color.withOpacity(0.5));
+    canvas.drawPath(leftFace, Paint()..color = color.withValues(alpha: 0.5));
 
     final rightFace = Path();
     rightFace.moveTo(0, -radius);
@@ -70,7 +69,7 @@ class Ar3DArrowPainter extends CustomPainter {
     rightFace.lineTo(radius * 0.45, radius * 0.35); // Extrusion
     rightFace.lineTo(0, -radius - 5);
     rightFace.close();
-    canvas.drawPath(rightFace, Paint()..color = color.withOpacity(0.5));
+    canvas.drawPath(rightFace, Paint()..color = color.withValues(alpha: 0.5));
 
     canvas.restore();
   }

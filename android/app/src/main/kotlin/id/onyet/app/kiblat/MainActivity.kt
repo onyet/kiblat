@@ -17,12 +17,26 @@ import java.security.Signature
 import java.security.spec.X509EncodedKeySpec
 import android.util.Base64
 import android.util.Log
+import androidx.annotation.NonNull
 
 class MainActivity : FlutterActivity() {
     private var pendingAudioResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        Log.d("MainActivity", "Configuring Flutter Engine")
+
+        // Safety: Ensure the target activity itself is always enabled. 
+        // Disabling it (which happened in previous versions) breaks all aliases.
+        val pm = packageManager
+        val mainActivity = ComponentName(this, "$packageName.MainActivity")
+        if (pm.getComponentEnabledSetting(mainActivity) == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) {
+            pm.setComponentEnabledSetting(
+                mainActivity,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                PackageManager.DONT_KILL_APP
+            )
+        }
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
@@ -47,12 +61,24 @@ class MainActivity : FlutterActivity() {
                     if (iconName == null) {
                         result.error("invalid_arguments", "iconName cannot be null", null)
                     } else {
-                        changeAppIcon(iconName)
+                        // Delay icon change until app is minimized to prevent immediate process kill
+                        pendingIconChange = iconName
+                        Log.d("MainActivity", "Icon change pended: $iconName")
                         result.success(true)
                     }
                 }
                 else -> result.notImplemented()
             }
+        }
+    }
+
+    private var pendingIconChange: String? = null
+
+    override fun onPause() {
+        super.onPause()
+        pendingIconChange?.let {
+            changeAppIcon(it)
+            pendingIconChange = null
         }
     }
 
@@ -62,8 +88,15 @@ class MainActivity : FlutterActivity() {
         val defaultAlias = ComponentName(this, "$packageName.MainActivityDefault")
         val proAlias = ComponentName(this, "$packageName.MainActivityPro")
 
+        val currentProState = pm.getComponentEnabledSetting(proAlias)
+        val isCurrentlyPro = currentProState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+
         if (iconName == "pro") {
-            // Enable Pro, disable default
+            if (isCurrentlyPro) {
+                Log.d("MainActivity", "App icon is already PRO, skipping update to prevent process kill")
+                return
+            }
+            // Enable Pro, disable Default
             pm.setComponentEnabledSetting(
                 proAlias,
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
@@ -76,7 +109,13 @@ class MainActivity : FlutterActivity() {
             )
             Log.d("MainActivity", "Switched app icon to PRO")
         } else {
-            // Enable default, disable Pro
+            // Check if it's already default. 
+            // Default is either DEFAULT or ENABLED (if we set it before)
+            if (!isCurrentlyPro && pm.getComponentEnabledSetting(defaultAlias) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED) {
+                Log.d("MainActivity", "App icon is already DEFAULT, skipping update to prevent process kill")
+                return
+            }
+            // Enable Default, disable Pro
             pm.setComponentEnabledSetting(
                 defaultAlias,
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED,

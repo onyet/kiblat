@@ -1,44 +1,48 @@
-# Move Tasbih to Main Navigation and Optimize UI
+# Prayer Log Redesign and Enhancements
 
-Move the Tasbih feature from a floating button to a dedicated fourth tab in the main navigation. Make it accessible to all users and relocate banner ads from the Settings screen to the Tasbih screen.
+Redesign the Prayer Tracker screen for a more professional look, reposition components, add JSON export for Pro users, fix badge theming in settings, and address the compass/gyro issue.
+
+## User Review Required
+
+- **Compass/Gyro Issue**: I suspect some devices report sensors as available but don't emit events or report zero values. I will add a "Manual Calibration" or "Sensor Reset" hint if no movement is detected.
 
 ## Proposed Changes
 
-### Navigation
+### Prayer Tracker
 
-#### [main_shell.dart](file:///Users/onyet/Onyet_Apps/kiblat/lib/screens/main_shell.dart)
-- Update `_screens` to include `TasbihScreen` as the 4th item.
-- Add a new `_buildNavItem` for Tasbih with appropriate icons and label.
-- Adjust the layout to accommodate 4 items in the bottom navigation.
+#### [prayer_tracker_screen.dart](file:///Users/onyet/Onyet_Apps/kiblat/lib/screens/prayer_tracker_screen.dart)
+- Reposition components:
+    1. Summary Card (Keep at top or integrate with Today Log)
+    2. **[TOP]** Today Prayer Log (Checklist) - Redesign for professional look.
+    3. Prayer Insights (Pro)
+    4. Prayer History (List)
+    5. **[BOTTOM]** Prayer Heatmap.
+- Update `_exportLogs` to support JSON format for Pro users.
+- Redesign checklist items with better typography and icons.
 
-### Tasbih Feature
-
-#### [tasbih_screen.dart](file:///Users/onyet/Onyet_Apps/kiblat/lib/screens/tasbih/tasbih_screen.dart)
-- Remove the `leading` back button from `AppBar`.
-- Update `title` from "Tasbih Digital Pro" to "Tasbih Digital" (since it's now for everyone).
-- Implement `BannerAd` logic similar to `SettingsScreen`.
-- Add `AdWidget` at the bottom of the screen for non-pro users.
-
-#### [home_screen.dart](file:///Users/onyet/Onyet_Apps/kiblat/lib/screens/home_screen.dart)
-- Remove the `FloatingActionButton` that currently opens Tasbih.
-- Remove `_handleTasbihTap` function.
+#### [prayer_heatmap.dart](file:///Users/onyet/Onyet_Apps/kiblat/lib/widgets/prayer_heatmap.dart)
+- Minor styling adjustments to match the professional redesign.
 
 ### Settings Screen
 
 #### [settings_screen.dart](file:///Users/onyet/Onyet_Apps/kiblat/lib/screens/settings_screen.dart)
-- Remove `BannerAd` initialization, disposal, and rendering logic.
-- Clean up related state variables like `_bannerAd` and `_bannerLoaded`.
+- Update `_statusChip` to use theme-aware colors (Accent color for active/available instead of hardcoded green).
 
 ### Localization
 
-#### [in.json](file:///Users/onyet/Onyet_Apps/kiblat/assets/translations/in.json) & [en.json](file:///Users/onyet/Onyet_Apps/kiblat/assets/translations/en.json)
-- Ensure "tasbih" label exists for the navigation bar.
+#### [all translation files](file:///Users/onyet/Onyet_Apps/kiblat/assets/translations/)
+- Audit and add missing keys: `tasbih`, `ar_warning_title`, `ar_warning_msg`, `proceed`, `prayer_heatmap`, `location_history`, `no_location_history`, `export_json`, etc.
+
+### Compass Service
+
+#### [location_service.dart](file:///Users/onyet/Onyet_Apps/kiblat/lib/services/location_service.dart)
+- Add a check for "stale" compass data. If the heading doesn't change for a while despite device movement (detected via accelerometer/gyro if available), suggest calibration.
 
 ## Verification Plan
 
 ### Manual Verification
-1. **Navigation Check**: Verify that a 4th tab with the Tasbih icon appears in the Bottom Navigation.
-2. **Tab Switching**: Confirm switching to the Tasbih tab works and it doesn't have a back button.
-3. **Ad Placement**: Verify that the banner ad appears at the bottom of the Tasbih screen (for non-pro) and NO LONGER appears in the Settings screen.
-4. **Pro Status**: Check that the banner ad is hidden on the Tasbih screen if the user is a Pro user.
-5. **Home Screen**: Confirm the Floating Action Button is gone from the Compass screen.
+1. **Prayer Tracker**: Verify the new order of components and the professional redesign.
+2. **JSON Export**: Check if Pro users can export history in JSON format.
+3. **Badge Theming**: Verify status badges in Settings change color based on selected accent theme.
+4. **Translations**: Switch languages and check for missing text or `key_not_found`.
+5. **Compass Check**: Simulate stale data (if possible) to see if a hint/warning appears.

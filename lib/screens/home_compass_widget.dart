@@ -2,6 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:kiblat/screens/ar_qibla_screen.dart';
+import 'package:kiblat/services/settings_service.dart';
+import 'package:kiblat/utils/theme_util.dart';
 
 import 'arrow_painter.dart';
 
@@ -12,6 +15,7 @@ class HomeCompass extends StatelessWidget {
   final double distanceKm;
   final bool isLocationReady;
   final String theme;
+  final bool isLight;
 
   const HomeCompass({
     super.key,
@@ -19,13 +23,14 @@ class HomeCompass extends StatelessWidget {
     required this.qiblaDeg,
     required this.distanceKm,
     required this.isLocationReady,
-    this.theme = 'classic',
+    required this.isLight,
+    this.theme = 'gold',
   });
 
   String _dirFromDegree(double deg) {
-    final dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    final dirs = ['dir_n', 'dir_ne', 'dir_e', 'dir_se', 'dir_s', 'dir_sw', 'dir_w', 'dir_nw'];
     final index = ((deg + 22.5) ~/ 45) % 8;
-    return dirs[index];
+    return tr(dirs[index]);
   }
 
   @override
@@ -38,57 +43,55 @@ class HomeCompass extends StatelessWidget {
           ..maximumFractionDigits = 1;
     final String formattedDistance = distFmt.format(distanceKm);
 
+    // Resolve Dynamic Theme
+    final settings = SettingsService.instance.notifier.value;
+    final String effectiveTheme = AppTheme.getEffectiveTheme(settings);
+
     // Resolve theme colors
     final Color primaryColor;
     final Color secondaryColor;
     final Color circularBorder1;
     final Color circularBorder2;
-    final Color shadowColor;
     final Color distanceBg;
     final Color distanceText;
     final Color northColor;
 
-    switch (theme) {
+    switch (effectiveTheme) {
       case 'gold':
-        primaryColor = const Color(0xFFD4AF37); // Gold
-        secondaryColor = const Color(0xFFD4AF37).withOpacity(0.5);
-        circularBorder1 = const Color(0xFFD4AF37).withOpacity(0.25);
-        circularBorder2 = const Color(0xFFD4AF37).withOpacity(0.4);
-        shadowColor = const Color(0xFFD4AF37).withOpacity(0.15);
-        distanceBg = const Color(0xFF1F1B0F);
-        distanceText = const Color(0xFFFCF6BA);
-        northColor = const Color(0xFFD4AF37);
+        primaryColor = isLight ? const Color(0xFFB58A0D) : const Color(0xFFD4AF37); // Gold
+        secondaryColor = primaryColor.withValues(alpha: 0.5);
+        circularBorder1 = isLight ? Colors.black12 : primaryColor.withValues(alpha: 0.25);
+        circularBorder2 = isLight ? Colors.black.withValues(alpha: 0.08) : primaryColor.withValues(alpha: 0.4);
+        distanceBg = isLight ? Colors.white : const Color(0xFF1F1B0F);
+        distanceText = isLight ? Colors.black87 : const Color(0xFFFCF6BA);
+        northColor = primaryColor;
         break;
       case 'dark':
-        primaryColor = Colors.white;
-        secondaryColor = Colors.white.withOpacity(0.2);
-        circularBorder1 = Colors.white.withOpacity(0.05);
-        circularBorder2 = Colors.white.withOpacity(0.1);
-        shadowColor = Colors.white.withOpacity(0.05);
-        distanceBg = const Color(0xFF121212);
-        distanceText = Colors.white60;
-        northColor = Colors.white;
+        primaryColor = isLight ? Colors.black : Colors.white;
+        secondaryColor = primaryColor.withValues(alpha: 0.2);
+        circularBorder1 = primaryColor.withValues(alpha: 0.05);
+        circularBorder2 = primaryColor.withValues(alpha: 0.1);
+        distanceBg = isLight ? Colors.white : const Color(0xFF121212);
+        distanceText = isLight ? Colors.black54 : Colors.white60;
+        northColor = primaryColor;
         break;
       case 'cyber':
         primaryColor = const Color(0xFF00E6FF); // Cyber Cyan
-        secondaryColor = const Color(0xFF00FF87).withOpacity(0.5); // Cyber Green
-        circularBorder1 = const Color(0xFF00E6FF).withOpacity(0.2);
-        circularBorder2 = const Color(0xFF00E6FF).withOpacity(0.4);
-        shadowColor = const Color(0xFF00E6FF).withOpacity(0.15);
-        distanceBg = const Color(0xFF081C1F);
-        distanceText = const Color(0xFF00FF87);
+        secondaryColor = const Color(0xFF00FF87).withValues(alpha: 0.5); // Cyber Green
+        circularBorder1 = const Color(0xFF00E6FF).withValues(alpha: 0.2);
+        circularBorder2 = const Color(0xFF00E6FF).withValues(alpha: 0.4);
+        distanceBg = isLight ? Colors.white : const Color(0xFF081C1F);
+        distanceText = isLight ? Colors.black87 : const Color(0xFF00FF87);
         northColor = const Color(0xFF00E6FF);
         break;
-      case 'classic':
-      default:
-        primaryColor = const Color(0xFFF4C025); // Classic Yellow/Gold
-        secondaryColor = Colors.white24;
-        circularBorder1 = Colors.white10;
-        circularBorder2 = Colors.white12;
-        shadowColor = const Color(0xFFF4C025).withOpacity(0.06);
-        distanceBg = const Color(0xFF121008);
-        distanceText = const Color(0xFFCBCB90);
-        northColor = const Color(0xFFF4C025);
+      default: // 'classic' or fallback
+        primaryColor = isLight ? const Color(0xFF2E7D32) : const Color(0xFF4CAF50); // Green
+        secondaryColor = primaryColor.withValues(alpha: 0.5);
+        circularBorder1 = isLight ? Colors.black12 : primaryColor.withValues(alpha: 0.25);
+        circularBorder2 = isLight ? Colors.black.withValues(alpha: 0.08) : primaryColor.withValues(alpha: 0.4);
+        distanceBg = isLight ? Colors.white : const Color(0xFF0F1E12);
+        distanceText = isLight ? Colors.black87 : const Color(0xFFC8E6C9);
+        northColor = primaryColor;
         break;
     }
 
@@ -104,13 +107,8 @@ class HomeCompass extends StatelessWidget {
               height: 320,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: circularBorder1),
-                boxShadow: [
-                  BoxShadow(
-                    color: shadowColor,
-                    blurRadius: 40,
-                  ),
-                ],
+                border: Border.all(color: circularBorder1, width: 1.5),
+                color: isLight ? Colors.white : Colors.transparent,
               ),
             ),
             Container(
@@ -122,6 +120,14 @@ class HomeCompass extends StatelessWidget {
                   color: circularBorder2,
                   style: BorderStyle.solid,
                 ),
+                gradient: isLight ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white,
+                    Colors.grey.shade50,
+                  ],
+                ) : null,
               ),
             ),
 
@@ -139,7 +145,7 @@ class HomeCompass extends StatelessWidget {
                       height: 240,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: circularBorder1),
+                        border: Border.all(color: circularBorder1, width: 1),
                       ),
                     ),
                     Positioned(
@@ -219,64 +225,12 @@ class HomeCompass extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       tr('calculating'),
-                      style: const TextStyle(color: Colors.white70),
+                      style: TextStyle(color: isLight ? Colors.black54 : Colors.white70),
                     ),
                   ],
                 ),
               )
             else ...[
-              // Kaaba at center
-              AnimatedRotation(
-                turns: ((qiblaDeg - headingDeg) / 360.0),
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeOut,
-                child: Container(
-                  width: 56,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1A1A1A), Colors.black],
-                    ),
-                    border: Border.all(color: Colors.white10),
-                  ),
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        top: 8,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          height: 6,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                const Color(0xFFBF953F),
-                                const Color(0xFFFFF6BA),
-                                const Color(0xFFBF953F),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 8,
-                        right: 8,
-                        child: Container(
-                          width: 8,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white12),
-                            color: const Color(0x66F4C025),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
               // Qibla arrow on top
               AnimatedRotation(
                 turns: ((qiblaDeg - headingDeg) / 360.0),
@@ -312,6 +266,77 @@ class HomeCompass extends StatelessWidget {
                   ),
                 ),
               ),
+              
+              // Kaaba at center + Hit area for AR
+              AnimatedRotation(
+                turns: ((qiblaDeg - headingDeg) / 360.0),
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOut,
+                child: GestureDetector(
+                  onTap: () {
+                    final settings = SettingsService.instance.notifier.value;
+                    if (settings.isProUser) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ArQiblaScreen(qiblaBearing: qiblaDeg),
+                        ),
+                      );
+                    }
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: 70, // larger hit area
+                    height: 80,
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: 56,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(6),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF1A1A1A), Colors.black],
+                        ),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            top: 8,
+                            left: 0,
+                            right: 0,
+                            child: Container(
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Color(0xFFBF953F),
+                                    Color(0xFFFFF6BA),
+                                    Color(0xFFBF953F),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 8,
+                            right: 8,
+                            child: Container(
+                              width: 8,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.white12),
+                                color: const Color(0x66F4C025),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ],
         ),
@@ -327,6 +352,13 @@ class HomeCompass extends StatelessWidget {
             color: primaryColor,
             fontSize: 40,
             fontWeight: FontWeight.bold,
+            shadows: isLight ? [
+              Shadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              )
+            ] : null,
           ),
         ),
         const SizedBox(height: 10),
@@ -352,6 +384,7 @@ class HomeCompass extends StatelessWidget {
                   style: TextStyle(
                     color: distanceText,
                     fontSize: 14,
+                    fontWeight: isLight ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
               ] else ...[
@@ -363,10 +396,10 @@ class HomeCompass extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const SizedBox(
+                SizedBox(
                   width: 12,
                   height: 12,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: primaryColor),
                 ),
               ],
             ],

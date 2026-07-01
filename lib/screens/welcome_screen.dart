@@ -2,14 +2,17 @@
 
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/location_service.dart';
+import '../services/settings_service.dart';
+import '../utils/theme_util.dart';
 import '../widgets/exit_helper.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   static const _languages = <String, String>{
-    'in': 'Indonesia',
+    'in': 'Bahasa Indonesia',
     'ar': 'العربية',
     'en': 'English',
     'zh': '中文',
@@ -21,7 +24,23 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentCode = context.locale.languageCode == 'id' ? 'in' : context.locale.languageCode;
+    final locale = context.locale;
+    // Map 'id' or any other code to 'in' if that's what's in our supported list
+    final String currentCode;
+    if (locale.languageCode == 'id') {
+      currentCode = 'in';
+    } else if (_languages.containsKey(locale.languageCode)) {
+      currentCode = locale.languageCode;
+    } else {
+      currentCode = 'en'; // default to english in dropdown if current not supported
+    }
+
+    final settings = SettingsService.instance.notifier.value;
+    final isLight = AppTheme.isLight(settings, context);
+    final accentColor = AppTheme.getAccentColor(settings, context);
+    final bgColor = isLight ? Colors.white : const Color(0xFF0F0F0F);
+    final textColor = isLight ? Colors.black87 : Colors.white;
+    final subTextColor = isLight ? Colors.black54 : Colors.white70;
 
     return PopScope(
       canPop: false,
@@ -30,7 +49,7 @@ class WelcomeScreen extends StatelessWidget {
         await showExitAndMaybeShowAd(context);
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF050505), // kaaba-black
+        backgroundColor: bgColor,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
@@ -48,10 +67,10 @@ class WelcomeScreen extends StatelessWidget {
                       Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color.fromARGB(31, 244, 192, 37),
+                          color: accentColor.withValues(alpha: 0.12),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color.fromARGB(56, 244, 192, 37),
+                              color: accentColor.withValues(alpha: 0.22),
                               blurRadius: 30,
                               spreadRadius: -10,
                             ),
@@ -75,8 +94,8 @@ class WelcomeScreen extends StatelessWidget {
                 Text(
                   tr('welcome_title'),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Color(0xFFF4C025),
+                  style: TextStyle(
+                    color: isLight ? const Color(0xFFB58A0D) : const Color(0xFFD4AF37),
                     fontWeight: FontWeight.bold,
                     fontSize: 28,
                   ),
@@ -87,8 +106,8 @@ class WelcomeScreen extends StatelessWidget {
                 Text(
                   tr('welcome_description'),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white60,
+                  style: TextStyle(
+                    color: subTextColor,
                     fontSize: 14,
                     height: 1.4,
                   ),
@@ -102,7 +121,7 @@ class WelcomeScreen extends StatelessWidget {
                   children: [
                     Text(
                       '${tr('language')}: ',
-                      style: const TextStyle(color: Colors.white70),
+                      style: TextStyle(color: subTextColor),
                     ),
                     const SizedBox(width: 8),
                     Container(
@@ -111,12 +130,12 @@ class WelcomeScreen extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white12,
+                        color: textColor.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          dropdownColor: const Color(0xFF121212),
+                          dropdownColor: bgColor,
                           value: currentCode,
                           items: _languages.entries
                               .map(
@@ -124,7 +143,7 @@ class WelcomeScreen extends StatelessWidget {
                                   value: e.key,
                                   child: Text(
                                     e.value,
-                                    style: const TextStyle(color: Colors.white),
+                                    style: TextStyle(color: textColor),
                                   ),
                                 ),
                               )
@@ -150,8 +169,8 @@ class WelcomeScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     child: Ink(
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFD4AF37), Color(0xFFF4C025)],
+                        gradient: LinearGradient(
+                          colors: [accentColor, accentColor.withValues(alpha: 0.85)],
                         ),
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -160,41 +179,15 @@ class WelcomeScreen extends StatelessWidget {
                         onTap: () async {
                           final granted =
                               await LocationService.checkAndRequestPermission();
+                          
+                          // Mark as seen so they don't see it again
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('seen_welcome', true);
+
                           if (granted) {
                             Navigator.of(context).pushReplacementNamed('/home');
-                            return;
-                          }
-
-                          final res = await showDialog<bool>(
-                            context: context,
-                            barrierDismissible: true,
-                            builder: (ctx) => AlertDialog(
-                              title: Text(tr('location_permission_title')),
-                              content: Text(tr('location_permission_msg')),
-                              actions: [
-                                TextButton(
-                                  onPressed: () async {
-                                    Navigator.of(
-                                      ctx,
-                                      rootNavigator: true,
-                                    ).pop(false);
-                                    await LocationService.openAppSettings();
-                                  },
-                                  child: Text(tr('open_settings')),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.of(
-                                    ctx,
-                                    rootNavigator: true,
-                                  ).pop(true),
-                                  child: Text(tr('dismiss')),
-                                ),
-                              ],
-                            ),
-                          );
-
-                          if (res == true) {
-                            Navigator.of(context).pushReplacementNamed('/home');
+                          } else {
+                            Navigator.of(context).pushReplacementNamed('/permission_onboarding');
                           }
                         },
                         child: Container(
@@ -206,15 +199,15 @@ class WelcomeScreen extends StatelessWidget {
                             children: [
                               Text(
                                 tr('get_started'),
-                                style: const TextStyle(
-                                  color: Colors.black,
+                                style: TextStyle(
+                                  color: isLight ? Colors.white : Colors.black,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              const Icon(
+                              Icon(
                                 Icons.arrow_forward,
-                                color: Colors.black,
+                                color: isLight ? Colors.white : Colors.black,
                                 size: 20,
                               ),
                             ],
