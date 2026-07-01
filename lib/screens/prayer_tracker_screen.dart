@@ -49,8 +49,10 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen> {
       await AdService.initialize();
     }
 
+    final adUnitId = AdService.prayerLogBannerUnitId;
+    debugPrint('[PrayerTracker] Loading BannerAd with Unit ID: $adUnitId');
     _bannerAd = BannerAd(
-      adUnitId: AdService.prayerLogBannerUnitId,
+      adUnitId: adUnitId,
       request: const AdRequest(),
       size: AdSize.banner,
       listener: BannerAdListener(

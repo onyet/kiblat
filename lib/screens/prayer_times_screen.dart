@@ -200,8 +200,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
       await AdService.initialize();
     }
 
+    final adUnitId = AdService.prayerTimesBannerUnitId;
+    debugPrint('[PrayerTimes] Loading BannerAd with Unit ID: $adUnitId');
     _bannerAd = BannerAd(
-      adUnitId: AdService.prayerTimesBannerUnitId,
+      adUnitId: adUnitId,
       request: const AdRequest(),
       size: AdSize.banner,
       listener: BannerAdListener(

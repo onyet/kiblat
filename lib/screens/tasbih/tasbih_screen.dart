@@ -79,8 +79,10 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
       await AdService.initialize();
     }
 
+    final adUnitId = AdService.settingsBannerUnitId;
+    debugPrint('[Tasbih] Loading BannerAd with Unit ID: $adUnitId');
     _bannerAd = BannerAd(
-      adUnitId: AdService.settingsBannerUnitId,
+      adUnitId: adUnitId,
       request: const AdRequest(),
       size: AdSize.banner,
       listener: BannerAdListener(
