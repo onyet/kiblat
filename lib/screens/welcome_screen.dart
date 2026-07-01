@@ -60,13 +60,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       setState(() {
         _permissionGranted = granted;
       });
-      
-      // Auto-navigate to home if they returned from Settings with permission granted
-      if (granted) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('seen_welcome', true);
-        Navigator.of(context).pushReplacementNamed('/home');
-      }
     }
   }
 
@@ -78,11 +71,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       });
     }
 
-    if (granted) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('seen_welcome', true);
-      Navigator.of(context).pushReplacementNamed('/home');
-    } else {
+    if (!granted) {
       if (mounted) {
         showDialog(
           context: context,
@@ -397,21 +386,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         ),
                       ),
                     ),
-                    if (!_permissionGranted) ...[
-                      const SizedBox(height: 12),
-                      TextButton.icon(
-                        onPressed: () => LocationService.openAppSettings(),
-                        icon: Icon(Icons.settings_outlined, color: accentColor, size: 20),
-                        label: Text(
-                          tr('open_settings'),
-                          style: TextStyle(
-                            color: accentColor,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
 

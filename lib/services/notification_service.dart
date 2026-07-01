@@ -187,6 +187,18 @@ class NotificationService {
     if (!settings.enablePrayerNotifications) return;
     
     await _configureLocalTimezone(settings.timezoneId);
+    
+    // Safety check for tz.local lookup to prevent uninitialized LocationNotFoundException / assertion crashes
+    tz.Location localLocation;
+    try {
+      localLocation = tz.local;
+    } catch (_) {
+      try {
+        tz.setLocalLocation(tz.UTC);
+      } catch (_) {}
+      localLocation = tz.UTC;
+    }
+
     final androidScheduleMode = await _resolveAndroidScheduleMode();
     final customSoundUri = await _usableAndroidSoundUri(settings.customRingtonePath);
     final hasCustomSound = customSoundUri != null && customSoundUri.isNotEmpty;
@@ -205,8 +217,8 @@ class NotificationService {
         if (!mainNames.contains(prayer.name)) continue;
 
         // 1. MAIN ADZAN NOTIFICATION
-        final scheduledAdzan = tz.TZDateTime.from(prayer.time, tz.local);
-        if (scheduledAdzan.isAfter(tz.TZDateTime.now(tz.local))) {
+        final scheduledAdzan = tz.TZDateTime.from(prayer.time, localLocation);
+        if (scheduledAdzan.isAfter(tz.TZDateTime.now(localLocation))) {
           final adzanId = _prayerIds[prayer.name]! + (dayOffset * 100);
           final prayerLabel = tr(prayer.name.toLowerCase());
           
@@ -228,9 +240,9 @@ class NotificationService {
         // 2. ADVANCED REMINDER (PRO)
         if (settings.isProUser && settings.enableAdvancedReminders) {
           final reminderTime = prayer.time.add(Duration(minutes: settings.reminderOffset));
-          final scheduledReminder = tz.TZDateTime.from(reminderTime, tz.local);
+          final scheduledReminder = tz.TZDateTime.from(reminderTime, localLocation);
           
-          if (scheduledReminder.isAfter(tz.TZDateTime.now(tz.local))) {
+          if (scheduledReminder.isAfter(tz.TZDateTime.now(localLocation))) {
             final reminderId = _prayerIds[prayer.name]! + (dayOffset * 100) + 1000;
             final prayerLabel = tr(prayer.name.toLowerCase());
             final minutes = settings.reminderOffset.abs();
