@@ -5,7 +5,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/main_shell.dart';
-import 'screens/permission_onboarding_screen.dart';
 import 'navigation/page_transitions.dart';
 import 'services/ad_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -280,9 +279,6 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
               case '/welcome':
                 page = const WelcomeScreen();
                 break;
-              case '/permission_onboarding':
-                page = const PermissionOnboardingScreen();
-                break;
               case '/home':
                 page = MainShell(key: MainShell.shellKey);
                 break;
@@ -294,8 +290,6 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             }
 
             if (settings.name == '/welcome') {
-              return PageTransitions.fadeSlideTransition((_) => page);
-            } else if (settings.name == '/permission_onboarding') {
               return PageTransitions.fadeSlideTransition((_) => page);
             } else if (settings.name == '/home') {
               return PageTransitions.fadeSlideTransition((_) => page);
@@ -504,7 +498,7 @@ class _SplashScreenState extends State<SplashScreen>
         // If welcome screen was already seen, verify silently if GPS permission is granted
         final hasGps = await LocationService.isPermissionGranted();
         if (!hasGps) {
-          nextRoute = '/permission_onboarding';
+          nextRoute = '/welcome';
         }
       }
     } catch (e) {
