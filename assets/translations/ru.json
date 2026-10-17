@@ -321,5 +321,17 @@
   "dzikir_tap_hint": "Нажмите, чтобы считать · удерживайте, чтобы сбросить",
   "dzikir_reset_period": "Сбросить список",
   "dzikir_reset_confirm": "Очистить сегодняшний прогресс по этому списку?",
-  "dzikir_open": "Утренний и вечерний зикр"
+  "dzikir_open": "Утренний и вечерний зикр",
+  "tasbih_reset": "Сбросить счётчик",
+  "dzikir_card_subtitle": "Чеклист утреннего и вечернего зикра с повторами",
+  "wirid_library_card_subtitle": "Свои вирды, цели и история сессий",
+  "wirid_library_pro_hint": "Функция Pro",
+  "daily_dhikr_fmt": "Ежедневный зикр · {count} / {target}",
+  "active_wirid": "Активный вирд",
+  "tasbih_target_label": "Цель",
+  "wirid_subhanallah": "Субханаллах",
+  "wirid_alhamdulillah": "Альхамдулиллах",
+  "wirid_allahuakbar": "Аллаху Акбар",
+  "dzikir_meaning_id_note": "Перевод показан на индонезийском",
+  "dzikir_attribution": "Контент адаптирован из открытых собраний Hisnul Muslim. Религиозные тексты не принадлежат Kiblat."
 }

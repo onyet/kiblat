@@ -321,5 +321,17 @@
   "dzikir_tap_hint": "タップでカウント · 長押しでこの項目をリセット",
   "dzikir_reset_period": "このリストをリセット",
   "dzikir_reset_confirm": "今日のこのリストの進捗を消去しますか？",
-  "dzikir_open": "朝夕のズィクル"
+  "dzikir_open": "朝夕のズィクル",
+  "tasbih_reset": "カウントをリセット",
+  "dzikir_card_subtitle": "朝夕のズィクル・チェックリスト（回数付き）",
+  "wirid_library_card_subtitle": "カスタムズィクル、目標、履歴",
+  "wirid_library_pro_hint": "Pro機能",
+  "daily_dhikr_fmt": "毎日のズィクル · {count} / {target}",
+  "active_wirid": "選択中のズィクル",
+  "tasbih_target_label": "目標",
+  "wirid_subhanallah": "スブハーナッラー",
+  "wirid_alhamdulillah": "アルハムドリッラー",
+  "wirid_allahuakbar": "アッラーフ・アクバル",
+  "dzikir_meaning_id_note": "訳はインドネシア語で表示されます",
+  "dzikir_attribution": "オープンソースのヒスンル・ムスリム系コレクションを基にしています。宗教的本文の権利はKiblatにありません。"
 }

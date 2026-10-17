@@ -48,6 +48,16 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
 
     _loadBannerAd();
     SettingsService.instance.notifier.addListener(_onSettingsChanged);
+    unawaited(TasbihProService.instance.load());
+  }
+
+  String _wiridLabel(TasbihWirid w) {
+    final key = w.nameKey;
+    if (key != null && key.isNotEmpty) {
+      final translated = tr(key);
+      if (translated != key) return translated;
+    }
+    return w.name;
   }
 
   @override
@@ -212,7 +222,7 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
                                 color: selected ? accent : sheetText,
                               ),
                               title: Text(
-                                w.name,
+                                _wiridLabel(w),
                                 style: TextStyle(
                                   color: sheetText,
                                   fontWeight: FontWeight.w600,
@@ -244,7 +254,9 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
                           }),
                         const SizedBox(height: 8),
                         TextButton.icon(
-                          onPressed: () => _promptAddWirid(ctx),
+                          onPressed: () {
+                            unawaited(_promptAddWirid(ctx));
+                          },
                           icon: Icon(Icons.add, color: accent),
                           label: Text(
                             tr('add_wirid'),
@@ -344,10 +356,23 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
           ),
         );
       }
+    } catch (e, st) {
+      debugPrint('[Tasbih] add wirid failed: $e\n$st');
+      if (sheetContext.mounted) {
+        ScaffoldMessenger.of(sheetContext).showSnackBar(
+          SnackBar(content: Text('$e')),
+        );
+      }
     } finally {
       nameCtrl.dispose();
       targetCtrl.dispose();
     }
+  }
+
+  void _openDzikir() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const DzikirScreen()),
+    );
   }
 
   @override
@@ -359,34 +384,34 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
         final textColor = AppTheme.getTextColor(settings, context);
         final accentColor = AppTheme.getAccentColor(settings, context);
         final cardColor = AppTheme.getCardColor(settings, context);
+        final isPro = settings.isProUser;
+
+        String? activeWiridName;
+        if (_activeWiridId != null) {
+          final match = TasbihProService.instance.wiridsNotifier.value
+              .where((w) => w.id == _activeWiridId);
+          if (match.isNotEmpty) {
+            activeWiridName = _wiridLabel(match.first);
+          }
+        }
 
         return Scaffold(
           backgroundColor: bgColor,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
+            centerTitle: true,
             title: Text(
               tr('tasbih_digital'),
-              style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
-            centerTitle: true,
             actions: [
               IconButton(
-                icon: Icon(Icons.menu_book_outlined, color: textColor),
-                tooltip: tr('dzikir_open'),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const DzikirScreen()),
-                  );
-                },
-              ),
-              if (settings.isProUser)
-                IconButton(
-                  icon: Icon(Icons.library_books_outlined, color: textColor),
-                  tooltip: tr('tasbih_library'),
-                  onPressed: () => _showWiridLibrary(settings),
-                ),
-              IconButton(
+                tooltip: tr('tasbih_reset'),
                 icon: Icon(Icons.refresh, color: textColor),
                 onPressed: _reset,
               ),
@@ -395,198 +420,370 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
           body: SafeArea(
             child: Column(
               children: [
-                if (settings.isProUser)
-                  ValueListenableBuilder(
-                    valueListenable: TasbihProService.instance.dailyCountNotifier,
-                    builder: (context, daily, _) {
-                      final target =
-                          TasbihProService.instance.dailyTargetNotifier.value;
-                      return Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-                        child: Text(
-                          '${tr('daily_dhikr')}: $daily / $target',
-                          style: TextStyle(
-                            color: textColor.withValues(alpha: 0.7),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                const Spacer(),
-
-                // Target selector
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [33, 99, 100].map((t) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: ChoiceChip(
-                      label: Text('$t'),
-                      selected: _target == t,
-                      onSelected: (selected) {
-                        if (selected) {
-                          HapticFeedback.selectionClick();
-                          setState(() {
-                            _target = t;
-                            _activeWiridId = null;
-                          });
-                        }
-                      },
-                      selectedColor: accentColor,
-                      labelStyle: TextStyle(
-                        color: _target == t ? Colors.black : textColor,
-                        fontWeight: FontWeight.bold,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Column(
+                    children: [
+                      _TasbihFeatureCard(
+                        cardColor: cardColor,
+                        textColor: textColor,
+                        accentColor: accentColor,
+                        icon: Icons.wb_twilight_outlined,
+                        title: tr('dzikir_open'),
+                        subtitle: tr('dzikir_card_subtitle'),
+                        onTap: _openDzikir,
                       ),
-                    ),
-                  )).toList(),
-                ),
-
-                const SizedBox(height: 50),
-
-                // Counter Display with Progress Ring
-                GestureDetector(
-                  onTap: _increment,
-                  child: ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Background Glow
-                        AnimatedBuilder(
-                          animation: _glowAnimation,
-                          builder: (context, child) {
-                            return Container(
-                              width: 280,
-                              height: 280,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: accentColor.withValues(alpha: 0.15 + (_glowAnimation.value * 0.15)),
-                                    blurRadius: 40 + (_glowAnimation.value * 20),
-                                    spreadRadius: 5 + (_glowAnimation.value * 10),
+                      const SizedBox(height: 8),
+                      _TasbihFeatureCard(
+                        cardColor: cardColor,
+                        textColor: textColor,
+                        accentColor: accentColor,
+                        icon: Icons.library_books_outlined,
+                        title: tr('tasbih_library'),
+                        subtitle: isPro
+                            ? tr('wirid_library_card_subtitle')
+                            : tr('wirid_library_pro_hint'),
+                        trailing: isPro
+                            ? null
+                            : Icon(
+                                Icons.lock_outline,
+                                size: 18,
+                                color: textColor.withValues(alpha: 0.45),
+                              ),
+                        onTap: isPro
+                            ? () => _showWiridLibrary(settings)
+                            : () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(tr('wirid_library_pro_hint')),
                                   ),
-                                ],
+                                );
+                              },
+                      ),
+                      if (isPro)
+                        ValueListenableBuilder<int>(
+                          valueListenable:
+                              TasbihProService.instance.dailyCountNotifier,
+                          builder: (context, daily, _) {
+                            final target = TasbihProService
+                                .instance.dailyTargetNotifier.value;
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 10),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  tr(
+                                    'daily_dhikr_fmt',
+                                    namedArgs: {
+                                      'count': '$daily',
+                                      'target': '$target',
+                                    },
+                                  ),
+                                  style: TextStyle(
+                                    color: textColor.withValues(alpha: 0.65),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
                               ),
                             );
                           },
                         ),
-                        
-                        // Progress Ring
-                        SizedBox(
-                          width: 300,
-                          height: 300,
-                          child: CustomPaint(
-                            painter: TasbihProgressPainter(
-                              progress: _counter / _target,
-                              color: accentColor,
-                              backgroundColor: accentColor.withValues(alpha: 0.1),
-                            ),
-                          ),
-                        ),
-
-                        // Main Button
-                        Container(
-                          width: 240,
-                          height: 240,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: cardColor,
-                            border: Border.all(color: accentColor.withValues(alpha: 0.3), width: 2),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                '$_counter',
-                                style: TextStyle(
-                                  fontSize: 80,
-                                  fontWeight: FontWeight.w900,
-                                  color: accentColor,
-                                  fontFamily: 'monospace',
-                                  letterSpacing: -2,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: accentColor.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  '/ $_target',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: textColor.withValues(alpha: 0.6),
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 50),
-
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        tr('total_count').toUpperCase(),
-                        style: TextStyle(
-                          color: textColor.withValues(alpha: 0.4),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "$_totalCount",
-                        style: TextStyle(
-                          color: textColor,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
                     ],
                   ),
                 ),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Reserve space for chips/labels/instruction; scale ring to fit.
+                      const reserved = 140.0;
+                      final ring = (constraints.maxHeight - reserved)
+                          .clamp(160.0, 240.0);
+                      final inner = ring * 0.76;
+                      final countSize = (ring * 0.24).clamp(36.0, 56.0);
 
-                const Spacer(),
-                
-                Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Text(
-                    tr('tasbih_instruction'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: textColor.withValues(alpha: 0.4), fontSize: 12, height: 1.5),
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Column(
+                          children: [
+                            Text(
+                              tr('tasbih_target_label'),
+                              style: TextStyle(
+                                color: textColor.withValues(alpha: 0.45),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.6,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [33, 99, 100].map((t) {
+                                final selected =
+                                    _target == t && _activeWiridId == null;
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 6),
+                                  child: ChoiceChip(
+                                    label: Text('$t'),
+                                    selected: selected,
+                                    visualDensity: VisualDensity.compact,
+                                    onSelected: (on) {
+                                      if (!on) return;
+                                      HapticFeedback.selectionClick();
+                                      setState(() {
+                                        _target = t;
+                                        _activeWiridId = null;
+                                        _counter = 0;
+                                      });
+                                    },
+                                    selectedColor: accentColor,
+                                    labelStyle: TextStyle(
+                                      color:
+                                          selected ? Colors.black : textColor,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            if (activeWiridName != null) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                '${tr('active_wirid')}: $activeWiridName',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: accentColor,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                            Expanded(
+                              child: Center(
+                                child: GestureDetector(
+                                  onTap: _increment,
+                                  child: ScaleTransition(
+                                    scale: _scaleAnimation,
+                                    child: SizedBox(
+                                      width: ring,
+                                      height: ring,
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          AnimatedBuilder(
+                                            animation: _glowAnimation,
+                                            builder: (context, child) {
+                                              return Container(
+                                                width: ring * 0.92,
+                                                height: ring * 0.92,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color:
+                                                          accentColor.withValues(
+                                                        alpha: 0.12 +
+                                                            (_glowAnimation
+                                                                    .value *
+                                                                0.12),
+                                                      ),
+                                                      blurRadius: 20 +
+                                                          (_glowAnimation
+                                                                  .value *
+                                                              12),
+                                                      spreadRadius: 1 +
+                                                          (_glowAnimation
+                                                                  .value *
+                                                              4),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          CustomPaint(
+                                            size: Size(ring, ring),
+                                            painter: TasbihProgressPainter(
+                                              progress: _counter / _target,
+                                              color: accentColor,
+                                              backgroundColor: accentColor
+                                                  .withValues(alpha: 0.1),
+                                            ),
+                                          ),
+                                          Container(
+                                            width: inner,
+                                            height: inner,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: cardColor,
+                                              border: Border.all(
+                                                color: accentColor.withValues(
+                                                  alpha: 0.28,
+                                                ),
+                                                width: 2,
+                                              ),
+                                            ),
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  '$_counter',
+                                                  style: TextStyle(
+                                                    fontSize: countSize,
+                                                    fontWeight: FontWeight.w900,
+                                                    color: accentColor,
+                                                    fontFamily: 'monospace',
+                                                    letterSpacing: -2,
+                                                    height: 1,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  '/ $_target',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: textColor.withValues(
+                                                      alpha: 0.55,
+                                                    ),
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '${tr('total_count')}: $_totalCount',
+                              style: TextStyle(
+                                color: textColor.withValues(alpha: 0.7),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(8, 6, 8, 4),
+                              child: Text(
+                                tr('tasbih_instruction'),
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: textColor.withValues(alpha: 0.4),
+                                  fontSize: 11,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
-
-                if (!settings.isProUser && _bannerAd != null)
-                  Container(
-                    alignment: Alignment.center,
+                if (!isPro && _bannerAd != null && _bannerLoaded)
+                  SizedBox(
                     width: _bannerAd!.size.width.toDouble(),
                     height: _bannerAd!.size.height.toDouble(),
-                    child: _bannerLoaded 
-                        ? AdWidget(ad: _bannerAd!) 
-                        : const SizedBox.shrink(),
+                    child: AdWidget(ad: _bannerAd!),
                   ),
               ],
             ),
           ),
         );
       },
+    );
+  }
+}
+
+class _TasbihFeatureCard extends StatelessWidget {
+  final Color cardColor;
+  final Color textColor;
+  final Color accentColor;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final Widget? trailing;
+
+  const _TasbihFeatureCard({
+    required this.cardColor,
+    required this.textColor,
+    required this.accentColor,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: cardColor,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: accentColor, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: textColor,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: textColor.withValues(alpha: 0.55),
+                        fontSize: 11,
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              trailing ??
+                  Icon(
+                    Icons.chevron_right,
+                    color: textColor.withValues(alpha: 0.35),
+                  ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

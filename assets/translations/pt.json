@@ -321,5 +321,17 @@
   "dzikir_tap_hint": "Toque para contar · pressione para reiniciar este item",
   "dzikir_reset_period": "Reiniciar esta lista",
   "dzikir_reset_confirm": "Limpar o progresso de hoje desta lista?",
-  "dzikir_open": "Dhikr manhã e tarde"
+  "dzikir_open": "Dhikr manhã e tarde",
+  "tasbih_reset": "Redefinir contador",
+  "dzikir_card_subtitle": "Lista de dhikr manhã e tarde com repetições",
+  "wirid_library_card_subtitle": "Wirids personalizados, metas e histórico",
+  "wirid_library_pro_hint": "Recurso Pro",
+  "daily_dhikr_fmt": "Dhikr diário · {count} / {target}",
+  "active_wirid": "Wirid ativo",
+  "tasbih_target_label": "Meta",
+  "wirid_subhanallah": "Subhanallah",
+  "wirid_alhamdulillah": "Alhamdulillah",
+  "wirid_allahuakbar": "Allahu Akbar",
+  "dzikir_meaning_id_note": "Tradução exibida em indonésio",
+  "dzikir_attribution": "Conteúdo adaptado de coleções abertas de Hisnul Muslim. Textos religiosos não pertencem ao Kiblat."
 }

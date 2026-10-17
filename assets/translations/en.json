@@ -321,5 +321,17 @@
   "dzikir_tap_hint": "Tap to count · long-press to reset this item",
   "dzikir_reset_period": "Reset this list",
   "dzikir_reset_confirm": "Clear today’s progress for this list?",
-  "dzikir_open": "Morning & evening dhikr"
+  "dzikir_open": "Morning & evening dhikr",
+  "tasbih_reset": "Reset counter",
+  "dzikir_card_subtitle": "Morning & evening checklist with repeat counts",
+  "wirid_library_card_subtitle": "Custom wirids, targets, and session history",
+  "wirid_library_pro_hint": "Pro feature",
+  "daily_dhikr_fmt": "Daily dhikr · {count} / {target}",
+  "active_wirid": "Active wirid",
+  "tasbih_target_label": "Target",
+  "wirid_subhanallah": "Subhanallah",
+  "wirid_alhamdulillah": "Alhamdulillah",
+  "wirid_allahuakbar": "Allahu Akbar",
+  "dzikir_meaning_id_note": "Translation shown in Indonesian",
+  "dzikir_attribution": "Content adapted from open-source Hisnul Muslim collections. Religious texts are not owned by Kiblat."
 }

@@ -321,5 +321,17 @@
   "dzikir_tap_hint": "Tippen zum Zählen · lang drücken zum Zurücksetzen",
   "dzikir_reset_period": "Liste zurücksetzen",
   "dzikir_reset_confirm": "Heutigen Fortschritt für diese Liste löschen?",
-  "dzikir_open": "Morgen- & Abend-Dhikr"
+  "dzikir_open": "Morgen- & Abend-Dhikr",
+  "tasbih_reset": "Zähler zurücksetzen",
+  "dzikir_card_subtitle": "Morgen- & Abend-Checkliste mit Wiederholungen",
+  "wirid_library_card_subtitle": "Eigene Wirds, Ziele und Sitzungsverlauf",
+  "wirid_library_pro_hint": "Pro-Funktion",
+  "daily_dhikr_fmt": "Täglicher Dhikr · {count} / {target}",
+  "active_wirid": "Aktiver Wird",
+  "tasbih_target_label": "Ziel",
+  "wirid_subhanallah": "Subhanallah",
+  "wirid_alhamdulillah": "Alhamdulillah",
+  "wirid_allahuakbar": "Allahu Akbar",
+  "dzikir_meaning_id_note": "Übersetzung auf Indonesisch angezeigt",
+  "dzikir_attribution": "Inhalt aus offenen Hisnul-Muslim-Sammlungen. Religiöse Texte gehören nicht Kiblat."
 }

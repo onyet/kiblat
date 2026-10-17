@@ -1,5 +1,5 @@
 {
-  "attribution": "Konten Arab, latin, dan arti Indonesia diadaptasi dari proyek open-source Pepryan/dzikir-pagi-petang (Hisnul Muslim). Teks keagamaan tidak diklaim sebagai milik proyek Kiblat.",
+  "attribution": "Arabic/Latin/Indonesian adapted from Pepryan/dzikir-pagi-petang (Hisnul Muslim). English meanings matched from OpenDua (CC BY 4.0) and Morning-And-Evening-Adhkar-DB where available. Religious texts are not owned by Kiblat.",
   "pagi": [
     {
       "id": "pagi_1",
@@ -8,7 +8,9 @@
       "latin": "A'udzu billahi minasy syaithanir rajim",
       "meaning": "Aku berlindung kepada Allah dari godaan syaitan yang terkutuk.",
       "repeat": 1,
-      "source": "Disyariatkan sebelum membaca Al-Qur'an (QS. An-Nahl: 98)"
+      "source": "Disyariatkan sebelum membaca Al-Qur'an (QS. An-Nahl: 98)",
+      "meaningIn": "Aku berlindung kepada Allah dari godaan syaitan yang terkutuk.",
+      "meaningEn": "I seek refuge in Allah from the accursed devil."
     },
     {
       "id": "pagi_2",
@@ -17,7 +19,9 @@
       "latin": "Allahu laa ilaaha illaa huwal hayyul qayyuum. Laa ta'khudzuhuu sinatuw walaa naum. Lahuu maa fissamaawaati wa maa fil ardh. Man dzal ladzii yasyfa'u 'indahuu illaa bi idznih. Ya'lamu maa baina aidiihim wa maa khalfahum. Wa laa yuhiithuuna bisyai'im min 'ilmihii illaa bimaa syaa'. Wasi'a kursiyyuhus samaawaati wal ardh. Wa laa ya'uuduhuu hifzhuhumaa wahuwal 'aliyyul 'azhiim.",
       "meaning": "Allah, tidak ada Tuhan (yang berhak disembah) melainkan Dia Yang Hidup kekal lagi terus menerus mengurus (makhluk-Nya); tidak mengantuk dan tidak tidur. Kepunyaan-Nya apa yang di langit dan di bumi. Tiada yang dapat memberi syafa'at di sisi Allah tanpa izin-Nya. Allah mengetahui apa-apa yang di hadapan mereka dan di belakang mereka, dan mereka tidak mengetahui apa-apa dari ilmu Allah melainkan apa yang dikehendaki-Nya. Kursi Allah meliputi langit dan bumi. Dan Allah tidak merasa berat memelihara keduanya, dan Allah Maha Tinggi lagi Maha Besar.",
       "repeat": 1,
-      "source": "Nabi ﷺ bersabda: \"Barangsiapa yang membaca ayat ini [Ayat Kursi] ketika pagi hari, maka ia dijaga dari (gangguan) jin hingga sore hari. Dan barangsiapa mengucapkannya ketika sore hari, maka ia dijaga dari (gangguan) jin hingga pagi hari.\" (HR. Al-Hakim 1/562, Shahiih at-Targhiib wat Tarhiib 1/418 no. 662, shahih)."
+      "source": "Nabi ﷺ bersabda: \"Barangsiapa yang membaca ayat ini [Ayat Kursi] ketika pagi hari, maka ia dijaga dari (gangguan) jin hingga sore hari. Dan barangsiapa mengucapkannya ketika sore hari, maka ia dijaga dari (gangguan) jin hingga pagi hari.\" (HR. Al-Hakim 1/562, Shahiih at-Targhiib wat Tarhiib 1/418 no. 662, shahih).",
+      "meaningIn": "Allah, tidak ada Tuhan (yang berhak disembah) melainkan Dia Yang Hidup kekal lagi terus menerus mengurus (makhluk-Nya); tidak mengantuk dan tidak tidur. Kepunyaan-Nya apa yang di langit dan di bumi. Tiada yang dapat memberi syafa'at di sisi Allah tanpa izin-Nya. Allah mengetahui apa-apa yang di hadapan mereka dan di belakang mereka, dan mereka tidak mengetahui apa-apa dari ilmu Allah melainkan apa yang dikehendaki-Nya. Kursi Allah meliputi langit dan bumi. Dan Allah tidak merasa berat memelihara keduanya, dan Allah Maha Tinggi lagi Maha Besar.",
+      "meaningEn": "Allah—there is no deity except Him, the Ever-Living, the Sustainer of all. Neither drowsiness nor sleep overtakes Him. Everything in the heavens and on the earth belongs to Him. Who can intercede with Him except by His permission? He knows what lies before people and what lies beyond them, while they grasp nothing of His knowledge except what He wills. His Kursi extends over the heavens and the earth, and preserving them does not tire Him. He is the Most High, the Magnificent."
     },
     {
       "id": "pagi_3",
@@ -26,7 +30,9 @@
       "latin": "Qul huwallaahu ahad. Allaahush shamad. Lam yalid wa lam yuulad. Wa lam yakul lahuu kufuwan ahad.",
       "meaning": "Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang. Katakanlah: Dialah Allah, Yang Maha Esa. Allah adalah Tuhan yang bergantung kepada-Nya segala sesuatu. Dia tiada beranak dan tidak pula diperanakkan, dan tidak ada seorangpun yang setara dengan Dia.",
       "repeat": 3,
-      "source": "Barangsiapa membaca surat Al-Ikhlas, Al-Falaq, dan An-Nas tiga kali di pagi dan petang hari, maka itu akan mencukupinya dari segala sesuatu. (HR. Abu Dawud dan At-Tirmidzi)"
+      "source": "Barangsiapa membaca surat Al-Ikhlas, Al-Falaq, dan An-Nas tiga kali di pagi dan petang hari, maka itu akan mencukupinya dari segala sesuatu. (HR. Abu Dawud dan At-Tirmidzi)",
+      "meaningIn": "Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang. Katakanlah: Dialah Allah, Yang Maha Esa. Allah adalah Tuhan yang bergantung kepada-Nya segala sesuatu. Dia tiada beranak dan tidak pula diperanakkan, dan tidak ada seorangpun yang setara dengan Dia.",
+      "meaningEn": "In the name of Allah, the Most Compassionate, the Most Merciful. 112:1 Say: He is Allah, the One. 112:2 Allah, the One on whom all depend. 112:3 He neither begets nor was born. 112:4 Nothing is comparable to Him. In the name of Allah, the Most Compassionate, the Most Merciful. 113:1 Say: I seek refuge in the Lord of daybreak, 113:2 from the evil of what He created, 113:3 from the evil of darkness when it settles, 113:4 from the evil of those who blow upon knots, 113:5 and from the evil of an envier when he envies. In the name of Allah, the Most Compassionate, the Most Merciful. 114:1 Say: I seek refuge in the Lord of humankind, 114:2 the King of humankind, 114:3 the God of humankind, 114:4 from the evil of the retreating whisperer, 114:5 who whispers into people’s hearts, 114:6 whether from the jinn or humankind."
     },
     {
       "id": "pagi_4",
@@ -35,7 +41,9 @@
       "latin": "Qul a'uudzu birabbil falaq. Min syarri maa khalaq. Wa min syarri ghaasiqin idzaa waqab. Wa min syarrin naffaatsaati fil 'uqad. Wa min syarri haasidin idzaa hasad.",
       "meaning": "Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang. Katakanlah: Aku berlindung kepada Tuhan Yang Menguasai subuh, dari kejahatan makhluk-Nya, dan dari kejahatan malam apabila telah gelap gulita, dan dari kejahatan wanita-wanita tukang sihir yang menghembus pada buhul-buhul, dan dari kejahatan pendengki bila ia dengki.",
       "repeat": 3,
-      "source": "Barangsiapa membaca surat Al-Ikhlas, Al-Falaq, dan An-Nas tiga kali di pagi dan petang hari, maka itu akan mencukupinya dari segala sesuatu. (HR. Abu Dawud dan At-Tirmidzi)"
+      "source": "Barangsiapa membaca surat Al-Ikhlas, Al-Falaq, dan An-Nas tiga kali di pagi dan petang hari, maka itu akan mencukupinya dari segala sesuatu. (HR. Abu Dawud dan At-Tirmidzi)",
+      "meaningIn": "Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang. Katakanlah: Aku berlindung kepada Tuhan Yang Menguasai subuh, dari kejahatan makhluk-Nya, dan dari kejahatan malam apabila telah gelap gulita, dan dari kejahatan wanita-wanita tukang sihir yang menghembus pada buhul-buhul, dan dari kejahatan pendengki bila ia dengki.",
+      "meaningEn": "In the name of Allah, the Most Compassionate, the Most Merciful. 112:1 Say: He is Allah, the One. 112:2 Allah, the One on whom all depend. 112:3 He neither begets nor was born. 112:4 Nothing is comparable to Him. In the name of Allah, the Most Compassionate, the Most Merciful. 113:1 Say: I seek refuge in the Lord of daybreak, 113:2 from the evil of what He created, 113:3 from the evil of darkness when it settles, 113:4 from the evil of those who blow upon knots, 113:5 and from the evil of an envier when he envies. In the name of Allah, the Most Compassionate, the Most Merciful. 114:1 Say: I seek refuge in the Lord of humankind, 114:2 the King of humankind, 114:3 the God of humankind, 114:4 from the evil of the retreating whisperer, 114:5 who whispers into people’s hearts, 114:6 whether from the jinn or humankind."
     },
     {
       "id": "pagi_5",
@@ -44,7 +52,9 @@
       "latin": "Qul a'uudzu birabbin naas. Malikin naas. Ilaahin naas. Min syarril waswaasil khannaas. Alladzii yuwaswisu fii shuduurin naas. Minal jinnati wan naas.",
       "meaning": "Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang.  Katakanlah: Aku berlindung kepada Tuhan (yang memelihara dan menguasai) manusia, Raja manusia, Sembahan manusia, dari kejahatan (bisikan) syaitan yang biasa bersembunyi, yang membisikkan (kejahatan) ke dalam dada manusia, dari (golongan) jin dan manusia.",
       "repeat": 3,
-      "source": "Barangsiapa membaca surat Al-Ikhlas, Al-Falaq, dan An-Nas tiga kali di pagi dan petang hari, maka itu akan mencukupinya dari segala sesuatu. (HR. Abu Dawud dan At-Tirmidzi)"
+      "source": "Barangsiapa membaca surat Al-Ikhlas, Al-Falaq, dan An-Nas tiga kali di pagi dan petang hari, maka itu akan mencukupinya dari segala sesuatu. (HR. Abu Dawud dan At-Tirmidzi)",
+      "meaningIn": "Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang.  Katakanlah: Aku berlindung kepada Tuhan (yang memelihara dan menguasai) manusia, Raja manusia, Sembahan manusia, dari kejahatan (bisikan) syaitan yang biasa bersembunyi, yang membisikkan (kejahatan) ke dalam dada manusia, dari (golongan) jin dan manusia.",
+      "meaningEn": "In the name of Allah, the Most Compassionate, the Most Merciful. 112:1 Say: He is Allah, the One. 112:2 Allah, the One on whom all depend. 112:3 He neither begets nor was born. 112:4 Nothing is comparable to Him. In the name of Allah, the Most Compassionate, the Most Merciful. 113:1 Say: I seek refuge in the Lord of daybreak, 113:2 from the evil of what He created, 113:3 from the evil of darkness when it settles, 113:4 from the evil of those who blow upon knots, 113:5 and from the evil of an envier when he envies. In the name of Allah, the Most Compassionate, the Most Merciful. 114:1 Say: I seek refuge in the Lord of humankind, 114:2 the King of humankind, 114:3 the God of humankind, 114:4 from the evil of the retreating whisperer, 114:5 who whispers into people’s hearts, 114:6 whether from the jinn or humankind."
     },
     {
       "id": "pagi_6",
@@ -53,7 +63,9 @@
       "latin": "Ashbahnaa wa ashbahal mulku lillah walhamdulillah, laa ilaha illallah wahdahu laa syarika lah, lahul mulku walahul hamdu wa huwa 'ala kulli syai-in qodir. Robbi as-aluka khoiro maa fii hadzal yaum wa khoiro maa ba'dahu, wa a'udzu bika min syarri maa fii hadzal yaum wa syarri maa ba'dahu. Robbi a'udzu bika minal kasali wa su-il kibar. Robbi a'udzu bika min 'adzabin fin naari wa 'adzabin fil qobri.",
       "meaning": "Kami telah memasuki waktu pagi dan kerajaan hanya milik Allah, segala puji bagi Allah. Tidak ada ilah (yang berhak disembah) kecuali Allah semata, tiada sekutu bagi-Nya. Milik Allah kerajaan dan bagi-Nya pujian. Dia-lah Yang Mahakuasa atas segala sesuatu. Wahai Rabbku, aku mohon kepada-Mu kebaikan di hari ini dan kebaikan sesudahnya. Aku berlindung kepada-Mu dari kejahatan hari ini dan kejahatan sesudahnya. Wahai Rabbku, aku berlindung kepada-Mu dari kemalasan dan kejelekan di hari tua. Wahai Rabbku, aku berlindung kepada-Mu dari siksaan di neraka dan siksaan di alam kubur.",
       "repeat": 1,
-      "source": "Meminta pada Allah kebaikan di hari ini dan kebaikan sesudahnya, juga agar terhindar dari kejelekan di hari ini dan kejelekan sesudahnya. Di dalamnya berisi pula permintaan agar terhindar dari rasa malas padahal mampu untuk beramal, juga agar terhindar dari kejelekan di masa tua. Di dalamnya juga berisi permintaan agar terselamatkan dari siksa kubur dan siksa neraka yang merupakan siksa terberat di hari kiamat kelak. Dzikir ini mengajarkan kita untuk memulai hari dengan mengakui kekuasaan Allah dan memohon perlindungan-Nya. Ini mengingatkan kita bahwa segala sesuatu adalah milik Allah dan kita bergantung pada-Nya untuk keselamatan dan kebaikan dalam hidup kita. Sumber: HR. Muslim no. 2723 (75), Abu Dawud no. 5071, dan at-Tirmidzi 3390, shahih dari Abdullah Ibnu Mas’ud."
+      "source": "Meminta pada Allah kebaikan di hari ini dan kebaikan sesudahnya, juga agar terhindar dari kejelekan di hari ini dan kejelekan sesudahnya. Di dalamnya berisi pula permintaan agar terhindar dari rasa malas padahal mampu untuk beramal, juga agar terhindar dari kejelekan di masa tua. Di dalamnya juga berisi permintaan agar terselamatkan dari siksa kubur dan siksa neraka yang merupakan siksa terberat di hari kiamat kelak. Dzikir ini mengajarkan kita untuk memulai hari dengan mengakui kekuasaan Allah dan memohon perlindungan-Nya. Ini mengingatkan kita bahwa segala sesuatu adalah milik Allah dan kita bergantung pada-Nya untuk keselamatan dan kebaikan dalam hidup kita. Sumber: HR. Muslim no. 2723 (75), Abu Dawud no. 5071, dan at-Tirmidzi 3390, shahih dari Abdullah Ibnu Mas’ud.",
+      "meaningIn": "Kami telah memasuki waktu pagi dan kerajaan hanya milik Allah, segala puji bagi Allah. Tidak ada ilah (yang berhak disembah) kecuali Allah semata, tiada sekutu bagi-Nya. Milik Allah kerajaan dan bagi-Nya pujian. Dia-lah Yang Mahakuasa atas segala sesuatu. Wahai Rabbku, aku mohon kepada-Mu kebaikan di hari ini dan kebaikan sesudahnya. Aku berlindung kepada-Mu dari kejahatan hari ini dan kejahatan sesudahnya. Wahai Rabbku, aku berlindung kepada-Mu dari kemalasan dan kejelekan di hari tua. Wahai Rabbku, aku berlindung kepada-Mu dari siksaan di neraka dan siksaan di alam kubur.",
+      "meaningEn": "We have entered the morning, and all sovereignty belongs to Allah. All praise is for Allah. None has the right to be worshipped except Allah alone, without partner. To Him belong all sovereignty and praise, and He has power over all things. My Lord, I ask You for the good of this day and what follows it. I seek refuge in You from the evil of this day and what follows it. My Lord, I seek refuge in You from laziness and the evils of old age. My Lord, I seek refuge in You from punishment in the Fire and punishment in the grave."
     },
     {
       "id": "pagi_7",
@@ -62,7 +74,9 @@
       "latin": "Allahumma bika ashbahnaa wa bika amsaynaa wa bika nahyaa wa bika namuutu wa ilaikan nusyuur.",
       "meaning": "Ya Allah, dengan rahmat dan pertolongan-Mu kami memasuki waktu pagi, dan dengan rahmat dan pertolongan-Mu kami memasuki waktu petang. Dengan rahmat dan pertolongan-Mu kami hidup dan dengan kehendak-Mu kami mati. Dan kepada-Mu kebangkitan (bagi semua makhluk).",
       "repeat": 1,
-      "source": "Dengan dzikir ini, kita telah menyerahkan segala urusan kepada Allah di pagi hari, di petang hari, ketika hidup dan ketika mati. Dzikir ini mengingatkan kita bahwa Allah adalah sumber kehidupan dan kematian. Kita bergantung pada-Nya dalam setiap aspek kehidupan kita, dari bangun tidur hingga kembali tidur, dan bahkan dalam kematian dan kebangkitan kita. Sumber: HR. Al-Bukhari dalam al-Adabul Mufrad no. 1199, lafazh ini adalah lafazh al-Bukhari, at-Tirmidzi no. 3391, Abu Dawud no. 5068, Ahmad 11/354, Ibnu Majah no. 3868, Dari Abu Hurairah Radhiyallahu ‘anhu. Shahiih al-Adabil Mufrad no. 911, shahih. Lihat pula Silsilah al-Ahaadiits ash-Shahiihah no. 262."
+      "source": "Dengan dzikir ini, kita telah menyerahkan segala urusan kepada Allah di pagi hari, di petang hari, ketika hidup dan ketika mati. Dzikir ini mengingatkan kita bahwa Allah adalah sumber kehidupan dan kematian. Kita bergantung pada-Nya dalam setiap aspek kehidupan kita, dari bangun tidur hingga kembali tidur, dan bahkan dalam kematian dan kebangkitan kita. Sumber: HR. Al-Bukhari dalam al-Adabul Mufrad no. 1199, lafazh ini adalah lafazh al-Bukhari, at-Tirmidzi no. 3391, Abu Dawud no. 5068, Ahmad 11/354, Ibnu Majah no. 3868, Dari Abu Hurairah Radhiyallahu ‘anhu. Shahiih al-Adabil Mufrad no. 911, shahih. Lihat pula Silsilah al-Ahaadiits ash-Shahiihah no. 262.",
+      "meaningIn": "Ya Allah, dengan rahmat dan pertolongan-Mu kami memasuki waktu pagi, dan dengan rahmat dan pertolongan-Mu kami memasuki waktu petang. Dengan rahmat dan pertolongan-Mu kami hidup dan dengan kehendak-Mu kami mati. Dan kepada-Mu kebangkitan (bagi semua makhluk).",
+      "meaningEn": "O Allah, by Your leave we have reached the morning and by Your leave we have reached the evening, by Your leave we live and die and unto You is our resurrection"
     },
     {
       "id": "pagi_8",
@@ -71,7 +85,9 @@
       "latin": ".",
       "meaning": "Ya Allah, Engkau adalah Rabb-ku, tidak ada Ilah (yang berhak diibadahi dengan benar) kecuali Engkau, Engkau-lah yang menciptakanku. Aku adalah hamba-Mu. Aku akan setia pada perjanjianku dengan-Mu semampuku. Aku berlindung kepada-Mu dari kejelekan (apa) yang kuperbuat. Aku mengakui nikmat-Mu (yang diberikan) kepadaku dan aku mengakui dosaku, oleh karena itu, ampunilah aku. Sesungguhnya tidak ada yang dapat mengampuni dosa kecuali Engkau.",
       "repeat": 1,
-      "source": "Barangsiapa membacanya dengan yakin di waktu pagi lalu ia meninggal sebelum masuk waktu sore, maka ia termasuk ahli Surga. Dan barangsiapa membacanya dengan yakin di waktu sore lalu ia meninggal sebelum masuk waktu pagi, maka ia termasuk ahli Surga.” (HR. Al-Bukhari no. 6306, 6323, Ahmad IV/122-125, an-Nasa-i VIII/279-280) dari Syaddad bin Aus Radhiyallahu ‘anhu"
+      "source": "Barangsiapa membacanya dengan yakin di waktu pagi lalu ia meninggal sebelum masuk waktu sore, maka ia termasuk ahli Surga. Dan barangsiapa membacanya dengan yakin di waktu sore lalu ia meninggal sebelum masuk waktu pagi, maka ia termasuk ahli Surga.” (HR. Al-Bukhari no. 6306, 6323, Ahmad IV/122-125, an-Nasa-i VIII/279-280) dari Syaddad bin Aus Radhiyallahu ‘anhu",
+      "meaningIn": "Ya Allah, Engkau adalah Rabb-ku, tidak ada Ilah (yang berhak diibadahi dengan benar) kecuali Engkau, Engkau-lah yang menciptakanku. Aku adalah hamba-Mu. Aku akan setia pada perjanjianku dengan-Mu semampuku. Aku berlindung kepada-Mu dari kejelekan (apa) yang kuperbuat. Aku mengakui nikmat-Mu (yang diberikan) kepadaku dan aku mengakui dosaku, oleh karena itu, ampunilah aku. Sesungguhnya tidak ada yang dapat mengampuni dosa kecuali Engkau.",
+      "meaningEn": "O Allah, You are my Lord, none has the right to be worshipped except You, You created me and I am Your servant and I abide to Your covenant and promise as best I can, I take refuge in You from the evil of which I have committed. I acknowledge Your favour upon me and I acknowledge my sin, so forgive me, for verily none can forgive sin except You."
     },
     {
       "id": "pagi_9",
@@ -80,7 +96,9 @@
       "latin": "",
       "meaning": "Ya Allah, selamatkanlah tubuhku (dari penyakit dan dari apa yang tidak aku inginkan). Ya Allah, selamatkanlah pendengaranku (dari penyakit dan maksiat atau dari apa yang tidak aku inginkan). Ya Allah, selamatkanlah penglihatanku, tidak ada Ilah yang berhak diibadahi dengan benar kecuali Engkau. Ya Allah, sesungguhnya aku berlindung kepada-Mu dari kekufuran dan kefakiran. Aku berlindung kepada-Mu dari siksa kubur, tidak ada Ilah yang berhak diibadahi dengan benar kecuali Engkau.",
       "repeat": 3,
-      "source": "Do'a ini diajarkan oleh Rasulullah shallallahu 'alaihi wa sallam pada Abu Bakar Ash Shiddiq radhiyallahu 'anhu untuk dibaca pada pagi, petang dan saat beranjak tidur. Dzikir ini mengajarkan kita untuk mengakui keesaan Allah dan memohon perlindungan-Nya dari kejahatan diri sendiri dan setan. Ini mengingatkan kita bahwa musuh terbesar kita bisa jadi adalah diri kita sendiri dan godaan setan. Sumber:  HR. Al-Bukhari dalam Shahiib al-Adabil Mufrad no. 701, Abu Dawud no. 5090, Ahmad V/42, hasan. Lihat Shahiih Al-Adabil Mufrad no.539"
+      "source": "Do'a ini diajarkan oleh Rasulullah shallallahu 'alaihi wa sallam pada Abu Bakar Ash Shiddiq radhiyallahu 'anhu untuk dibaca pada pagi, petang dan saat beranjak tidur. Dzikir ini mengajarkan kita untuk mengakui keesaan Allah dan memohon perlindungan-Nya dari kejahatan diri sendiri dan setan. Ini mengingatkan kita bahwa musuh terbesar kita bisa jadi adalah diri kita sendiri dan godaan setan. Sumber:  HR. Al-Bukhari dalam Shahiib al-Adabil Mufrad no. 701, Abu Dawud no. 5090, Ahmad V/42, hasan. Lihat Shahiih Al-Adabil Mufrad no.539",
+      "meaningIn": "Ya Allah, selamatkanlah tubuhku (dari penyakit dan dari apa yang tidak aku inginkan). Ya Allah, selamatkanlah pendengaranku (dari penyakit dan maksiat atau dari apa yang tidak aku inginkan). Ya Allah, selamatkanlah penglihatanku, tidak ada Ilah yang berhak diibadahi dengan benar kecuali Engkau. Ya Allah, sesungguhnya aku berlindung kepada-Mu dari kekufuran dan kefakiran. Aku berlindung kepada-Mu dari siksa kubur, tidak ada Ilah yang berhak diibadahi dengan benar kecuali Engkau.",
+      "meaningEn": "O Allah, grant my body health, O Allah, grant my hearing health, O Allah, grant my sight health. None has the right to be worshipped except You. O Allah, I take refuge with You from disbelief and poverty, and I take refuge with You from the punishment of the grave. None has the right to be worshipped except You."
     },
     {
       "id": "pagi_10",
@@ -89,7 +107,9 @@
       "latin": "Allahumma innii as-alukal 'afwa wal 'aafiyah fid dunyaa wal aakhiroh. Allahumma innii as-alukal 'afwa wal 'aafiyah fii diinii wa dun-yaaya wa ahlii wa maalii. Allahumas-tur 'awrootii wa aamin row'aatii. Allahummahfazh-nii mim bayni yadayya wa min kholfii wa 'an yamiinii wa 'an syimaalii wa min fawqii wa a'udzu bi 'azhomatik an ughtaala min tahtii.",
       "meaning": "Ya Allah, sesungguhnya aku memohon kebajikan dan keselamatan di dunia dan akhirat. Ya Allah, sesungguhnya aku memohon kebajikan dan keselamatan dalam agama, dunia, keluarga dan hartaku. Ya Allah, tutupilah auratku (aib dan sesuatu yang tidak layak dilihat orang) dan tenteramkanlah aku dari rasa takut. Ya Allah, peliharalah aku dari muka, belakang, kanan, kiri dan atasku. Aku berlindung dengan kebesaran-Mu, agar aku tidak disambar dari bawahku (oleh ular atau tenggelam dalam bumi dan lain-lain yang membuat aku jatuh).",
       "repeat": 1,
-      "source": "Rasulullah shallallahu 'alaihi wa sallam tidaklah pernah meninggalkan do'a ini di pagi dan petang hari. Di dalamnya berisi perlindungan dan keselamatan pada agama, dunia, keluarga dan harta dari berbagai macam gangguan yang datang dari berbagai arah. Dzikir ini mengajarkan kita untuk memohon perlindungan Allah dari segala arah dan aspek kehidupan. Ini mengingatkan kita bahwa kita membutuhkan perlindungan Allah dalam setiap saat dan dari segala arah. Sumber: HR. Abu Daud no. 5074 dan Ibnu Majah no. 3871"
+      "source": "Rasulullah shallallahu 'alaihi wa sallam tidaklah pernah meninggalkan do'a ini di pagi dan petang hari. Di dalamnya berisi perlindungan dan keselamatan pada agama, dunia, keluarga dan harta dari berbagai macam gangguan yang datang dari berbagai arah. Dzikir ini mengajarkan kita untuk memohon perlindungan Allah dari segala arah dan aspek kehidupan. Ini mengingatkan kita bahwa kita membutuhkan perlindungan Allah dalam setiap saat dan dari segala arah. Sumber: HR. Abu Daud no. 5074 dan Ibnu Majah no. 3871",
+      "meaningIn": "Ya Allah, sesungguhnya aku memohon kebajikan dan keselamatan di dunia dan akhirat. Ya Allah, sesungguhnya aku memohon kebajikan dan keselamatan dalam agama, dunia, keluarga dan hartaku. Ya Allah, tutupilah auratku (aib dan sesuatu yang tidak layak dilihat orang) dan tenteramkanlah aku dari rasa takut. Ya Allah, peliharalah aku dari muka, belakang, kanan, kiri dan atasku. Aku berlindung dengan kebesaran-Mu, agar aku tidak disambar dari bawahku (oleh ular atau tenggelam dalam bumi dan lain-lain yang membuat aku jatuh).",
+      "meaningEn": "O Allah, I ask You for pardon and well-being in this life and the next. O Allah, I ask You for pardon and well-being in my religious and worldly affairs, and my family and my wealth. O Allah, veil my weaknesses and set at ease my dismay. O Allah, preserve me from the front and from behind and on my right and on my left and from above, and I take refuge with You lest I be swallowed up by the earth."
     },
     {
       "id": "pagi_11",
@@ -98,7 +118,9 @@
       "latin": "Allahumma 'aalimal ghoybi wasy syahaadah faathiros samaawaati wal ardh. Robba kulli syai-in wa maliikah. Asyhadu alla ilaha illa anta. A'udzu bika min syarri nafsii wa min syarrisy syaythooni wa syirkihi, wa an aqtarifa 'alaa nafsii suu-an aw ajurrohu ilaa muslim.",
       "meaning": "Ya Allah, Yang Maha Mengetahui yang ghaib dan yang nyata, wahai Rabb pencipta langit dan bumi, Rabb segala sesuatu dan yang merajainya. Aku bersaksi bahwa tidak ada ilah yang berhak disembah kecuali Engkau. Aku berlindung kepadaMu dari kejahatan diriku, setan dan balatentaranya (godaan untuk berbuat syirik pada Allah), dan aku (berlindung kepada-Mu) dari berbuat kejelekan terhadap diriku atau menyeretnya kepada seorang muslim.",
       "repeat": 1,
-      "source": "Do'a ini diajarkan oleh Rasulullah shallallahu 'alaihi wa sallam pada Abu Bakar Ash Shiddiq radhiyallahu 'anhu untuk dibaca pada pagi, petang dan saat beranjak tidur. Dzikir ini mengajarkan kita untuk mengakui keesaan Allah dan memohon perlindungan-Nya dari kejahatan diri sendiri dan setan. Ini mengingatkan kita bahwa musuh terbesar kita bisa jadi adalah diri kita sendiri dan godaan setan. Sumber: Nabi صلي الله عليه وسلم bersabda kepada Abu Bakar ash-Shiddiq رضي الله عنه “Ucapkanlah pagi dan petang dan apabila engkau hendak tidur.” HR. Al-Bukhari dalam Al-Adabul Mufrad 1202, at-Tirmidzi no.3392 dan Abu Daud no. 5067,Lihat Shahih At- Tirmidzi no. 2798, Shahiih al-Adabil Mufrad no. 914, shahih. Lihat Silsilah al-Ahaadiits ash-Shahiihah no. 2753."
+      "source": "Do'a ini diajarkan oleh Rasulullah shallallahu 'alaihi wa sallam pada Abu Bakar Ash Shiddiq radhiyallahu 'anhu untuk dibaca pada pagi, petang dan saat beranjak tidur. Dzikir ini mengajarkan kita untuk mengakui keesaan Allah dan memohon perlindungan-Nya dari kejahatan diri sendiri dan setan. Ini mengingatkan kita bahwa musuh terbesar kita bisa jadi adalah diri kita sendiri dan godaan setan. Sumber: Nabi صلي الله عليه وسلم bersabda kepada Abu Bakar ash-Shiddiq رضي الله عنه “Ucapkanlah pagi dan petang dan apabila engkau hendak tidur.” HR. Al-Bukhari dalam Al-Adabul Mufrad 1202, at-Tirmidzi no.3392 dan Abu Daud no. 5067,Lihat Shahih At- Tirmidzi no. 2798, Shahiih al-Adabil Mufrad no. 914, shahih. Lihat Silsilah al-Ahaadiits ash-Shahiihah no. 2753.",
+      "meaningIn": "Ya Allah, Yang Maha Mengetahui yang ghaib dan yang nyata, wahai Rabb pencipta langit dan bumi, Rabb segala sesuatu dan yang merajainya. Aku bersaksi bahwa tidak ada ilah yang berhak disembah kecuali Engkau. Aku berlindung kepadaMu dari kejahatan diriku, setan dan balatentaranya (godaan untuk berbuat syirik pada Allah), dan aku (berlindung kepada-Mu) dari berbuat kejelekan terhadap diriku atau menyeretnya kepada seorang muslim.",
+      "meaningEn": "O Allah, Knower of the unseen and the seen, Creator of the heavens and the Earth, Lord and Sovereign of all things, I bear witness that none has the right to be worshipped except You. I take refuge in You from the evil of my soul and from the evil and shirk of the devil, and from committing wrong against my soul or bringing such upon another Muslim."
     },
     {
       "id": "pagi_12",
@@ -107,7 +129,9 @@
       "latin": "Bismillahilladzi laa yadhurru ma'asmihi syai-un fil ardhi wa laa fis samaa' wa huwas samii'ul 'aliim.",
       "meaning": "Dengan nama Allah yang bila disebut, segala sesuatu di bumi dan langit tidak akan berbahaya, Dia-lah Yang Maha Mendengar lagi Maha Mengetahui.",
       "repeat": 3,
-      "source": "Barangsiapa yang mengucapkan dzikir tersebut sebanyak tiga kali di pagi hari dan tiga kali di petang hari, maka tidak akan ada bahaya yang tiba-tiba memudaratkannya. \n Dzikir ini mengajarkan kita untuk selalu menyebut nama Allah sebagai perlindungan dari segala bahaya. Ini mengingatkan kita bahwa dengan menyebut nama Allah, kita akan terlindungi dari bahaya di bumi dan di langit. Sumber:HR. Abu Daud no. 5088, 5089, Tirmidzi no. 3388, dan Ibnu Majah no. 3869."
+      "source": "Barangsiapa yang mengucapkan dzikir tersebut sebanyak tiga kali di pagi hari dan tiga kali di petang hari, maka tidak akan ada bahaya yang tiba-tiba memudaratkannya. \n Dzikir ini mengajarkan kita untuk selalu menyebut nama Allah sebagai perlindungan dari segala bahaya. Ini mengingatkan kita bahwa dengan menyebut nama Allah, kita akan terlindungi dari bahaya di bumi dan di langit. Sumber:HR. Abu Daud no. 5088, 5089, Tirmidzi no. 3388, dan Ibnu Majah no. 3869.",
+      "meaningIn": "Dengan nama Allah yang bila disebut, segala sesuatu di bumi dan langit tidak akan berbahaya, Dia-lah Yang Maha Mendengar lagi Maha Mengetahui.",
+      "meaningEn": "In the name of Allah with whose name nothing is harmed on earth nor in the heavens, and He is the All-Hearing, the All-Knowing."
     },
     {
       "id": "pagi_13",
@@ -116,7 +140,9 @@
       "latin": "Rodhiitu billaahi robbaa, wa bil-islaami diinaa, wa bi-muhammadin shallallaahu 'alaihi wa sallama nabiyya.",
       "meaning": "Aku ridha Allah sebagai Rabb, Islam sebagai agama dan Muhammad shallallahu 'alaihi wa sallam sebagai nabi.",
       "repeat": 3,
-      "source": "Barangsiapa yang mengucapkan dzikir ini sebanyak tiga kali di pagi hari dan tiga kali di petang hari, maka pantas baginya mendapatkan ridha Allah. Dzikir ini mengajarkan kita untuk meneguhkan keimanan kita kepada Allah, Islam, dan Nabi Muhammad SAW. Ini adalah bentuk pengakuan dan kerelaan hati terhadap tiga hal fundamental dalam keimanan seorang Muslim. Sumber: HR. Abu Daud no. 5072, Tirmidzi no. 3389"
+      "source": "Barangsiapa yang mengucapkan dzikir ini sebanyak tiga kali di pagi hari dan tiga kali di petang hari, maka pantas baginya mendapatkan ridha Allah. Dzikir ini mengajarkan kita untuk meneguhkan keimanan kita kepada Allah, Islam, dan Nabi Muhammad SAW. Ini adalah bentuk pengakuan dan kerelaan hati terhadap tiga hal fundamental dalam keimanan seorang Muslim. Sumber: HR. Abu Daud no. 5072, Tirmidzi no. 3389",
+      "meaningIn": "Aku ridha Allah sebagai Rabb, Islam sebagai agama dan Muhammad shallallahu 'alaihi wa sallam sebagai nabi.",
+      "meaningEn": "I am pleased with Allah as Lord, with Islam as religion, and with Muhammad as Prophet."
     },
     {
       "id": "pagi_14",
@@ -125,7 +151,9 @@
       "latin": "Yaa Hayyu Yaa Qoyyum, bi-rohmatika astaghiits, wa ash-lih lii sya'nii kullahu wa laa takilnii ilaa nafsii thorfata 'ain.",
       "meaning": "Wahai Rabb Yang Maha Hidup, wahai Rabb Yang Berdiri Sendiri (tidak butuh segala sesuatu), dengan rahmat-Mu aku minta pertolongan, perbaikilah segala urusanku dan jangan diserahkan kepadaku sekali pun sekejap mata (tanpa mendapat pertolongan dari-Mu).",
       "repeat": 1,
-      "source": "Dzikir ini diajarkan oleh Nabi shallallahu 'alaihi wa sallam pada Fathimah supaya diamalkan pagi dan petang. Dzikir ini mengajarkan kita untuk selalu bergantung pada Allah dan memohon pertolongan-Nya dalam segala urusan. Ini mengingatkan kita bahwa kita tidak bisa mandiri bahkan sekejap mata pun tanpa pertolongan Allah. Sumber: HR. Ibnu As-Sunni dalam 'Amalul Yaum wal Lailah no. 46, An-Nasa'i dalam Al-Kubra (381/ 570), Al-Bazzar dalam musnadnya (4/ 25/ 3107)"
+      "source": "Dzikir ini diajarkan oleh Nabi shallallahu 'alaihi wa sallam pada Fathimah supaya diamalkan pagi dan petang. Dzikir ini mengajarkan kita untuk selalu bergantung pada Allah dan memohon pertolongan-Nya dalam segala urusan. Ini mengingatkan kita bahwa kita tidak bisa mandiri bahkan sekejap mata pun tanpa pertolongan Allah. Sumber: HR. Ibnu As-Sunni dalam 'Amalul Yaum wal Lailah no. 46, An-Nasa'i dalam Al-Kubra (381/ 570), Al-Bazzar dalam musnadnya (4/ 25/ 3107)",
+      "meaningIn": "Wahai Rabb Yang Maha Hidup, wahai Rabb Yang Berdiri Sendiri (tidak butuh segala sesuatu), dengan rahmat-Mu aku minta pertolongan, perbaikilah segala urusanku dan jangan diserahkan kepadaku sekali pun sekejap mata (tanpa mendapat pertolongan dari-Mu).",
+      "meaningEn": "O Ever Living, O Self-Subsisting and Supporter of all, by Your mercy I seek assistance, rectify for me all of my affairs and do not leave me to myself, even for the blink of an eye."
     },
     {
       "id": "pagi_15",
@@ -134,7 +162,9 @@
       "latin": "Ash-bahnaa 'ala fithrotil islaam wa 'alaa kalimatil ikhlaash, wa 'alaa diini nabiyyinaa Muhammadin shallallahu 'alaihi wa sallam, wa 'alaa millati abiinaa Ibraahiima haniifam muslimaaw wa maa kaana minal musyrikin.",
       "meaning": "Di waktu pagi kami memegang agama Islam, kalimat ikhlas (kalimat syahadat), agama Nabi kami Muhammad shallallahu 'alaihi wa sallam, dan agama bapak kami Ibrahim, yang berdiri di atas jalan yang lurus, muslim dan tidak tergolong orang-orang musyrik.",
       "repeat": 1,
-      "source": "Dzikir ini menunjukkan bahwa kita berada di atas fitrah Islam, kalimat ikhlas (kalimat syahadat), agama Nabi Muhammad shallallahu 'alaihi wa sallam, dan millah (agama) Ibrahim yang lurus. Dzikir ini mengajarkan kita untuk meneguhkan identitas kita sebagai Muslim yang mengikuti ajaran Nabi Muhammad SAW dan agama Ibrahim yang lurus. Ini mengingatkan kita untuk selalu berpegang teguh pada fitrah Islam dan menjauhi kesyirikan. Sumber: HR. Ahmad (3/406-407), Ad-Darimi (2/292) dan lain-lain"
+      "source": "Dzikir ini menunjukkan bahwa kita berada di atas fitrah Islam, kalimat ikhlas (kalimat syahadat), agama Nabi Muhammad shallallahu 'alaihi wa sallam, dan millah (agama) Ibrahim yang lurus. Dzikir ini mengajarkan kita untuk meneguhkan identitas kita sebagai Muslim yang mengikuti ajaran Nabi Muhammad SAW dan agama Ibrahim yang lurus. Ini mengingatkan kita untuk selalu berpegang teguh pada fitrah Islam dan menjauhi kesyirikan. Sumber: HR. Ahmad (3/406-407), Ad-Darimi (2/292) dan lain-lain",
+      "meaningIn": "Di waktu pagi kami memegang agama Islam, kalimat ikhlas (kalimat syahadat), agama Nabi kami Muhammad shallallahu 'alaihi wa sallam, dan agama bapak kami Ibrahim, yang berdiri di atas jalan yang lurus, muslim dan tidak tergolong orang-orang musyrik.",
+      "meaningEn": "We have entered the morning upon the natural way of Islam, the declaration of sincere faith, the religion of our Prophet Muhammad (may Allah’s peace and blessings be upon him), and the faith of our forefather Ibraheem, who was upright, a Muslim, and not among those who associate partners with Allah."
     },
     {
       "id": "pagi_16",
@@ -143,7 +173,9 @@
       "latin": "Subhanallah wa bihamdih, adada khalqih, wa ridha nafsihh, wa zinaa arshih wa midada kalimatih.",
       "meaning": "Mahasuci Allah, aku memuji-Nya sebanyak bilangan makhluk-Nya, Mahasuci Allah sesuai ke-ridhaan-Nya, Mahasuci seberat timbangan ‘Arsy-Nya, dan Mahasuci sebanyak tinta (yang menulis) kalimat-Nya.",
       "repeat": 3,
-      "source": "HR. Muslim no. 2726. Syarah Muslim XVII/44. Dari Juwairiyah binti al- Harits radhiyallahu ‘anhuma."
+      "source": "HR. Muslim no. 2726. Syarah Muslim XVII/44. Dari Juwairiyah binti al- Harits radhiyallahu ‘anhuma.",
+      "meaningIn": "Mahasuci Allah, aku memuji-Nya sebanyak bilangan makhluk-Nya, Mahasuci Allah sesuai ke-ridhaan-Nya, Mahasuci seberat timbangan ‘Arsy-Nya, dan Mahasuci sebanyak tinta (yang menulis) kalimat-Nya.",
+      "meaningEn": "How perfect Allah is and I praise Him by the number of His creation and His pleasure, and by the weight of His throne, and the ink of His words."
     },
     {
       "id": "pagi_17",
@@ -152,7 +184,9 @@
       "latin": "",
       "meaning": "Ya Allah, sesungguhnya aku meminta kepada-Mu ilmu yang bermanfaat, rizki yang halal, dan amalan yang diterima.",
       "repeat": 1,
-      "source": "HR. Ibnu Majah no. 925, Shahiih Ibni Majah 1/152 no. 753 Ibnus Sunni dalam ‘Amalul Yaum wal Lailah no. 54,110, dan Ahmad VI / 294, 305, 318, 322. Dari Ummu Salamah, shahih."
+      "source": "HR. Ibnu Majah no. 925, Shahiih Ibni Majah 1/152 no. 753 Ibnus Sunni dalam ‘Amalul Yaum wal Lailah no. 54,110, dan Ahmad VI / 294, 305, 318, 322. Dari Ummu Salamah, shahih.",
+      "meaningIn": "Ya Allah, sesungguhnya aku meminta kepada-Mu ilmu yang bermanfaat, rizki yang halal, dan amalan yang diterima.",
+      "meaningEn": "O Allah, I ask You for knowledge which is beneficial and sustenance which is good, and deeds which are acceptable."
     },
     {
       "id": "pagi_18",
@@ -161,7 +195,9 @@
       "latin": "Laa ilaha illa Allahu wa hadhu laa shariki lahu, lahu mulkuu wa lahu hamduu wa huwa 'alaa kulli syai-in qadiru.",
       "meaning": "Tidak ada ilah yang berhak disembah selain Allah semata, tidak ada sekutu bagi-Nya. Milik Allah kerajaan dan segala pujian. Dia-lah yang berkuasa atas segala sesuatu.",
       "repeat": 10,
-      "source": "Barangsiapa yang mengucapkan dzikir tersebut di pagi hari sebanyak 10x, Allah akan mencatatkan baginya 10 kebaikan, menghapuskan baginya 10 kesalahan, ia juga mendapatkan kebaikan semisal memerdekakan 10 budak, Allah akan melindunginya dari gangguan setan hingga petang hari. Siapa yang mengucapkannya di petang hari, ia akan mendapatkan keutamaan semisal itu pula. Dzikir ini mengajarkan kita tentang tauhid (keesaan Allah) dan kekuasaan-Nya atas segala sesuatu. Ini mengingatkan kita bahwa hanya Allah yang berhak disembah dan Dia memiliki kekuasaan mutlak atas segala sesuatu. Sumber: HR. Ahmad (3/406-407), Ad-Darimi (2/292) dan lain-lain"
+      "source": "Barangsiapa yang mengucapkan dzikir tersebut di pagi hari sebanyak 10x, Allah akan mencatatkan baginya 10 kebaikan, menghapuskan baginya 10 kesalahan, ia juga mendapatkan kebaikan semisal memerdekakan 10 budak, Allah akan melindunginya dari gangguan setan hingga petang hari. Siapa yang mengucapkannya di petang hari, ia akan mendapatkan keutamaan semisal itu pula. Dzikir ini mengajarkan kita tentang tauhid (keesaan Allah) dan kekuasaan-Nya atas segala sesuatu. Ini mengingatkan kita bahwa hanya Allah yang berhak disembah dan Dia memiliki kekuasaan mutlak atas segala sesuatu. Sumber: HR. Ahmad (3/406-407), Ad-Darimi (2/292) dan lain-lain",
+      "meaningIn": "Tidak ada ilah yang berhak disembah selain Allah semata, tidak ada sekutu bagi-Nya. Milik Allah kerajaan dan segala pujian. Dia-lah yang berkuasa atas segala sesuatu.",
+      "meaningEn": "None has the right to be worshipped except Allah alone, without partner. To Him belong all sovereignty and praise, and He has power over all things."
     },
     {
       "id": "pagi_19",
@@ -170,7 +206,9 @@
       "latin": "Subhanallahi wa bihamdihi.",
       "meaning": "Maha Suci Allah, aku memuji-Nya.",
       "repeat": 100,
-      "source": "Barangsiapa yang mengucapkan kalimat 'Subhanallahi wa bihamdihi' di pagi dan petang hari sebanyak 100x, maka tidak ada yang datang pada hari kiamat yang lebih baik dari yang ia lakukan kecuali orang yang mengucapkan semisal atau lebih dari itu. Dzikir ini mengajarkan kita untuk selalu mensucikan dan memuji Allah. Ini adalah bentuk pengakuan akan kesempurnaan Allah dan rasa syukur atas segala nikmat-Nya. Sumber: HR. Muslim no. 2692"
+      "source": "Barangsiapa yang mengucapkan kalimat 'Subhanallahi wa bihamdihi' di pagi dan petang hari sebanyak 100x, maka tidak ada yang datang pada hari kiamat yang lebih baik dari yang ia lakukan kecuali orang yang mengucapkan semisal atau lebih dari itu. Dzikir ini mengajarkan kita untuk selalu mensucikan dan memuji Allah. Ini adalah bentuk pengakuan akan kesempurnaan Allah dan rasa syukur atas segala nikmat-Nya. Sumber: HR. Muslim no. 2692",
+      "meaningIn": "Maha Suci Allah, aku memuji-Nya.",
+      "meaningEn": "How perfect Allah is and I praise Him."
     },
     {
       "id": "pagi_20",
@@ -179,7 +217,9 @@
       "latin": "Astaghfirullah wa atubu illaih.",
       "meaning": "Aku memohon ampunan kepada Allah dan bertaubat kepada-Nya.",
       "repeat": 100,
-      "source": "HR. Al-Bukhari/ Fat-hul Baari XI/101 dan Muslim no.2702 عَنِ ابْنِ عُمَرَ قَالَ:قَالَ رَسُو لُ اللهِ صلي الله عليه وسلم : يَااَيُّهَا النَّسُ، تُوبُواإِلَيْ اللهِ. فَإِنِّيْ اَتُوبُ فِيْ الْيَومِ إِلَيْهِ مِانَةً مَرَّةٍ Dari Ibnu ‘Umar ia berkata: “Rasulullah صلي الله عليه وسلم bersabda: ‘Wahai manusia, bertaubatlah kalian kepada Allah, sesungguhnya aku bertaubat kepada-Nya dalam sehari seratus kali.’” [HR. Muslim no. 2702 (42)]. Dalam riwayat lain dari Agharr al-Muzani, Rasulullah صلي الله عليه وسلم bersabda: [إِنَّهُ لَيُغَانُ عَلَى قَلْبِيْ وَإِنِّيْ لأَسْتَغْفِرُ اللهَ فِي الْيَوْمِ مِائَةَ مَرَّةٍ] “Sesungguhnya hatiku terkadang lupa, dan sesungguhnya aku istighfar (minta ampun) kepada Allah dalam sehari seratus kali.” [HR. Muslim no. 2702 (41)] Nabi صلي الله عليه وسلم bersabda: “Barangsiapa yang mengucapkan: أَسْتَغْفِرُ اللهَ الْعَظِيْمَ الَّذِيْ لاَ إِلَـهَ إِلاَّ هُوَ الْحَيُّ الْقَيُّوْمُ وَأَتُوْبُ إِلَيْهِ ‘Aku memohon ampunan kepada Allah Yang Maha Agung, Yang tidak ada Ilah yang berhak diibadahi kecuali Dia, Yang Maha hidup lagi Maha berdiri sendiri dan aku bertaubat kepada-Nya.’ Maka Allah akan mengampuni dosanya meskipun ia pernah lari dari medan perang.” HR. Abu Dawud no. 1517, at-Tirmidzi no. 3577 dan al-Hakim I/511. Lihat Shahiih at-Tirmidzi III/282 no. 2381. Ayat yang menganjurkan istighfar dan taubat di antaranya: (QS. Huud: 3), (QS. An-Nuur: 31), (QS. At-Tahriim: 8) dan lain-lain."
+      "source": "HR. Al-Bukhari/ Fat-hul Baari XI/101 dan Muslim no.2702 عَنِ ابْنِ عُمَرَ قَالَ:قَالَ رَسُو لُ اللهِ صلي الله عليه وسلم : يَااَيُّهَا النَّسُ، تُوبُواإِلَيْ اللهِ. فَإِنِّيْ اَتُوبُ فِيْ الْيَومِ إِلَيْهِ مِانَةً مَرَّةٍ Dari Ibnu ‘Umar ia berkata: “Rasulullah صلي الله عليه وسلم bersabda: ‘Wahai manusia, bertaubatlah kalian kepada Allah, sesungguhnya aku bertaubat kepada-Nya dalam sehari seratus kali.’” [HR. Muslim no. 2702 (42)]. Dalam riwayat lain dari Agharr al-Muzani, Rasulullah صلي الله عليه وسلم bersabda: [إِنَّهُ لَيُغَانُ عَلَى قَلْبِيْ وَإِنِّيْ لأَسْتَغْفِرُ اللهَ فِي الْيَوْمِ مِائَةَ مَرَّةٍ] “Sesungguhnya hatiku terkadang lupa, dan sesungguhnya aku istighfar (minta ampun) kepada Allah dalam sehari seratus kali.” [HR. Muslim no. 2702 (41)] Nabi صلي الله عليه وسلم bersabda: “Barangsiapa yang mengucapkan: أَسْتَغْفِرُ اللهَ الْعَظِيْمَ الَّذِيْ لاَ إِلَـهَ إِلاَّ هُوَ الْحَيُّ الْقَيُّوْمُ وَأَتُوْبُ إِلَيْهِ ‘Aku memohon ampunan kepada Allah Yang Maha Agung, Yang tidak ada Ilah yang berhak diibadahi kecuali Dia, Yang Maha hidup lagi Maha berdiri sendiri dan aku bertaubat kepada-Nya.’ Maka Allah akan mengampuni dosanya meskipun ia pernah lari dari medan perang.” HR. Abu Dawud no. 1517, at-Tirmidzi no. 3577 dan al-Hakim I/511. Lihat Shahiih at-Tirmidzi III/282 no. 2381. Ayat yang menganjurkan istighfar dan taubat di antaranya: (QS. Huud: 3), (QS. An-Nuur: 31), (QS. At-Tahriim: 8) dan lain-lain.",
+      "meaningIn": "Aku memohon ampunan kepada Allah dan bertaubat kepada-Nya.",
+      "meaningEn": "‘I seek Allaah’s forgiveness and I turn to Him in repentance.’"
     }
   ],
   "petang": [
@@ -190,7 +230,9 @@
       "latin": "A'udzu billahi minasy syaithanir rajim",
       "meaning": "Aku berlindung kepada Allah dari godaan syaitan yang terkutuk.",
       "repeat": 1,
-      "source": "Disyariatkan sebelum membaca Al-Qur'an (QS. An-Nahl: 98)"
+      "source": "Disyariatkan sebelum membaca Al-Qur'an (QS. An-Nahl: 98)",
+      "meaningIn": "Aku berlindung kepada Allah dari godaan syaitan yang terkutuk.",
+      "meaningEn": "I seek refuge in Allah from the accursed devil."
     },
     {
       "id": "petang_2",
@@ -199,7 +241,9 @@
       "latin": "Allahu laa ilaaha illaa huwal hayyul qayyuum. Laa ta'khudzuhuu sinatuw walaa naum. Lahuu maa fissamaawaati wa maa fil ardh. Man dzal ladzii yasyfa'u 'indahuu illaa bi idznih. Ya'lamu maa baina aidiihim wa maa khalfahum. Wa laa yuhiithuuna bisyai'im min 'ilmihii illaa bimaa syaa'. Wasi'a kursiyyuhus samaawaati wal ardh. Wa laa ya'uuduhuu hifzhuhumaa wahuwal 'aliyyul 'azhiim.",
       "meaning": "Allah, tidak ada Tuhan (yang berhak disembah) melainkan Dia Yang Hidup kekal lagi terus menerus mengurus (makhluk-Nya); tidak mengantuk dan tidak tidur. Kepunyaan-Nya apa yang di langit dan di bumi. Tiada yang dapat memberi syafa'at di sisi Allah tanpa izin-Nya. Allah mengetahui apa-apa yang di hadapan mereka dan di belakang mereka, dan mereka tidak mengetahui apa-apa dari ilmu Allah melainkan apa yang dikehendaki-Nya. Kursi Allah meliputi langit dan bumi. Dan Allah tidak merasa berat memelihara keduanya, dan Allah Maha Tinggi lagi Maha Besar.",
       "repeat": 1,
-      "source": "Nabi ﷺ bersabda: \"Barangsiapa yang membaca ayat ini [Ayat Kursi] ketika pagi hari, maka ia dijaga dari (gangguan) jin hingga sore hari. Dan barangsiapa mengucapkannya ketika sore hari, maka ia dijaga dari (gangguan) jin hingga pagi hari.\" (HR. Al-Hakim 1/562, Shahiih at-Targhiib wat Tarhiib 1/418 no. 662, shahih)."
+      "source": "Nabi ﷺ bersabda: \"Barangsiapa yang membaca ayat ini [Ayat Kursi] ketika pagi hari, maka ia dijaga dari (gangguan) jin hingga sore hari. Dan barangsiapa mengucapkannya ketika sore hari, maka ia dijaga dari (gangguan) jin hingga pagi hari.\" (HR. Al-Hakim 1/562, Shahiih at-Targhiib wat Tarhiib 1/418 no. 662, shahih).",
+      "meaningIn": "Allah, tidak ada Tuhan (yang berhak disembah) melainkan Dia Yang Hidup kekal lagi terus menerus mengurus (makhluk-Nya); tidak mengantuk dan tidak tidur. Kepunyaan-Nya apa yang di langit dan di bumi. Tiada yang dapat memberi syafa'at di sisi Allah tanpa izin-Nya. Allah mengetahui apa-apa yang di hadapan mereka dan di belakang mereka, dan mereka tidak mengetahui apa-apa dari ilmu Allah melainkan apa yang dikehendaki-Nya. Kursi Allah meliputi langit dan bumi. Dan Allah tidak merasa berat memelihara keduanya, dan Allah Maha Tinggi lagi Maha Besar.",
+      "meaningEn": "Allah—there is no deity except Him, the Ever-Living, the Sustainer of all. Neither drowsiness nor sleep overtakes Him. Everything in the heavens and on the earth belongs to Him. Who can intercede with Him except by His permission? He knows what lies before people and what lies beyond them, while they grasp nothing of His knowledge except what He wills. His Kursi extends over the heavens and the earth, and preserving them does not tire Him. He is the Most High, the Magnificent."
     },
     {
       "id": "petang_3",
@@ -208,7 +252,9 @@
       "latin": "Qul huwallaahu ahad. Allaahush shamad. Lam yalid wa lam yuulad. Wa lam yakul lahuu kufuwan ahad.",
       "meaning": "Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang. Katakanlah: Dialah Allah, Yang Maha Esa. Allah adalah Tuhan yang bergantung kepada-Nya segala sesuatu. Dia tiada beranak dan tidak pula diperanakkan, dan tidak ada seorangpun yang setara dengan Dia.",
       "repeat": 3,
-      "source": "Barangsiapa membaca surat Al-Ikhlas, Al-Falaq, dan An-Nas tiga kali di pagi dan petang hari, maka itu akan mencukupinya dari segala sesuatu. (HR. Abu Dawud dan At-Tirmidzi)"
+      "source": "Barangsiapa membaca surat Al-Ikhlas, Al-Falaq, dan An-Nas tiga kali di pagi dan petang hari, maka itu akan mencukupinya dari segala sesuatu. (HR. Abu Dawud dan At-Tirmidzi)",
+      "meaningIn": "Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang. Katakanlah: Dialah Allah, Yang Maha Esa. Allah adalah Tuhan yang bergantung kepada-Nya segala sesuatu. Dia tiada beranak dan tidak pula diperanakkan, dan tidak ada seorangpun yang setara dengan Dia.",
+      "meaningEn": "In the name of Allah, the Most Compassionate, the Most Merciful. 112:1 Say: He is Allah, the One. 112:2 Allah, the One on whom all depend. 112:3 He neither begets nor was born. 112:4 Nothing is comparable to Him. In the name of Allah, the Most Compassionate, the Most Merciful. 113:1 Say: I seek refuge in the Lord of daybreak, 113:2 from the evil of what He created, 113:3 from the evil of darkness when it settles, 113:4 from the evil of those who blow upon knots, 113:5 and from the evil of an envier when he envies. In the name of Allah, the Most Compassionate, the Most Merciful. 114:1 Say: I seek refuge in the Lord of humankind, 114:2 the King of humankind, 114:3 the God of humankind, 114:4 from the evil of the retreating whisperer, 114:5 who whispers into people’s hearts, 114:6 whether from the jinn or humankind."
     },
     {
       "id": "petang_4",
@@ -217,7 +263,9 @@
       "latin": "Qul a'uudzu birabbil falaq. Min syarri maa khalaq. Wa min syarri ghaasiqin idzaa waqab. Wa min syarrin naffaatsaati fil 'uqad. Wa min syarri haasidin idzaa hasad.",
       "meaning": "Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang. Katakanlah: Aku berlindung kepada Tuhan Yang Menguasai subuh, dari kejahatan makhluk-Nya, dan dari kejahatan malam apabila telah gelap gulita, dan dari kejahatan wanita-wanita tukang sihir yang menghembus pada buhul-buhul, dan dari kejahatan pendengki bila ia dengki.",
       "repeat": 3,
-      "source": "Barangsiapa membaca surat Al-Ikhlas, Al-Falaq, dan An-Nas tiga kali di pagi dan petang hari, maka itu akan mencukupinya dari segala sesuatu. (HR. Abu Dawud dan At-Tirmidzi)"
+      "source": "Barangsiapa membaca surat Al-Ikhlas, Al-Falaq, dan An-Nas tiga kali di pagi dan petang hari, maka itu akan mencukupinya dari segala sesuatu. (HR. Abu Dawud dan At-Tirmidzi)",
+      "meaningIn": "Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang. Katakanlah: Aku berlindung kepada Tuhan Yang Menguasai subuh, dari kejahatan makhluk-Nya, dan dari kejahatan malam apabila telah gelap gulita, dan dari kejahatan wanita-wanita tukang sihir yang menghembus pada buhul-buhul, dan dari kejahatan pendengki bila ia dengki.",
+      "meaningEn": "In the name of Allah, the Most Compassionate, the Most Merciful. 112:1 Say: He is Allah, the One. 112:2 Allah, the One on whom all depend. 112:3 He neither begets nor was born. 112:4 Nothing is comparable to Him. In the name of Allah, the Most Compassionate, the Most Merciful. 113:1 Say: I seek refuge in the Lord of daybreak, 113:2 from the evil of what He created, 113:3 from the evil of darkness when it settles, 113:4 from the evil of those who blow upon knots, 113:5 and from the evil of an envier when he envies. In the name of Allah, the Most Compassionate, the Most Merciful. 114:1 Say: I seek refuge in the Lord of humankind, 114:2 the King of humankind, 114:3 the God of humankind, 114:4 from the evil of the retreating whisperer, 114:5 who whispers into people’s hearts, 114:6 whether from the jinn or humankind."
     },
     {
       "id": "petang_5",
@@ -226,7 +274,9 @@
       "latin": "Qul a'uudzu birabbin naas. Malikin naas. Ilaahin naas. Min syarril waswaasil khannaas. Alladzii yuwaswisu fii shuduurin naas. Minal jinnati wan naas.",
       "meaning": "Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang.  Katakanlah: Aku berlindung kepada Tuhan (yang memelihara dan menguasai) manusia, Raja manusia, Sembahan manusia, dari kejahatan (bisikan) syaitan yang biasa bersembunyi, yang membisikkan (kejahatan) ke dalam dada manusia, dari (golongan) jin dan manusia.",
       "repeat": 3,
-      "source": "Barangsiapa membaca surat Al-Ikhlas, Al-Falaq, dan An-Nas tiga kali di pagi dan petang hari, maka itu akan mencukupinya dari segala sesuatu. (HR. Abu Dawud dan At-Tirmidzi)"
+      "source": "Barangsiapa membaca surat Al-Ikhlas, Al-Falaq, dan An-Nas tiga kali di pagi dan petang hari, maka itu akan mencukupinya dari segala sesuatu. (HR. Abu Dawud dan At-Tirmidzi)",
+      "meaningIn": "Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang.  Katakanlah: Aku berlindung kepada Tuhan (yang memelihara dan menguasai) manusia, Raja manusia, Sembahan manusia, dari kejahatan (bisikan) syaitan yang biasa bersembunyi, yang membisikkan (kejahatan) ke dalam dada manusia, dari (golongan) jin dan manusia.",
+      "meaningEn": "In the name of Allah, the Most Compassionate, the Most Merciful. 112:1 Say: He is Allah, the One. 112:2 Allah, the One on whom all depend. 112:3 He neither begets nor was born. 112:4 Nothing is comparable to Him. In the name of Allah, the Most Compassionate, the Most Merciful. 113:1 Say: I seek refuge in the Lord of daybreak, 113:2 from the evil of what He created, 113:3 from the evil of darkness when it settles, 113:4 from the evil of those who blow upon knots, 113:5 and from the evil of an envier when he envies. In the name of Allah, the Most Compassionate, the Most Merciful. 114:1 Say: I seek refuge in the Lord of humankind, 114:2 the King of humankind, 114:3 the God of humankind, 114:4 from the evil of the retreating whisperer, 114:5 who whispers into people’s hearts, 114:6 whether from the jinn or humankind."
     },
     {
       "id": "petang_6",
@@ -235,7 +285,9 @@
       "latin": "Amsaynaa wa amsal mulku lillah walhamdulillah, laa ilaha illallah wahdahu laa syarika lah, lahul mulku walahul hamdu wa huwa 'ala kulli syai-in qodir. Robbi as-aluka khoiro maa fii hadzihil lailah wa khoiro maa ba'dahaa, wa a'udzu bika min syarri maa fii hadzihil lailah wa syarri maa ba'dahaa. Robbi a'udzu bika minal kasali wa su-il kibar. Robbi a'udzu bika min 'adzabin fin naari wa 'adzabin fil qobri.",
       "meaning": "Kami telah memasuki waktu petang dan kerajaan hanya milik Allah, segala puji bagi Allah. Tidak ada ilah (yang berhak disembah) kecuali Allah semata, tiada sekutu bagi-Nya. Milik Allah kerajaan dan bagi-Nya pujian. Dia-lah Yang Mahakuasa atas segala sesuatu. Wahai Rabbku, aku mohon kepada-Mu kebaikan di malam ini dan kebaikan sesudahnya. Aku berlindung kepada-Mu dari kejahatan malam ini dan kejahatan sesudahnya. Wahai Rabbku, aku berlindung kepada-Mu dari kemalasan dan kejelekan di hari tua. Wahai Rabbku, aku berlindung kepada-Mu dari siksaan di neraka dan siksaan di alam kubur.",
       "repeat": 1,
-      "source": "HR. Muslim IV/2088 no. 2723, Abu Dawud no. 5071, at-Tirmidzi 3390, shahih"
+      "source": "HR. Muslim IV/2088 no. 2723, Abu Dawud no. 5071, at-Tirmidzi 3390, shahih",
+      "meaningIn": "Kami telah memasuki waktu petang dan kerajaan hanya milik Allah, segala puji bagi Allah. Tidak ada ilah (yang berhak disembah) kecuali Allah semata, tiada sekutu bagi-Nya. Milik Allah kerajaan dan bagi-Nya pujian. Dia-lah Yang Mahakuasa atas segala sesuatu. Wahai Rabbku, aku mohon kepada-Mu kebaikan di malam ini dan kebaikan sesudahnya. Aku berlindung kepada-Mu dari kejahatan malam ini dan kejahatan sesudahnya. Wahai Rabbku, aku berlindung kepada-Mu dari kemalasan dan kejelekan di hari tua. Wahai Rabbku, aku berlindung kepada-Mu dari siksaan di neraka dan siksaan di alam kubur.",
+      "meaningEn": "We have entered the evening, and all sovereignty belongs to Allah. All praise is for Allah. None has the right to be worshipped except Allah alone, without partner. To Him belong all sovereignty and praise, and He has power over all things. My Lord, I ask You for the good of this night and what follows it. I seek refuge in You from the evil of this night and what follows it. My Lord, I seek refuge in You from laziness and the evils of old age. My Lord, I seek refuge in You from punishment in the Fire and punishment in the grave."
     },
     {
       "id": "petang_7",
@@ -244,7 +296,9 @@
       "latin": "Allahumma bika ashbahnaa wa bika amsaynaa wa bika nahyaa wa bika namuutu wa ilaikan nusyuur.",
       "meaning": "Ya Allah, dengan rahmat dan pertolongan-Mu kami memasuki waktu pagi, dan dengan rahmat dan pertolongan-Mu kami memasuki waktu petang. Dengan rahmat dan pertolongan-Mu kami hidup dan dengan kehendak-Mu kami mati. Dan kepada-Mu kebangkitan (bagi semua makhluk).",
       "repeat": 1,
-      "source": "Dengan dzikir ini, kita telah menyerahkan segala urusan kepada Allah di pagi hari, di petang hari, ketika hidup dan ketika mati. Dzikir ini mengingatkan kita bahwa Allah adalah sumber kehidupan dan kematian. Kita bergantung pada-Nya dalam setiap aspek kehidupan kita, dari bangun tidur hingga kembali tidur, dan bahkan dalam kematian dan kebangkitan kita. Sumber: HR. Al-Bukhari dalam al-Adabul Mufrad no. 1199, lafazh ini adalah lafazh al-Bukhari, at-Tirmidzi no. 3391, Abu Dawud no. 5068, Ahmad 11/354, Ibnu Majah no. 3868, Dari Abu Hurairah Radhiyallahu ‘anhu. Shahiih al-Adabil Mufrad no. 911, shahih. Lihat pula Silsilah al-Ahaadiits ash-Shahiihah no. 262."
+      "source": "Dengan dzikir ini, kita telah menyerahkan segala urusan kepada Allah di pagi hari, di petang hari, ketika hidup dan ketika mati. Dzikir ini mengingatkan kita bahwa Allah adalah sumber kehidupan dan kematian. Kita bergantung pada-Nya dalam setiap aspek kehidupan kita, dari bangun tidur hingga kembali tidur, dan bahkan dalam kematian dan kebangkitan kita. Sumber: HR. Al-Bukhari dalam al-Adabul Mufrad no. 1199, lafazh ini adalah lafazh al-Bukhari, at-Tirmidzi no. 3391, Abu Dawud no. 5068, Ahmad 11/354, Ibnu Majah no. 3868, Dari Abu Hurairah Radhiyallahu ‘anhu. Shahiih al-Adabil Mufrad no. 911, shahih. Lihat pula Silsilah al-Ahaadiits ash-Shahiihah no. 262.",
+      "meaningIn": "Ya Allah, dengan rahmat dan pertolongan-Mu kami memasuki waktu pagi, dan dengan rahmat dan pertolongan-Mu kami memasuki waktu petang. Dengan rahmat dan pertolongan-Mu kami hidup dan dengan kehendak-Mu kami mati. Dan kepada-Mu kebangkitan (bagi semua makhluk).",
+      "meaningEn": "O Allah, by Your leave we have reached the morning and by Your leave we have reached the evening, by Your leave we live and die and unto You is our resurrection"
     },
     {
       "id": "petang_8",
@@ -253,7 +307,9 @@
       "latin": ".",
       "meaning": "Ya Allah, Engkau adalah Rabb-ku, tidak ada Ilah (yang berhak diibadahi dengan benar) kecuali Engkau, Engkau-lah yang menciptakanku. Aku adalah hamba-Mu. Aku akan setia pada perjanjianku dengan-Mu semampuku. Aku berlindung kepada-Mu dari kejelekan (apa) yang kuperbuat. Aku mengakui nikmat-Mu (yang diberikan) kepadaku dan aku mengakui dosaku, oleh karena itu, ampunilah aku. Sesungguhnya tidak ada yang dapat mengampuni dosa kecuali Engkau.",
       "repeat": 1,
-      "source": "Barangsiapa membacanya dengan yakin di waktu pagi lalu ia meninggal sebelum masuk waktu sore, maka ia termasuk ahli Surga. Dan barangsiapa membacanya dengan yakin di waktu sore lalu ia meninggal sebelum masuk waktu pagi, maka ia termasuk ahli Surga.” (HR. Al-Bukhari no. 6306, 6323, Ahmad IV/122-125, an-Nasa-i VIII/279-280) dari Syaddad bin Aus Radhiyallahu ‘anhu"
+      "source": "Barangsiapa membacanya dengan yakin di waktu pagi lalu ia meninggal sebelum masuk waktu sore, maka ia termasuk ahli Surga. Dan barangsiapa membacanya dengan yakin di waktu sore lalu ia meninggal sebelum masuk waktu pagi, maka ia termasuk ahli Surga.” (HR. Al-Bukhari no. 6306, 6323, Ahmad IV/122-125, an-Nasa-i VIII/279-280) dari Syaddad bin Aus Radhiyallahu ‘anhu",
+      "meaningIn": "Ya Allah, Engkau adalah Rabb-ku, tidak ada Ilah (yang berhak diibadahi dengan benar) kecuali Engkau, Engkau-lah yang menciptakanku. Aku adalah hamba-Mu. Aku akan setia pada perjanjianku dengan-Mu semampuku. Aku berlindung kepada-Mu dari kejelekan (apa) yang kuperbuat. Aku mengakui nikmat-Mu (yang diberikan) kepadaku dan aku mengakui dosaku, oleh karena itu, ampunilah aku. Sesungguhnya tidak ada yang dapat mengampuni dosa kecuali Engkau.",
+      "meaningEn": "O Allah, You are my Lord, none has the right to be worshipped except You, You created me and I am Your servant and I abide to Your covenant and promise as best I can, I take refuge in You from the evil of which I have committed. I acknowledge Your favour upon me and I acknowledge my sin, so forgive me, for verily none can forgive sin except You."
     },
     {
       "id": "petang_9",
@@ -262,7 +318,9 @@
       "latin": "",
       "meaning": "Ya Allah, selamatkanlah tubuhku (dari penyakit dan dari apa yang tidak aku inginkan). Ya Allah, selamatkanlah pendengaranku (dari penyakit dan maksiat atau dari apa yang tidak aku inginkan). Ya Allah, selamatkanlah penglihatanku, tidak ada Ilah yang berhak diibadahi dengan benar kecuali Engkau. Ya Allah, sesungguhnya aku berlindung kepada-Mu dari kekufuran dan kefakiran. Aku berlindung kepada-Mu dari siksa kubur, tidak ada Ilah yang berhak diibadahi dengan benar kecuali Engkau.",
       "repeat": 3,
-      "source": "Do'a ini diajarkan oleh Rasulullah shallallahu 'alaihi wa sallam pada Abu Bakar Ash Shiddiq radhiyallahu 'anhu untuk dibaca pada pagi, petang dan saat beranjak tidur. Dzikir ini mengajarkan kita untuk mengakui keesaan Allah dan memohon perlindungan-Nya dari kejahatan diri sendiri dan setan. Ini mengingatkan kita bahwa musuh terbesar kita bisa jadi adalah diri kita sendiri dan godaan setan. Sumber:  HR. Al-Bukhari dalam Shahiib al-Adabil Mufrad no. 701, Abu Dawud no. 5090, Ahmad V/42, hasan. Lihat Shahiih Al-Adabil Mufrad no.539"
+      "source": "Do'a ini diajarkan oleh Rasulullah shallallahu 'alaihi wa sallam pada Abu Bakar Ash Shiddiq radhiyallahu 'anhu untuk dibaca pada pagi, petang dan saat beranjak tidur. Dzikir ini mengajarkan kita untuk mengakui keesaan Allah dan memohon perlindungan-Nya dari kejahatan diri sendiri dan setan. Ini mengingatkan kita bahwa musuh terbesar kita bisa jadi adalah diri kita sendiri dan godaan setan. Sumber:  HR. Al-Bukhari dalam Shahiib al-Adabil Mufrad no. 701, Abu Dawud no. 5090, Ahmad V/42, hasan. Lihat Shahiih Al-Adabil Mufrad no.539",
+      "meaningIn": "Ya Allah, selamatkanlah tubuhku (dari penyakit dan dari apa yang tidak aku inginkan). Ya Allah, selamatkanlah pendengaranku (dari penyakit dan maksiat atau dari apa yang tidak aku inginkan). Ya Allah, selamatkanlah penglihatanku, tidak ada Ilah yang berhak diibadahi dengan benar kecuali Engkau. Ya Allah, sesungguhnya aku berlindung kepada-Mu dari kekufuran dan kefakiran. Aku berlindung kepada-Mu dari siksa kubur, tidak ada Ilah yang berhak diibadahi dengan benar kecuali Engkau.",
+      "meaningEn": "O Allah, grant my body health, O Allah, grant my hearing health, O Allah, grant my sight health. None has the right to be worshipped except You. O Allah, I take refuge with You from disbelief and poverty, and I take refuge with You from the punishment of the grave. None has the right to be worshipped except You."
     },
     {
       "id": "petang_10",
@@ -271,7 +329,9 @@
       "latin": "Allahumma innii as-alukal 'afwa wal 'aafiyah fid dunyaa wal aakhiroh. Allahumma innii as-alukal 'afwa wal 'aafiyah fii diinii wa dun-yaaya wa ahlii wa maalii. Allahumas-tur 'awrootii wa aamin row'aatii. Allahummahfazh-nii mim bayni yadayya wa min kholfii wa 'an yamiinii wa 'an syimaalii wa min fawqii wa a'udzu bi 'azhomatik an ughtaala min tahtii.",
       "meaning": "Ya Allah, sesungguhnya aku memohon kebajikan dan keselamatan di dunia dan akhirat. Ya Allah, sesungguhnya aku memohon kebajikan dan keselamatan dalam agama, dunia, keluarga dan hartaku. Ya Allah, tutupilah auratku (aib dan sesuatu yang tidak layak dilihat orang) dan tenteramkanlah aku dari rasa takut. Ya Allah, peliharalah aku dari muka, belakang, kanan, kiri dan atasku. Aku berlindung dengan kebesaran-Mu, agar aku tidak disambar dari bawahku (oleh ular atau tenggelam dalam bumi dan lain-lain yang membuat aku jatuh).",
       "repeat": 1,
-      "source": "Rasulullah shallallahu 'alaihi wa sallam tidaklah pernah meninggalkan do'a ini di pagi dan petang hari. Di dalamnya berisi perlindungan dan keselamatan pada agama, dunia, keluarga dan harta dari berbagai macam gangguan yang datang dari berbagai arah. Dzikir ini mengajarkan kita untuk memohon perlindungan Allah dari segala arah dan aspek kehidupan. Ini mengingatkan kita bahwa kita membutuhkan perlindungan Allah dalam setiap saat dan dari segala arah. Sumber: HR. Abu Daud no. 5074 dan Ibnu Majah no. 3871"
+      "source": "Rasulullah shallallahu 'alaihi wa sallam tidaklah pernah meninggalkan do'a ini di pagi dan petang hari. Di dalamnya berisi perlindungan dan keselamatan pada agama, dunia, keluarga dan harta dari berbagai macam gangguan yang datang dari berbagai arah. Dzikir ini mengajarkan kita untuk memohon perlindungan Allah dari segala arah dan aspek kehidupan. Ini mengingatkan kita bahwa kita membutuhkan perlindungan Allah dalam setiap saat dan dari segala arah. Sumber: HR. Abu Daud no. 5074 dan Ibnu Majah no. 3871",
+      "meaningIn": "Ya Allah, sesungguhnya aku memohon kebajikan dan keselamatan di dunia dan akhirat. Ya Allah, sesungguhnya aku memohon kebajikan dan keselamatan dalam agama, dunia, keluarga dan hartaku. Ya Allah, tutupilah auratku (aib dan sesuatu yang tidak layak dilihat orang) dan tenteramkanlah aku dari rasa takut. Ya Allah, peliharalah aku dari muka, belakang, kanan, kiri dan atasku. Aku berlindung dengan kebesaran-Mu, agar aku tidak disambar dari bawahku (oleh ular atau tenggelam dalam bumi dan lain-lain yang membuat aku jatuh).",
+      "meaningEn": "O Allah, I ask You for pardon and well-being in this life and the next. O Allah, I ask You for pardon and well-being in my religious and worldly affairs, and my family and my wealth. O Allah, veil my weaknesses and set at ease my dismay. O Allah, preserve me from the front and from behind and on my right and on my left and from above, and I take refuge with You lest I be swallowed up by the earth."
     },
     {
       "id": "petang_11",
@@ -280,7 +340,9 @@
       "latin": "Allahumma 'aalimal ghoybi wasy syahaadah faathiros samaawaati wal ardh. Robba kulli syai-in wa maliikah. Asyhadu alla ilaha illa anta. A'udzu bika min syarri nafsii wa min syarrisy syaythooni wa syirkihi, wa an aqtarifa 'alaa nafsii suu-an aw ajurrohu ilaa muslim.",
       "meaning": "Ya Allah, Yang Maha Mengetahui yang ghaib dan yang nyata, wahai Rabb pencipta langit dan bumi, Rabb segala sesuatu dan yang merajainya. Aku bersaksi bahwa tidak ada ilah yang berhak disembah kecuali Engkau. Aku berlindung kepadaMu dari kejahatan diriku, setan dan balatentaranya (godaan untuk berbuat syirik pada Allah), dan aku (berlindung kepada-Mu) dari berbuat kejelekan terhadap diriku atau menyeretnya kepada seorang muslim.",
       "repeat": 1,
-      "source": "Do'a ini diajarkan oleh Rasulullah shallallahu 'alaihi wa sallam pada Abu Bakar Ash Shiddiq radhiyallahu 'anhu untuk dibaca pada pagi, petang dan saat beranjak tidur. Dzikir ini mengajarkan kita untuk mengakui keesaan Allah dan memohon perlindungan-Nya dari kejahatan diri sendiri dan setan. Ini mengingatkan kita bahwa musuh terbesar kita bisa jadi adalah diri kita sendiri dan godaan setan. Sumber: Nabi صلي الله عليه وسلم bersabda kepada Abu Bakar ash-Shiddiq رضي الله عنه “Ucapkanlah pagi dan petang dan apabila engkau hendak tidur.” HR. Al-Bukhari dalam Al-Adabul Mufrad 1202, at-Tirmidzi no.3392 dan Abu Daud no. 5067,Lihat Shahih At- Tirmidzi no. 2798, Shahiih al-Adabil Mufrad no. 914, shahih. Lihat Silsilah al-Ahaadiits ash-Shahiihah no. 2753."
+      "source": "Do'a ini diajarkan oleh Rasulullah shallallahu 'alaihi wa sallam pada Abu Bakar Ash Shiddiq radhiyallahu 'anhu untuk dibaca pada pagi, petang dan saat beranjak tidur. Dzikir ini mengajarkan kita untuk mengakui keesaan Allah dan memohon perlindungan-Nya dari kejahatan diri sendiri dan setan. Ini mengingatkan kita bahwa musuh terbesar kita bisa jadi adalah diri kita sendiri dan godaan setan. Sumber: Nabi صلي الله عليه وسلم bersabda kepada Abu Bakar ash-Shiddiq رضي الله عنه “Ucapkanlah pagi dan petang dan apabila engkau hendak tidur.” HR. Al-Bukhari dalam Al-Adabul Mufrad 1202, at-Tirmidzi no.3392 dan Abu Daud no. 5067,Lihat Shahih At- Tirmidzi no. 2798, Shahiih al-Adabil Mufrad no. 914, shahih. Lihat Silsilah al-Ahaadiits ash-Shahiihah no. 2753.",
+      "meaningIn": "Ya Allah, Yang Maha Mengetahui yang ghaib dan yang nyata, wahai Rabb pencipta langit dan bumi, Rabb segala sesuatu dan yang merajainya. Aku bersaksi bahwa tidak ada ilah yang berhak disembah kecuali Engkau. Aku berlindung kepadaMu dari kejahatan diriku, setan dan balatentaranya (godaan untuk berbuat syirik pada Allah), dan aku (berlindung kepada-Mu) dari berbuat kejelekan terhadap diriku atau menyeretnya kepada seorang muslim.",
+      "meaningEn": "O Allah, Knower of the unseen and the seen, Creator of the heavens and the Earth, Lord and Sovereign of all things, I bear witness that none has the right to be worshipped except You. I take refuge in You from the evil of my soul and from the evil and shirk of the devil, and from committing wrong against my soul or bringing such upon another Muslim."
     },
     {
       "id": "petang_12",
@@ -289,7 +351,9 @@
       "latin": "Bismillahilladzi laa yadhurru ma'asmihi syai-un fil ardhi wa laa fis samaa' wa huwas samii'ul 'aliim.",
       "meaning": "Dengan nama Allah yang bila disebut, segala sesuatu di bumi dan langit tidak akan berbahaya, Dia-lah Yang Maha Mendengar lagi Maha Mengetahui.",
       "repeat": 3,
-      "source": "Barangsiapa yang mengucapkan dzikir tersebut sebanyak tiga kali di pagi hari dan tiga kali di petang hari, maka tidak akan ada bahaya yang tiba-tiba memudaratkannya. \n Dzikir ini mengajarkan kita untuk selalu menyebut nama Allah sebagai perlindungan dari segala bahaya. Ini mengingatkan kita bahwa dengan menyebut nama Allah, kita akan terlindungi dari bahaya di bumi dan di langit. Sumber:HR. Abu Daud no. 5088, 5089, Tirmidzi no. 3388, dan Ibnu Majah no. 3869."
+      "source": "Barangsiapa yang mengucapkan dzikir tersebut sebanyak tiga kali di pagi hari dan tiga kali di petang hari, maka tidak akan ada bahaya yang tiba-tiba memudaratkannya. \n Dzikir ini mengajarkan kita untuk selalu menyebut nama Allah sebagai perlindungan dari segala bahaya. Ini mengingatkan kita bahwa dengan menyebut nama Allah, kita akan terlindungi dari bahaya di bumi dan di langit. Sumber:HR. Abu Daud no. 5088, 5089, Tirmidzi no. 3388, dan Ibnu Majah no. 3869.",
+      "meaningIn": "Dengan nama Allah yang bila disebut, segala sesuatu di bumi dan langit tidak akan berbahaya, Dia-lah Yang Maha Mendengar lagi Maha Mengetahui.",
+      "meaningEn": "In the name of Allah with whose name nothing is harmed on earth nor in the heavens, and He is the All-Hearing, the All-Knowing."
     },
     {
       "id": "petang_13",
@@ -298,7 +362,9 @@
       "latin": "Rodhiitu billaahi robbaa, wa bil-islaami diinaa, wa bi-muhammadin shallallaahu 'alaihi wa sallama nabiyya.",
       "meaning": "Aku ridha Allah sebagai Rabb, Islam sebagai agama dan Muhammad shallallahu 'alaihi wa sallam sebagai nabi.",
       "repeat": 3,
-      "source": "Barangsiapa yang mengucapkan dzikir ini sebanyak tiga kali di pagi hari dan tiga kali di petang hari, maka pantas baginya mendapatkan ridha Allah. Dzikir ini mengajarkan kita untuk meneguhkan keimanan kita kepada Allah, Islam, dan Nabi Muhammad SAW. Ini adalah bentuk pengakuan dan kerelaan hati terhadap tiga hal fundamental dalam keimanan seorang Muslim. Sumber: HR. Abu Daud no. 5072, Tirmidzi no. 3389"
+      "source": "Barangsiapa yang mengucapkan dzikir ini sebanyak tiga kali di pagi hari dan tiga kali di petang hari, maka pantas baginya mendapatkan ridha Allah. Dzikir ini mengajarkan kita untuk meneguhkan keimanan kita kepada Allah, Islam, dan Nabi Muhammad SAW. Ini adalah bentuk pengakuan dan kerelaan hati terhadap tiga hal fundamental dalam keimanan seorang Muslim. Sumber: HR. Abu Daud no. 5072, Tirmidzi no. 3389",
+      "meaningIn": "Aku ridha Allah sebagai Rabb, Islam sebagai agama dan Muhammad shallallahu 'alaihi wa sallam sebagai nabi.",
+      "meaningEn": "I am pleased with Allah as Lord, with Islam as religion, and with Muhammad as Prophet."
     },
     {
       "id": "petang_14",
@@ -307,7 +373,9 @@
       "latin": "Yaa Hayyu Yaa Qoyyum, bi-rohmatika astaghiits, wa ash-lih lii sya'nii kullahu wa laa takilnii ilaa nafsii thorfata 'ain.",
       "meaning": "Wahai Rabb Yang Maha Hidup, wahai Rabb Yang Berdiri Sendiri (tidak butuh segala sesuatu), dengan rahmat-Mu aku minta pertolongan, perbaikilah segala urusanku dan jangan diserahkan kepadaku sekali pun sekejap mata (tanpa mendapat pertolongan dari-Mu).",
       "repeat": 1,
-      "source": "Dzikir ini diajarkan oleh Nabi shallallahu 'alaihi wa sallam pada Fathimah supaya diamalkan pagi dan petang. Dzikir ini mengajarkan kita untuk selalu bergantung pada Allah dan memohon pertolongan-Nya dalam segala urusan. Ini mengingatkan kita bahwa kita tidak bisa mandiri bahkan sekejap mata pun tanpa pertolongan Allah. Sumber: HR. Ibnu As-Sunni dalam 'Amalul Yaum wal Lailah no. 46, An-Nasa'i dalam Al-Kubra (381/ 570), Al-Bazzar dalam musnadnya (4/ 25/ 3107)"
+      "source": "Dzikir ini diajarkan oleh Nabi shallallahu 'alaihi wa sallam pada Fathimah supaya diamalkan pagi dan petang. Dzikir ini mengajarkan kita untuk selalu bergantung pada Allah dan memohon pertolongan-Nya dalam segala urusan. Ini mengingatkan kita bahwa kita tidak bisa mandiri bahkan sekejap mata pun tanpa pertolongan Allah. Sumber: HR. Ibnu As-Sunni dalam 'Amalul Yaum wal Lailah no. 46, An-Nasa'i dalam Al-Kubra (381/ 570), Al-Bazzar dalam musnadnya (4/ 25/ 3107)",
+      "meaningIn": "Wahai Rabb Yang Maha Hidup, wahai Rabb Yang Berdiri Sendiri (tidak butuh segala sesuatu), dengan rahmat-Mu aku minta pertolongan, perbaikilah segala urusanku dan jangan diserahkan kepadaku sekali pun sekejap mata (tanpa mendapat pertolongan dari-Mu).",
+      "meaningEn": "O Ever Living, O Self-Subsisting and Supporter of all, by Your mercy I seek assistance, rectify for me all of my affairs and do not leave me to myself, even for the blink of an eye."
     },
     {
       "id": "petang_15",
@@ -316,7 +384,9 @@
       "latin": "Amsaynaa 'ala fithrotil islaam wa 'alaa kalimatil ikhlaash, wa 'alaa diini nabiyyinaa Muhammadin shallallahu 'alaihi wa sallam, wa 'alaa millati abiinaa Ibraahiima haniifam muslimaaw wa maa kaana minal musyrikin.",
       "meaning": "Di waktu sore kami berada diatas fitrah agama Islam, kalimat ikhlas, agama Nabi kita Muhammad صلي الله عليه وسلم dan agama ayah kami, Ibrahim, yang berdiri di atas jalan yang lurus, muslim dan tidak tergolong orang-orang yang musyrik.",
       "repeat": 1,
-      "source": "Dzikir ini menunjukkan bahwa kita berada di atas fitrah Islam, kalimat ikhlas (kalimat syahadat), agama Nabi Muhammad shallallahu 'alaihi wa sallam, dan millah (agama) Ibrahim yang lurus. Dzikir ini mengajarkan kita untuk meneguhkan identitas kita sebagai Muslim yang mengikuti ajaran Nabi Muhammad SAW dan agama Ibrahim yang lurus. Ini mengingatkan kita untuk selalu berpegang teguh pada fitrah Islam dan menjauhi kesyirikan. Sumber: HR. Ahmad (3/406-407), Ad-Darimi (2/292) dan lain-lain"
+      "source": "Dzikir ini menunjukkan bahwa kita berada di atas fitrah Islam, kalimat ikhlas (kalimat syahadat), agama Nabi Muhammad shallallahu 'alaihi wa sallam, dan millah (agama) Ibrahim yang lurus. Dzikir ini mengajarkan kita untuk meneguhkan identitas kita sebagai Muslim yang mengikuti ajaran Nabi Muhammad SAW dan agama Ibrahim yang lurus. Ini mengingatkan kita untuk selalu berpegang teguh pada fitrah Islam dan menjauhi kesyirikan. Sumber: HR. Ahmad (3/406-407), Ad-Darimi (2/292) dan lain-lain",
+      "meaningIn": "Di waktu sore kami berada diatas fitrah agama Islam, kalimat ikhlas, agama Nabi kita Muhammad صلي الله عليه وسلم dan agama ayah kami, Ibrahim, yang berdiri di atas jalan yang lurus, muslim dan tidak tergolong orang-orang yang musyrik.",
+      "meaningEn": "We have entered the evening upon the natural way of Islam, the declaration of sincere faith, the religion of our Prophet Muhammad (may Allah’s peace and blessings be upon him), and the faith of our forefather Ibraheem, who was upright, a Muslim, and not among those who associate partners with Allah."
     },
     {
       "id": "petang_16",
@@ -325,7 +395,9 @@
       "latin": "Laa ilaha illa Allahu wa hadhu laa shariki lahu, lahu mulkuu wa lahu hamduu wa huwa 'alaa kulli syai-in qadiru.",
       "meaning": "Tidak ada ilah yang berhak disembah selain Allah semata, tidak ada sekutu bagi-Nya. Milik Allah kerajaan dan segala pujian. Dia-lah yang berkuasa atas segala sesuatu.",
       "repeat": 10,
-      "source": "Barangsiapa yang mengucapkan dzikir tersebut di pagi hari sebanyak 10x, Allah akan mencatatkan baginya 10 kebaikan, menghapuskan baginya 10 kesalahan, ia juga mendapatkan kebaikan semisal memerdekakan 10 budak, Allah akan melindunginya dari gangguan setan hingga petang hari. Siapa yang mengucapkannya di petang hari, ia akan mendapatkan keutamaan semisal itu pula. Dzikir ini mengajarkan kita tentang tauhid (keesaan Allah) dan kekuasaan-Nya atas segala sesuatu. Ini mengingatkan kita bahwa hanya Allah yang berhak disembah dan Dia memiliki kekuasaan mutlak atas segala sesuatu. Sumber: HR. Ahmad (3/406-407), Ad-Darimi (2/292) dan lain-lain"
+      "source": "Barangsiapa yang mengucapkan dzikir tersebut di pagi hari sebanyak 10x, Allah akan mencatatkan baginya 10 kebaikan, menghapuskan baginya 10 kesalahan, ia juga mendapatkan kebaikan semisal memerdekakan 10 budak, Allah akan melindunginya dari gangguan setan hingga petang hari. Siapa yang mengucapkannya di petang hari, ia akan mendapatkan keutamaan semisal itu pula. Dzikir ini mengajarkan kita tentang tauhid (keesaan Allah) dan kekuasaan-Nya atas segala sesuatu. Ini mengingatkan kita bahwa hanya Allah yang berhak disembah dan Dia memiliki kekuasaan mutlak atas segala sesuatu. Sumber: HR. Ahmad (3/406-407), Ad-Darimi (2/292) dan lain-lain",
+      "meaningIn": "Tidak ada ilah yang berhak disembah selain Allah semata, tidak ada sekutu bagi-Nya. Milik Allah kerajaan dan segala pujian. Dia-lah yang berkuasa atas segala sesuatu.",
+      "meaningEn": "None has the right to be worshipped except Allah alone, without partner. To Him belong all sovereignty and praise, and He has power over all things."
     },
     {
       "id": "petang_17",
@@ -334,7 +406,9 @@
       "latin": "Subhanallahi wa bihamdihi.",
       "meaning": "Maha Suci Allah, aku memuji-Nya.",
       "repeat": 100,
-      "source": "Barangsiapa yang mengucapkan kalimat 'Subhanallahi wa bihamdihi' di pagi dan petang hari sebanyak 100x, maka tidak ada yang datang pada hari kiamat yang lebih baik dari yang ia lakukan kecuali orang yang mengucapkan semisal atau lebih dari itu. Dzikir ini mengajarkan kita untuk selalu mensucikan dan memuji Allah. Ini adalah bentuk pengakuan akan kesempurnaan Allah dan rasa syukur atas segala nikmat-Nya. Sumber: HR. Muslim no. 2692"
+      "source": "Barangsiapa yang mengucapkan kalimat 'Subhanallahi wa bihamdihi' di pagi dan petang hari sebanyak 100x, maka tidak ada yang datang pada hari kiamat yang lebih baik dari yang ia lakukan kecuali orang yang mengucapkan semisal atau lebih dari itu. Dzikir ini mengajarkan kita untuk selalu mensucikan dan memuji Allah. Ini adalah bentuk pengakuan akan kesempurnaan Allah dan rasa syukur atas segala nikmat-Nya. Sumber: HR. Muslim no. 2692",
+      "meaningIn": "Maha Suci Allah, aku memuji-Nya.",
+      "meaningEn": "How perfect Allah is and I praise Him."
     },
     {
       "id": "petang_18",
@@ -343,7 +417,9 @@
       "latin": "A'udzu bikalimaatil lahit tammaa ti mins syarri maa kholaq.",
       "meaning": "Aku berlindung dengan kalimat-kalimat Allah yang sempurna, dari kejahatan sesuatu yang diciptakan-Nya.",
       "repeat": 3,
-      "source": "HR. Ahmad 11/290, an-Nasa-i dalam ‘Amalul Yaum wal Lailah no. 596, Shahiih at-Targhiib wat Tarhiib 1/412 no. 652, Shahiih al-Jaami ‘ish Shaghiir no. 6427."
+      "source": "HR. Ahmad 11/290, an-Nasa-i dalam ‘Amalul Yaum wal Lailah no. 596, Shahiih at-Targhiib wat Tarhiib 1/412 no. 652, Shahiih al-Jaami ‘ish Shaghiir no. 6427.",
+      "meaningIn": "Aku berlindung dengan kalimat-kalimat Allah yang sempurna, dari kejahatan sesuatu yang diciptakan-Nya.",
+      "meaningEn": "I take refuge in Allah’s perfect words from the evil He has created."
     }
   ]
 }

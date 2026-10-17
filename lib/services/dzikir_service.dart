@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show Locale;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,7 +12,8 @@ class DzikirItem {
   final String title;
   final String arabic;
   final String latin;
-  final String meaning;
+  final String meaningIn;
+  final String meaningEn;
   final int repeat;
   final String source;
 
@@ -20,20 +22,43 @@ class DzikirItem {
     required this.title,
     required this.arabic,
     required this.latin,
-    required this.meaning,
+    required this.meaningIn,
+    required this.meaningEn,
     required this.repeat,
     required this.source,
   });
 
-  factory DzikirItem.fromJson(Map<String, dynamic> json) => DzikirItem(
-        id: json['id'] as String,
-        title: json['title'] as String? ?? '',
-        arabic: json['arabic'] as String? ?? '',
-        latin: json['latin'] as String? ?? '',
-        meaning: json['meaning'] as String? ?? '',
-        repeat: (json['repeat'] as num?)?.toInt() ?? 1,
-        source: json['source'] as String? ?? '',
-      );
+  factory DzikirItem.fromJson(Map<String, dynamic> json) {
+    final legacy = json['meaning'] as String? ?? '';
+    final meaningIn = json['meaningIn'] as String? ?? legacy;
+    final meaningEn = json['meaningEn'] as String? ?? '';
+    return DzikirItem(
+      id: json['id'] as String,
+      title: json['title'] as String? ?? '',
+      arabic: json['arabic'] as String? ?? '',
+      latin: json['latin'] as String? ?? '',
+      meaningIn: meaningIn,
+      meaningEn: meaningEn,
+      repeat: (json['repeat'] as num?)?.toInt() ?? 1,
+      source: json['source'] as String? ?? '',
+    );
+  }
+
+  /// Prefer Indonesian for `in`/`id`, English when available, else Indonesian.
+  String localizedMeaning(Locale locale) {
+    final code = locale.languageCode;
+    if (code == 'in' || code == 'id') {
+      return meaningIn;
+    }
+    if (meaningEn.isNotEmpty) return meaningEn;
+    return meaningIn;
+  }
+
+  bool meaningUsesIndonesianFallback(Locale locale) {
+    final code = locale.languageCode;
+    if (code == 'in' || code == 'id') return false;
+    return meaningEn.isEmpty && meaningIn.isNotEmpty;
+  }
 }
 
 /// Offline morning/evening dhikr checklist with per-item repeat counters.

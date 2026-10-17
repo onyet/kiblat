@@ -220,11 +220,6 @@ class _DzikirScreenState extends State<DzikirScreen> {
                                 itemCount: items.length + 1,
                                 itemBuilder: (context, index) {
                                   if (index == items.length) {
-                                    final attr = DzikirService
-                                        .instance.attributionNotifier.value;
-                                    if (attr.isEmpty) {
-                                      return const SizedBox.shrink();
-                                    }
                                     return Padding(
                                       padding: const EdgeInsets.fromLTRB(
                                         8,
@@ -233,7 +228,7 @@ class _DzikirScreenState extends State<DzikirScreen> {
                                         8,
                                       ),
                                       child: Text(
-                                        attr,
+                                        tr('dzikir_attribution'),
                                         style: TextStyle(
                                           fontSize: 11,
                                           height: 1.35,
@@ -248,6 +243,7 @@ class _DzikirScreenState extends State<DzikirScreen> {
                                       .countFor(item.id);
                                   final complete = DzikirService.instance
                                       .isComplete(item);
+                                  final locale = context.locale;
                                   return _DzikirCard(
                                     item: item,
                                     count: count,
@@ -255,6 +251,11 @@ class _DzikirScreenState extends State<DzikirScreen> {
                                     cardColor: card,
                                     textColor: text,
                                     accentColor: accent,
+                                    meaning: item.localizedMeaning(locale),
+                                    showIndonesianNote: item
+                                        .meaningUsesIndonesianFallback(
+                                      locale,
+                                    ),
                                     onTap: () => _onTapItem(item),
                                     onLongPress: () async {
                                       await DzikirService.instance
@@ -282,6 +283,8 @@ class _DzikirCard extends StatelessWidget {
   final Color cardColor;
   final Color textColor;
   final Color accentColor;
+  final String meaning;
+  final bool showIndonesianNote;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
@@ -292,6 +295,8 @@ class _DzikirCard extends StatelessWidget {
     required this.cardColor,
     required this.textColor,
     required this.accentColor,
+    required this.meaning,
+    required this.showIndonesianNote,
     required this.onTap,
     required this.onLongPress,
   });
@@ -384,10 +389,22 @@ class _DzikirCard extends StatelessWidget {
                     ),
                   ),
                 ],
-                if (item.meaning.isNotEmpty) ...[
+                if (meaning.isNotEmpty) ...[
                   const SizedBox(height: 8),
+                  if (showIndonesianNote)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        tr('dzikir_meaning_id_note'),
+                        style: TextStyle(
+                          color: accentColor.withValues(alpha: 0.85),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   Text(
-                    item.meaning,
+                    meaning,
                     style: TextStyle(
                       color: textColor.withValues(alpha: 0.8),
                       fontSize: 13,

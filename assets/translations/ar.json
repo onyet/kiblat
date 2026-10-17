@@ -321,5 +321,17 @@
   "dzikir_tap_hint": "انقر للعد · اضغط مطولاً لإعادة هذا العنصر",
   "dzikir_reset_period": "إعادة تعيين القائمة",
   "dzikir_reset_confirm": "مسح تقدم اليوم لهذه القائمة؟",
-  "dzikir_open": "أذكار الصباح والمساء"
+  "dzikir_open": "أذكار الصباح والمساء",
+  "tasbih_reset": "إعادة العداد",
+  "dzikir_card_subtitle": "قائمة أذكار الصباح والمساء مع عدّ التكرار",
+  "wirid_library_card_subtitle": "أوراد مخصصة وأهداف وسجل الجلسات",
+  "wirid_library_pro_hint": "ميزة Pro",
+  "daily_dhikr_fmt": "الذكر اليومي · {count} / {target}",
+  "active_wirid": "الورد النشط",
+  "tasbih_target_label": "الهدف",
+  "wirid_subhanallah": "سبحان الله",
+  "wirid_alhamdulillah": "الحمد لله",
+  "wirid_allahuakbar": "الله أكبر",
+  "dzikir_meaning_id_note": "الترجمة معروضة باللغة الإندونيسية",
+  "dzikir_attribution": "محتوى مقتبس من مجموعات حصن المسلم مفتوحة المصدر. النصوص الدينية ليست ملكًا لـ Kiblat."
 }

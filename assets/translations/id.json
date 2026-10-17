@@ -321,5 +321,17 @@
   "dzikir_tap_hint": "Ketuk untuk menghitung · tahan untuk reset item ini",
   "dzikir_reset_period": "Reset daftar ini",
   "dzikir_reset_confirm": "Hapus progres hari ini untuk daftar ini?",
-  "dzikir_open": "Dzikir pagi & petang"
+  "dzikir_open": "Dzikir pagi & petang",
+  "tasbih_reset": "Reset hitungan",
+  "dzikir_card_subtitle": "Checklist dzikir pagi & petang dengan hitungan ulang",
+  "wirid_library_card_subtitle": "Wirid kustom, target, dan riwayat sesi",
+  "wirid_library_pro_hint": "Fitur Pro",
+  "daily_dhikr_fmt": "Dzikir harian · {count} / {target}",
+  "active_wirid": "Wirid aktif",
+  "tasbih_target_label": "Target",
+  "wirid_subhanallah": "Subhanallah",
+  "wirid_alhamdulillah": "Alhamdulillah",
+  "wirid_allahuakbar": "Allahu Akbar",
+  "dzikir_meaning_id_note": "Arti ditampilkan dalam Bahasa Indonesia",
+  "dzikir_attribution": "Konten diadaptasi dari koleksi open-source Hisnul Muslim. Teks keagamaan bukan milik Kiblat."
 }

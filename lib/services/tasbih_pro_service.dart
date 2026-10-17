@@ -5,19 +5,28 @@ import 'package:shared_preferences/shared_preferences.dart';
 class TasbihWirid {
   final String id;
   final String name;
+  /// Optional i18n key for built-in wirids (e.g. `wirid_subhanallah`).
+  final String? nameKey;
   final int target;
 
   const TasbihWirid({
     required this.id,
     required this.name,
+    this.nameKey,
     required this.target,
   });
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'target': target};
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        if (nameKey != null) 'nameKey': nameKey,
+        'target': target,
+      };
 
   factory TasbihWirid.fromJson(Map<String, dynamic> json) => TasbihWirid(
         id: json['id'] as String,
         name: json['name'] as String,
+        nameKey: json['nameKey'] as String?,
         target: json['target'] as int? ?? 33,
       );
 }
@@ -82,7 +91,7 @@ class TasbihProService {
           wiridsNotifier.value = _defaults();
           seededDefaults = true;
         } else {
-          wiridsNotifier.value = parsed;
+          wiridsNotifier.value = parsed.map(_withBuiltinNameKey).toList();
         }
       } catch (_) {
         wiridsNotifier.value = _defaults();
@@ -118,10 +127,42 @@ class TasbihProService {
     }
   }
 
+  TasbihWirid _withBuiltinNameKey(TasbihWirid w) {
+    if (w.nameKey != null) return w;
+    const keys = {
+      'subhanallah': 'wirid_subhanallah',
+      'alhamdulillah': 'wirid_alhamdulillah',
+      'allahuakbar': 'wirid_allahuakbar',
+    };
+    final key = keys[w.id];
+    if (key == null) return w;
+    return TasbihWirid(
+      id: w.id,
+      name: w.name,
+      nameKey: key,
+      target: w.target,
+    );
+  }
+
   List<TasbihWirid> _defaults() => const [
-        TasbihWirid(id: 'subhanallah', name: 'Subhanallah', target: 33),
-        TasbihWirid(id: 'alhamdulillah', name: 'Alhamdulillah', target: 33),
-        TasbihWirid(id: 'allahuakbar', name: 'Allahu Akbar', target: 34),
+        TasbihWirid(
+          id: 'subhanallah',
+          name: 'Subhanallah',
+          nameKey: 'wirid_subhanallah',
+          target: 33,
+        ),
+        TasbihWirid(
+          id: 'alhamdulillah',
+          name: 'Alhamdulillah',
+          nameKey: 'wirid_alhamdulillah',
+          target: 33,
+        ),
+        TasbihWirid(
+          id: 'allahuakbar',
+          name: 'Allahu Akbar',
+          nameKey: 'wirid_allahuakbar',
+          target: 34,
+        ),
       ];
 
   String _todayKey() {
