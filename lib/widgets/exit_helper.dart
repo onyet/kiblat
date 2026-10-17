@@ -28,103 +28,40 @@ Future<void> showExitAndMaybeShowAd(
     context: context,
     barrierDismissible: true,
     builder: (ctx) {
-      bool isLoading = false;
-      double progress = 0.0;
-      Timer? timer;
-      final int totalMs = adTimeout.inMilliseconds;
+      final isLight = AppTheme.isLight(settings, context);
+      final textColor = AppTheme.getTextColor(settings, context);
+      final cardColor = AppTheme.getCardColor(settings, context);
+      final accentColor = AppTheme.getAccentColor(settings, context);
 
-      return StatefulBuilder(
-        builder: (ctx2, setState) {
-          final isLight = AppTheme.isLight(settings, context);
-          final textColor = AppTheme.getTextColor(settings, context);
-          final cardColor = AppTheme.getCardColor(settings, context);
-          final accentColor = AppTheme.getAccentColor(settings, context);
-
-          return AlertDialog(
-            backgroundColor: cardColor,
-            title: Text(
-              tr('exit_confirm_title'),
-              style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+      return AlertDialog(
+        backgroundColor: cardColor,
+        title: Text(
+          tr('exit_confirm_title'),
+          style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          tr('exit_confirm_msg'),
+          style: TextStyle(color: textColor.withValues(alpha: 0.8)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(false),
+            child: Text(tr('stay')),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: accentColor,
+              foregroundColor: isLight ? Colors.white : Colors.black,
             ),
-            content: isLoading
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        tr('exit_showing_ad'),
-                        style: TextStyle(color: textColor.withValues(alpha: 0.8)),
-                      ),
-                      const SizedBox(height: 16),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          backgroundColor: accentColor.withValues(alpha: 0.1),
-                          valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-                        ),
-                      ),
-                    ],
-                  )
-                : Text(
-                    tr('exit_confirm_msg'),
-                    style: TextStyle(color: textColor.withValues(alpha: 0.8)),
-                  ),
-            actions: isLoading
-                ? null
-                : [
-                    TextButton(
-                      onPressed: () =>
-                          Navigator.of(ctx2, rootNavigator: true).pop(false),
-                      child: Text(tr('stay')),
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: accentColor,
-                        foregroundColor: isLight ? Colors.white : Colors.black,
-                      ),
-                      onPressed: () async {
-                        // Switch to loading state (disables buttons)
-                        setState(() {
-                          isLoading = true;
-                          progress = 0.0;
-                        });
-
-                        // Start a timer to animate progress
-                        final startMs = DateTime.now().millisecondsSinceEpoch;
-                        timer = Timer.periodic(const Duration(milliseconds: 50), (t) {
-                          final elapsed = DateTime.now().millisecondsSinceEpoch - startMs;
-                          final double normalized = math.min(1.0, elapsed / totalMs);
-                          final eased = 1 - math.pow((1 - normalized), 3);
-                          setState(() {
-                            progress = eased.toDouble();
-                          });
-                        });
-
-                        // Track confirmed attempt
-                        TelemetryService.instance.trackExitAttempt(confirmed: true);
-
-                        // Show ad if user is NOT Pro
-                        if (!settings.isProUser) {
-                          try {
-                            final adShown = await AdService.instance.showInterstitialAd(
-                              timeout: adTimeout,
-                            );
-                            TelemetryService.instance.trackAdResult(shown: adShown);
-                          } catch (_) {}
-                        }
-
-                        // Stop the timer
-                        timer?.cancel();
-                        
-                        // Close dialog and return confirmed result
-                        Navigator.of(ctx2, rootNavigator: true).pop(true);
-                      },
-                      child: Text(tr('exit'), style: const TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-          );
-        },
+            onPressed: () {
+              // Track confirmed attempt
+              TelemetryService.instance.trackExitAttempt(confirmed: true);
+              Navigator.of(ctx, rootNavigator: true).pop(true);
+            },
+            child: Text(tr('exit'),
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
       );
     },
   );

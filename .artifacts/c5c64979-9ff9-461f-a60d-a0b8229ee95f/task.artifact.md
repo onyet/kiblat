@@ -1,0 +1,2 @@
+- [x] Implement Ad Content Rating constraints in `AdService.initialize()`
+- [x] Verify compilation and initialization logic

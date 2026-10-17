@@ -64,7 +64,15 @@ flutter pub get
 flutter run
 ```
 
-Notes: Android needs location permission; iOS needs Info.plist keys (already in the repo). If you use Google Maps, add your API key in platform files.
+Notes: Android needs location permission; iOS needs Info.plist keys (already in the repo). Google Maps reads `GOOGLE_API_KEY` from the ignored root `.env` file.
+
+For GeoNames reverse geocoding, pass an active GeoNames username at build/run time:
+
+```bash
+flutter run --dart-define=GEONAMES_USERNAME=your_geonames_username
+```
+
+Place labels use the local cache first. When no nearby cached place is available and GeoNames is configured, the app sends the current coordinates to GeoNames. If that lookup fails or is not configured, it falls back to the platform geocoder, which may use the device platform's location services. The local database is a cache populated by successful lookups, not a bundled global city database.
 
 ---
 
@@ -84,6 +92,8 @@ storeFile=keystore.jks
 ```bash
 flutter build appbundle --release
 ```
+
+Add `--dart-define=GEONAMES_USERNAME=your_geonames_username` if GeoNames reverse geocoding should be enabled in the release build.
 
 1. Upload `build/app/outputs/bundle/release/app-release.aab` to Play Console.
 

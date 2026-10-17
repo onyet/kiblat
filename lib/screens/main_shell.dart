@@ -22,14 +22,35 @@ class MainShell extends StatefulWidget {
     shellKey.currentState?._setTab(index);
   }
 
+  /// Get the active tab notifier from context.
+  static ValueNotifier<int>? activeTabOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<InheritedMainShell>()?.activeTabNotifier;
+  }
+
   const MainShell({super.key});
 
   @override
   State<MainShell> createState() => MainShellState();
 }
 
+class InheritedMainShell extends InheritedWidget {
+  final ValueNotifier<int> activeTabNotifier;
+
+  const InheritedMainShell({
+    super.key,
+    required this.activeTabNotifier,
+    required super.child,
+  });
+
+  @override
+  bool updateShouldNotify(InheritedMainShell oldWidget) =>
+      activeTabNotifier != oldWidget.activeTabNotifier;
+}
+
 class MainShellState extends State<MainShell> {
-  int _currentIndex = 0;
+  final ValueNotifier<int> activeTabNotifier = ValueNotifier<int>(0);
+  int get _currentIndex => activeTabNotifier.value;
+
   // Keep screens alive between tab switches using IndexedStack
   final _screens = const [
     HomeScreen(),
@@ -50,14 +71,23 @@ class MainShellState extends State<MainShell> {
     });
   }
 
+  @override
+  void dispose() {
+    activeTabNotifier.dispose();
+    super.dispose();
+  }
+
   void _setTab(int index) {
     if (!mounted) return;
-    setState(() => _currentIndex = index);
+    activeTabNotifier.value = index;
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
+    return InheritedMainShell(
+      activeTabNotifier: activeTabNotifier,
+      child: ValueListenableBuilder(
       valueListenable: SettingsService.instance.notifier,
       builder: (context, settings, _) {
         final bgColor = AppTheme.getBackgroundColor(settings, context);
@@ -136,8 +166,9 @@ class MainShellState extends State<MainShell> {
           ),
         );
       },
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildNavItem({
     required int index,

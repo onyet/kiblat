@@ -27,7 +27,7 @@ class NotificationService {
 
   /// Current notification channel ID for Adzan (changes when custom sound is set)
   String _currentChannelId = 'prayer_times';
-  
+
   /// Fixed channel ID for reminders (standard sound)
   static const String _reminderChannelId = 'prayer_reminders';
 
@@ -66,20 +66,44 @@ class NotificationService {
     String? localTimezoneId = timezoneId;
     if (localTimezoneId == null || localTimezoneId.isEmpty) {
       try {
-        localTimezoneId = await _platformChannel.invokeMethod<String>('getLocalTimezone');
+        localTimezoneId = await _platformChannel.invokeMethod<String>(
+          'getLocalTimezone',
+        );
       } catch (_) {}
     }
 
-    if (localTimezoneId == null || localTimezoneId.isEmpty) return;
+    if (localTimezoneId == null || localTimezoneId.isEmpty) {
+      try {
+        tz.setLocalLocation(tz.UTC);
+      } catch (_) {}
+      return;
+    }
     try {
       tz.setLocalLocation(tz.getLocation(localTimezoneId));
-    } catch (_) {}
+    } catch (_) {
+      // A stale prior custom timezone must not survive an invalid selection.
+      try {
+        final deviceTimezone = await _platformChannel.invokeMethod<String>(
+          'getLocalTimezone',
+        );
+        tz.setLocalLocation(
+          deviceTimezone == null || deviceTimezone.isEmpty
+              ? tz.UTC
+              : tz.getLocation(deviceTimezone),
+        );
+      } catch (_) {
+        try {
+          tz.setLocalLocation(tz.UTC);
+        } catch (_) {}
+      }
+    }
   }
 
   Future<String?> _usableAndroidSoundUri(String? customSoundPath) async {
     if (customSoundPath == null || customSoundPath.isEmpty) return null;
     if (!Platform.isAndroid) return customSoundPath;
-    if (customSoundPath.startsWith('content://') || customSoundPath.startsWith('android.resource://')) {
+    if (customSoundPath.startsWith('content://') ||
+        customSoundPath.startsWith('android.resource://')) {
       return customSoundPath;
     }
     return null;
@@ -97,17 +121,25 @@ class NotificationService {
 
   Future<AndroidScheduleMode> _resolveAndroidScheduleMode() async {
     if (!Platform.isAndroid) return AndroidScheduleMode.exactAllowWhileIdle;
-    final androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (androidPlugin == null) return AndroidScheduleMode.inexactAllowWhileIdle;
     try {
-      final canScheduleExact = await androidPlugin.canScheduleExactNotifications();
-      if (canScheduleExact ?? false) return AndroidScheduleMode.exactAllowWhileIdle;
+      final canScheduleExact = await androidPlugin
+          .canScheduleExactNotifications();
+      if (canScheduleExact ?? false)
+        return AndroidScheduleMode.exactAllowWhileIdle;
     } catch (_) {}
     return AndroidScheduleMode.inexactAllowWhileIdle;
   }
 
   Future<void> _ensureNotificationChannels(String? customSoundPath) async {
-    final androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (androidPlugin == null) return;
 
     // 1. Adzan Channel
@@ -115,12 +147,14 @@ class NotificationService {
     if (soundUri != null && soundUri.isNotEmpty) {
       final newChannelId = _channelIdForSound(soundUri);
       try {
-        if (_currentChannelId != 'prayer_times' && _currentChannelId != newChannelId) {
+        if (_currentChannelId != 'prayer_times' &&
+            _currentChannelId != newChannelId) {
           await androidPlugin.deleteNotificationChannel(_currentChannelId);
         }
       } catch (_) {}
       final channel = AndroidNotificationChannel(
-        newChannelId, 'Adzan Notification',
+        newChannelId,
+        'Adzan Notification',
         description: 'Daily adzan notifications',
         importance: Importance.high,
         sound: UriAndroidNotificationSound(soundUri),
@@ -130,64 +164,113 @@ class NotificationService {
       _currentChannelId = newChannelId;
     } else {
       try {
-        if (_currentChannelId != 'prayer_times') await androidPlugin.deleteNotificationChannel(_currentChannelId);
+        if (_currentChannelId != 'prayer_times')
+          await androidPlugin.deleteNotificationChannel(_currentChannelId);
       } catch (_) {}
-      const channel = AndroidNotificationChannel('prayer_times', 'Adzan Notification',
-          description: 'Daily adzan notifications', importance: Importance.high);
+      const channel = AndroidNotificationChannel(
+        'prayer_times',
+        'Adzan Notification',
+        description: 'Daily adzan notifications',
+        importance: Importance.high,
+      );
       await androidPlugin.createNotificationChannel(channel);
       _currentChannelId = 'prayer_times';
     }
 
     // 2. Reminder Channel (Pro) - uses default sound
-    const reminderChannel = AndroidNotificationChannel(_reminderChannelId, 'Prayer Reminders',
-        description: 'Advanced pre/post prayer reminders', importance: Importance.high, playSound: true);
+    const reminderChannel = AndroidNotificationChannel(
+      _reminderChannelId,
+      'Prayer Reminders',
+      description: 'Advanced pre/post prayer reminders',
+      importance: Importance.high,
+      playSound: true,
+    );
     await androidPlugin.createNotificationChannel(reminderChannel);
   }
 
   Future<bool> areNotificationsEnabled() async {
     if (Platform.isAndroid) {
-      final androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-      if (androidPlugin != null) return await androidPlugin.areNotificationsEnabled() ?? false;
+      final androidPlugin = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      if (androidPlugin != null)
+        return await androidPlugin.areNotificationsEnabled() ?? false;
     }
     return true;
   }
 
   Future<bool> requestPermissions() async {
     if (Platform.isAndroid) {
-      final androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-      if (androidPlugin != null) return await androidPlugin.requestNotificationsPermission() ?? false;
+      final androidPlugin = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      if (androidPlugin != null)
+        return await androidPlugin.requestNotificationsPermission() ?? false;
     }
     if (Platform.isIOS) {
-      final iosPlugin = _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
-      if (iosPlugin != null) return await iosPlugin.requestPermissions(alert: true, badge: true, sound: true) ?? false;
+      final iosPlugin = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
+      if (iosPlugin != null)
+        return await iosPlugin.requestPermissions(
+              alert: true,
+              badge: true,
+              sound: true,
+            ) ??
+            false;
     }
     return true;
   }
 
-  Future<void> cancelAllPrayerNotifications() async => await _plugin.cancelAll();
+  Future<void> cancelAllPrayerNotifications() async =>
+      await _plugin.cancelAll();
 
-  static const Map<String, int> _prayerIds = {'Fajr': 100, 'Dhuhr': 101, 'Asr': 102, 'Maghrib': 103, 'Isha': 104};
+  static const Map<String, int> _prayerIds = {
+    'Fajr': 100,
+    'Dhuhr': 101,
+    'Asr': 102,
+    'Maghrib': 103,
+    'Isha': 104,
+  };
 
-  Future<void> schedulePrayerNotificationsForCurrentLocation(PrayerSettings settings) async {
+  Future<void> schedulePrayerNotificationsForCurrentLocation(
+    PrayerSettings settings,
+  ) async {
     try {
-      if (!await areNotificationsEnabled() && !await requestPermissions()) return;
+      if (!await areNotificationsEnabled() && !await requestPermissions())
+        return;
       await _ensureNotificationChannels(settings.customRingtonePath);
       final pos = await LocationService.getCurrentPosition();
-      await schedulePrayerNotificationsForLocation(pos.latitude, pos.longitude, settings);
+      await schedulePrayerNotificationsForLocation(
+        pos.latitude,
+        pos.longitude,
+        settings,
+      );
     } catch (e) {
       final cached = await LocationService.getLastLocation();
       if (cached != null) {
-        await schedulePrayerNotificationsForLocation(cached['lat'] as double, cached['lon'] as double, settings);
+        await schedulePrayerNotificationsForLocation(
+          cached['lat'] as double,
+          cached['lon'] as double,
+          settings,
+        );
       }
     }
   }
 
-  Future<void> schedulePrayerNotificationsForLocation(double latitude, double longitude, PrayerSettings settings) async {
+  Future<void> schedulePrayerNotificationsForLocation(
+    double latitude,
+    double longitude,
+    PrayerSettings settings,
+  ) async {
     await cancelAllPrayerNotifications();
     if (!settings.enablePrayerNotifications) return;
-    
+
     await _configureLocalTimezone(settings.timezoneId);
-    
+
     // Safety check for tz.local lookup to prevent uninitialized LocationNotFoundException / assertion crashes
     tz.Location localLocation;
     try {
@@ -200,37 +283,67 @@ class NotificationService {
     }
 
     final androidScheduleMode = await _resolveAndroidScheduleMode();
-    final customSoundUri = await _usableAndroidSoundUri(settings.customRingtonePath);
+    final customSoundUri = await _usableAndroidSoundUri(
+      settings.customRingtonePath,
+    );
     final hasCustomSound = customSoundUri != null && customSoundUri.isNotEmpty;
 
     final mainNames = {'Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'};
-    final today = DateTime.now();
+    final now = tz.TZDateTime.now(localLocation);
 
     for (int dayOffset = 0; dayOffset < 7; dayOffset++) {
-      final targetDate = today.add(Duration(days: dayOffset));
+      final targetDate = tz.TZDateTime(
+        localLocation,
+        now.year,
+        now.month,
+        now.day + dayOffset,
+      );
       final daily = await ps.PrayerService.calculatePrayerTimes(
-        latitude: latitude, longitude: longitude,
-        date: DateTime(targetDate.year, targetDate.month, targetDate.day), settings: settings,
+        latitude: latitude,
+        longitude: longitude,
+        date: DateTime(targetDate.year, targetDate.month, targetDate.day),
+        settings: settings,
       );
 
       for (final prayer in daily.prayers) {
         if (!mainNames.contains(prayer.name)) continue;
 
         // 1. MAIN ADZAN NOTIFICATION
-        final scheduledAdzan = tz.TZDateTime.from(prayer.time, localLocation);
+        final scheduledAdzan = tz.TZDateTime(
+          localLocation,
+          prayer.time.year,
+          prayer.time.month,
+          prayer.time.day,
+          prayer.time.hour,
+          prayer.time.minute,
+          prayer.time.second,
+        );
         if (scheduledAdzan.isAfter(tz.TZDateTime.now(localLocation))) {
           final adzanId = _prayerIds[prayer.name]! + (dayOffset * 100);
           final prayerLabel = tr(prayer.name.toLowerCase());
-          
+
           await _plugin.zonedSchedule(
-            adzanId, tr('notification_prayer_title'),
-            tr('notification_prayer_arrived', namedArgs: {'prayer': prayerLabel}),
+            adzanId,
+            tr('notification_prayer_title'),
+            tr(
+              'notification_prayer_arrived',
+              namedArgs: {'prayer': prayerLabel},
+            ),
             scheduledAdzan,
             NotificationDetails(
-              android: AndroidNotificationDetails(_currentChannelId, 'Adzan',
-                importance: Importance.high, priority: Priority.high,
-                sound: hasCustomSound ? UriAndroidNotificationSound(customSoundUri) : null),
-              iOS: DarwinNotificationDetails(presentSound: true, sound: hasCustomSound ? settings.customRingtonePath : null),
+              android: AndroidNotificationDetails(
+                _currentChannelId,
+                'Adzan',
+                importance: Importance.high,
+                priority: Priority.high,
+                sound: hasCustomSound
+                    ? UriAndroidNotificationSound(customSoundUri)
+                    : null,
+              ),
+              iOS: DarwinNotificationDetails(
+                presentSound: true,
+                sound: hasCustomSound ? settings.customRingtonePath : null,
+              ),
             ),
             androidScheduleMode: androidScheduleMode,
             payload: 'adzan_${prayer.name}',
@@ -239,25 +352,48 @@ class NotificationService {
 
         // 2. ADVANCED REMINDER (PRO)
         if (settings.isProUser && settings.enableAdvancedReminders) {
-          final reminderTime = prayer.time.add(Duration(minutes: settings.reminderOffset));
-          final scheduledReminder = tz.TZDateTime.from(reminderTime, localLocation);
-          
+          final reminderTime = prayer.time.add(
+            Duration(minutes: settings.reminderOffset),
+          );
+          final scheduledReminder = tz.TZDateTime(
+            localLocation,
+            reminderTime.year,
+            reminderTime.month,
+            reminderTime.day,
+            reminderTime.hour,
+            reminderTime.minute,
+            reminderTime.second,
+          );
+
           if (scheduledReminder.isAfter(tz.TZDateTime.now(localLocation))) {
-            final reminderId = _prayerIds[prayer.name]! + (dayOffset * 100) + 1000;
+            final reminderId =
+                _prayerIds[prayer.name]! + (dayOffset * 100) + 1000;
             final prayerLabel = tr(prayer.name.toLowerCase());
             final minutes = settings.reminderOffset.abs();
             final isBefore = settings.reminderOffset < 0;
-            
-            final body = isBefore 
-                ? tr('reminder_before_fmt', namedArgs: {'min': '$minutes', 'prayer': prayerLabel})
-                : tr('reminder_after_fmt', namedArgs: {'min': '$minutes', 'prayer': prayerLabel});
+
+            final body = isBefore
+                ? tr(
+                    'reminder_before_fmt',
+                    namedArgs: {'min': '$minutes', 'prayer': prayerLabel},
+                  )
+                : tr(
+                    'reminder_after_fmt',
+                    namedArgs: {'min': '$minutes', 'prayer': prayerLabel},
+                  );
 
             await _plugin.zonedSchedule(
-              reminderId, tr('prayer_reminder'), body,
+              reminderId,
+              tr('prayer_reminder'),
+              body,
               scheduledReminder,
               NotificationDetails(
-                android: const AndroidNotificationDetails(_reminderChannelId, 'Reminders',
-                  importance: Importance.high, priority: Priority.high), // Standard sound
+                android: const AndroidNotificationDetails(
+                  _reminderChannelId,
+                  'Reminders',
+                  importance: Importance.high,
+                  priority: Priority.high,
+                ), // Standard sound
                 iOS: const DarwinNotificationDetails(presentSound: true),
               ),
               androidScheduleMode: androidScheduleMode,
@@ -273,15 +409,31 @@ class NotificationService {
     final title = tr('notification_prayer_title');
     final body = 'Tes Adzan: ${settings.customRingtoneName ?? 'Default'}';
     await _ensureNotificationChannels(settings.customRingtonePath);
-    String? customSoundUri = Platform.isAndroid ? await _usableAndroidSoundUri(settings.customRingtonePath) : null;
-    final hasCustomSound = settings.customRingtonePath != null && settings.customRingtonePath!.isNotEmpty;
+    String? customSoundUri = Platform.isAndroid
+        ? await _usableAndroidSoundUri(settings.customRingtonePath)
+        : null;
+    final hasCustomSound =
+        settings.customRingtonePath != null &&
+        settings.customRingtonePath!.isNotEmpty;
 
-    await _plugin.show(999, title, body,
+    await _plugin.show(
+      999,
+      title,
+      body,
       NotificationDetails(
-        android: AndroidNotificationDetails(_currentChannelId, 'Adzan',
-          importance: Importance.high, priority: Priority.high,
-          sound: hasCustomSound && customSoundUri != null ? UriAndroidNotificationSound(customSoundUri) : null),
-        iOS: DarwinNotificationDetails(presentSound: true, sound: hasCustomSound ? settings.customRingtonePath : null),
+        android: AndroidNotificationDetails(
+          _currentChannelId,
+          'Adzan',
+          importance: Importance.high,
+          priority: Priority.high,
+          sound: hasCustomSound && customSoundUri != null
+              ? UriAndroidNotificationSound(customSoundUri)
+              : null,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentSound: true,
+          sound: hasCustomSound ? settings.customRingtonePath : null,
+        ),
       ),
       payload: 'test',
     );

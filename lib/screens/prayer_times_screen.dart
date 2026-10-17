@@ -42,17 +42,30 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   Timer? _countdownTimer;
   ps.PrayerTime? _activePrayer;
   ps.PrayerTime? _nextPrayer;
-  final ValueNotifier<Duration> _timeToNextNotifier = ValueNotifier(Duration.zero);
+  final ValueNotifier<Duration> _timeToNextNotifier = ValueNotifier(
+    Duration.zero,
+  );
   final ValueNotifier<double> _progressToNextNotifier = ValueNotifier(0.0);
   bool _refreshingPrevNext = false;
 
   BannerAd? _bannerAd;
   bool _bannerLoaded = false;
 
-  DateTime get _todayDate => DateTime.now();
+  DateTime get _todayDate => ps.PrayerService.nowForSettings(
+    _settings ?? SettingsService.instance.notifier.value,
+  );
 
   String _getQiblaDirection(double degrees) {
-    final dirs = ['dir_n', 'dir_ne', 'dir_e', 'dir_se', 'dir_s', 'dir_sw', 'dir_w', 'dir_nw'];
+    final dirs = [
+      'dir_n',
+      'dir_ne',
+      'dir_e',
+      'dir_se',
+      'dir_s',
+      'dir_sw',
+      'dir_w',
+      'dir_nw',
+    ];
     final index = ((degrees + 22.5) ~/ 45) % 8;
     return tr(dirs[index]);
   }
@@ -75,9 +88,13 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
       // 1. Try to get position with a short timeout and fallback to cached
       dynamic pos;
       try {
-        pos = await LocationService.getCurrentPosition().timeout(const Duration(seconds: 12));
+        pos = await LocationService.getCurrentPosition().timeout(
+          const Duration(seconds: 12),
+        );
       } catch (e) {
-        debugPrint('PrayerTimes: GPS fetch failed or timed out, trying cached: $e');
+        debugPrint(
+          'PrayerTimes: GPS fetch failed or timed out, trying cached: $e',
+        );
         final cached = await LocationService.getLastLocation();
         if (cached != null) {
           // Construct map-like or generic object if Position class is not visible here
@@ -96,17 +113,19 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
         // Last resort: check if we have ANY location saved, even if old
         final cached = await LocationService.getLastLocation();
         if (cached != null) {
-           _latitude = cached['lat'];
-           _longitude = cached['lon'];
+          _latitude = cached['lat'];
+          _longitude = cached['lon'];
         } else {
           throw Exception('Location not available. Please enable GPS.');
         }
       }
-      
+
       // Use cached geocode if available to speed up UI, with timeout
       try {
         final cachedLoc = await LocationService.getLastLocation();
-        if (cachedLoc != null && cachedLoc['lat'] == _latitude && cachedLoc['lon'] == _longitude) {
+        if (cachedLoc != null &&
+            cachedLoc['lat'] == _latitude &&
+            cachedLoc['lon'] == _longitude) {
           _locationLabel = cachedLoc['label'];
         } else {
           _locationLabel = await LocationService.reverseGeocodeWithCache(
@@ -116,9 +135,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
         }
       } catch (e) {
         debugPrint('PrayerTimes: Geocode timeout or error: $e');
-        _locationLabel = '${_latitude!.toStringAsFixed(2)}, ${_longitude!.toStringAsFixed(2)}';
+        _locationLabel =
+            '${_latitude!.toStringAsFixed(2)}, ${_longitude!.toStringAsFixed(2)}';
       }
-      
+
       _qiblaDeg = LocationService.qiblaBearing(_latitude!, _longitude!);
 
       _settings = await PrayerSettings.load();
@@ -132,7 +152,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
       _weekPrayers = [];
       for (var i = 0; i < 7; i++) {
-        final d = DateTime.now().add(Duration(days: i));
+        final d = _todayDate.add(Duration(days: i));
         final dt = await ps.PrayerService.calculatePrayerTimes(
           latitude: _latitude!,
           longitude: _longitude!,
@@ -216,7 +236,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
           ad.dispose();
           _bannerAd = null;
           if (mounted) setState(() => _bannerLoaded = false);
-          
+
           // Retry after 30 seconds
           Future.delayed(const Duration(seconds: 30), () {
             if (mounted) _loadBannerAd();
@@ -234,7 +254,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
   void _onSettingsChanged() {
     final settings = SettingsService.instance.notifier.value;
-    
+
     // Update local settings state so build uses current values
     if (mounted) {
       setState(() {
@@ -267,8 +287,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
               child: Column(
                 children: [
                   HomeTopBar(
-                    locationLabel: _locationLabel.isNotEmpty ? _locationLabel : '...',
-                    onSettingsTap: () => Navigator.of(context).pushNamed('/settings'),
+                    locationLabel: _locationLabel.isNotEmpty
+                        ? _locationLabel
+                        : '...',
+                    onSettingsTap: () =>
+                        Navigator.of(context).pushNamed('/settings'),
                   ),
                   _buildTabs(),
                   Expanded(
@@ -306,8 +329,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                       width: _bannerAd!.size.width.toDouble(),
                       height: _bannerAd!.size.height.toDouble(),
                       color: bgColor,
-                      child: _bannerLoaded 
-                          ? AdWidget(ad: _bannerAd!) 
+                      child: _bannerLoaded
+                          ? AdWidget(ad: _bannerAd!)
                           : const SizedBox.shrink(),
                     ),
                 ],
@@ -373,7 +396,7 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     final accentColor = AppTheme.getAccentColor(settings, context);
     final secTextColor = AppTheme.getSecondaryTextColor(settings, context);
     final isActive = _selectedTabIndex == index;
-    
+
     return InkWell(
       onTap: () => setState(() => _selectedTabIndex = index),
       child: Column(
@@ -396,7 +419,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
             width: 40,
             decoration: BoxDecoration(
               color: isActive ? accentColor : Colors.transparent,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(3),
+              ),
             ),
           ),
         ],
@@ -446,7 +471,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
               ],
             ),
           ),
-          Icon(Icons.calendar_month_outlined, color: secTextColor.withValues(alpha: 0.5)),
+          Icon(
+            Icons.calendar_month_outlined,
+            color: secTextColor.withValues(alpha: 0.5),
+          ),
         ],
       ),
     );
@@ -454,10 +482,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
   Widget _buildDayView(ps.DailyPrayerTimes? day, {bool isToday = true}) {
     if (day == null) return const SizedBox.shrink();
-    
+
     // Ensure we use the latest settings for child widgets
-    final currentSettings = _settings ?? SettingsService.instance.notifier.value;
-    
+    final currentSettings =
+        _settings ?? SettingsService.instance.notifier.value;
+
     final sunnah = day.prayers.where((p) => p.isSunnah).toList();
     final regular = day.prayers.where((p) => !p.isSunnah).toList();
 
@@ -465,7 +494,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (currentSettings.showSunnahTimes == true && sunnah.isNotEmpty) ...[
-          SunnahCompact(sunnahList: sunnah, activePrayer: isToday ? _activePrayer : null),
+          SunnahCompact(
+            sunnahList: sunnah,
+            activePrayer: isToday ? _activePrayer : null,
+          ),
           const SizedBox(height: 12),
         ],
         ...regular.map((p) => _buildPrayerCard(p, isToday)),
@@ -477,7 +509,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     return Column(
       children: _weekPrayers.map((day) {
         final dateStr = HijriConverter.formatGregorianShort(day.date);
-        final dayName = DateFormat('EEEE', context.locale.toString()).format(day.date);
+        final dayName = DateFormat(
+          'EEEE',
+          context.locale.toString(),
+        ).format(day.date);
         final settings = _settings ?? SettingsService.instance.notifier.value;
         final accentColor = AppTheme.getAccentColor(settings, context);
 
@@ -535,19 +570,26 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isActive 
-                    ? accentColor 
-                    : (isLight ? Colors.black.withValues(alpha: 0.1) : AppTheme.getBorderColor(settings, context)),
+                color: isActive
+                    ? accentColor
+                    : (isLight
+                          ? Colors.black.withValues(alpha: 0.1)
+                          : AppTheme.getBorderColor(settings, context)),
                 width: isActive ? 1.5 : 1,
               ),
             ),
             child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 6,
+              ),
               leading: Container(
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: isActive ? accentColor : accentColor.withValues(alpha: 0.1),
+                  color: isActive
+                      ? accentColor
+                      : accentColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -578,7 +620,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                   Text(
                     prayer.timeString,
                     style: TextStyle(
-                      color: isActive ? accentColor : AppTheme.getTextColor(settings, context),
+                      color: isActive
+                          ? accentColor
+                          : AppTheme.getTextColor(settings, context),
                       fontWeight: FontWeight.w900,
                       fontSize: 18,
                       letterSpacing: -0.5,
@@ -682,16 +726,25 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
       );
       final prev = map['previous'];
       final next = map['next'];
-      final now = DateTime.now();
-      final active = (prev != null && (now.isAtSameMomentAs(prev.time) || now.isAfter(prev.time)) && (next == null || now.isBefore(next.time))) ? prev : null;
+      final now = ps.PrayerService.nowForSettings(_settings!);
+      final active =
+          (prev != null &&
+              (now.isAtSameMomentAs(prev.time) || now.isAfter(prev.time)) &&
+              (next == null || now.isBefore(next.time)))
+          ? prev
+          : null;
 
       if (mounted) {
         setState(() {
           _nextPrayer = next;
           _activePrayer = active;
         });
-        _timeToNextNotifier.value = next != null ? next.time.difference(now) : Duration.zero;
-        _progressToNextNotifier.value = (prev != null && next != null) ? ps.PrayerService.progressBetween(prev.time, next.time, now) : 0.0;
+        _timeToNextNotifier.value = next != null
+            ? next.time.difference(now)
+            : Duration.zero;
+        _progressToNextNotifier.value = (prev != null && next != null)
+            ? ps.PrayerService.progressBetween(prev.time, next.time, now)
+            : 0.0;
       }
     } finally {
       _refreshingPrevNext = false;
@@ -702,7 +755,9 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (t) async {
       if (!mounted) return;
-      final now = DateTime.now();
+      final now = ps.PrayerService.nowForSettings(
+        _settings ?? SettingsService.instance.notifier.value,
+      );
       if (_nextPrayer == null) return;
       if (now.isAfter(_nextPrayer!.time)) {
         await _updatePrevNext();
@@ -710,7 +765,11 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
       }
       _timeToNextNotifier.value = _nextPrayer!.time.difference(now);
       if (_activePrayer != null) {
-        _progressToNextNotifier.value = ps.PrayerService.progressBetween(_activePrayer!.time, _nextPrayer!.time, now);
+        _progressToNextNotifier.value = ps.PrayerService.progressBetween(
+          _activePrayer!.time,
+          _nextPrayer!.time,
+          now,
+        );
       }
     });
   }
@@ -720,12 +779,18 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     final h = d.inHours;
     final m = d.inMinutes.remainder(60);
     final s = d.inSeconds.remainder(60);
-    
+
     if (h > 0) {
-      return tr('duration_h_m', namedArgs: {'h': h.toString(), 'm': m.toString()});
+      return tr(
+        'duration_h_m',
+        namedArgs: {'h': h.toString(), 'm': m.toString()},
+      );
     }
     if (m > 0) {
-      return tr('duration_m_s', namedArgs: {'m': m.toString(), 's': s.toString()});
+      return tr(
+        'duration_m_s',
+        namedArgs: {'m': m.toString(), 's': s.toString()},
+      );
     }
     return tr('duration_s', namedArgs: {'s': s.toString()});
   }
@@ -739,7 +804,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
         return ValueListenableBuilder<double>(
           valueListenable: _progressToNextNotifier,
           builder: (context, progressToNext, _) {
-            final settings = _settings ?? SettingsService.instance.notifier.value;
+            final settings =
+                _settings ?? SettingsService.instance.notifier.value;
             final accentColor = AppTheme.getAccentColor(settings, context);
             final textColor = AppTheme.getTextColor(settings, context);
 
@@ -748,7 +814,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [accentColor.withValues(alpha: 0.15), accentColor.withValues(alpha: 0.05)],
+                  colors: [
+                    accentColor.withValues(alpha: 0.15),
+                    accentColor.withValues(alpha: 0.05),
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -767,10 +836,16 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                           value: progressToNext,
                           strokeWidth: 4,
                           backgroundColor: accentColor.withValues(alpha: 0.1),
-                          valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            accentColor,
+                          ),
                         ),
                       ),
-                      Icon(_iconForPrayer(_nextPrayer!.name), color: accentColor, size: 20),
+                      Icon(
+                        _iconForPrayer(_nextPrayer!.name),
+                        color: accentColor,
+                        size: 20,
+                      ),
                     ],
                   ),
                   const SizedBox(width: 16),
@@ -779,16 +854,29 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          tr('time_to_prayer_fmt', namedArgs: {
-                            'dur': _formatDuration(timeToNext),
-                            'prayer': tr(_nextPrayer!.name.toLowerCase()),
-                          }),
-                          style: TextStyle(color: textColor, fontWeight: FontWeight.w800, fontSize: 13),
+                          tr(
+                            'time_to_prayer_fmt',
+                            namedArgs: {
+                              'dur': _formatDuration(timeToNext),
+                              'prayer': tr(_nextPrayer!.name.toLowerCase()),
+                            },
+                          ),
+                          style: TextStyle(
+                            color: textColor,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           "${tr('next_prayer')}: ${_nextPrayer!.timeString}",
-                          style: TextStyle(color: AppTheme.getSecondaryTextColor(settings, context), fontSize: 11),
+                          style: TextStyle(
+                            color: AppTheme.getSecondaryTextColor(
+                              settings,
+                              context,
+                            ),
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),

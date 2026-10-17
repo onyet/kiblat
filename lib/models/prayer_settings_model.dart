@@ -88,6 +88,7 @@ class PrayerSettings {
     bool? showDhuha,
     bool? showTahajjud,
     String? timezoneId,
+    bool clearTimezone = false,
     bool? use24Hour,
     bool? enablePrayerNotifications,
     String? customRingtonePath,
@@ -108,17 +109,23 @@ class PrayerSettings {
       showSunnahTimes: showSunnahTimes ?? this.showSunnahTimes,
       showDhuha: showDhuha ?? this.showDhuha,
       showTahajjud: showTahajjud ?? this.showTahajjud,
-      timezoneId: timezoneId ?? this.timezoneId,
+      timezoneId: clearTimezone ? null : (timezoneId ?? this.timezoneId),
       use24Hour: use24Hour ?? this.use24Hour,
-      enablePrayerNotifications: enablePrayerNotifications ?? this.enablePrayerNotifications,
-      customRingtonePath: clearCustomRingtone ? null : (customRingtonePath ?? this.customRingtonePath),
-      customRingtoneName: clearCustomRingtone ? null : (customRingtoneName ?? this.customRingtoneName),
+      enablePrayerNotifications:
+          enablePrayerNotifications ?? this.enablePrayerNotifications,
+      customRingtonePath: clearCustomRingtone
+          ? null
+          : (customRingtonePath ?? this.customRingtonePath),
+      customRingtoneName: clearCustomRingtone
+          ? null
+          : (customRingtoneName ?? this.customRingtoneName),
       isProUser: isProUser ?? this.isProUser,
       defaultLaunchScreen: defaultLaunchScreen ?? this.defaultLaunchScreen,
       compassTheme: compassTheme ?? this.compassTheme,
       displayMode: displayMode ?? this.displayMode,
       reminderOffset: reminderOffset ?? this.reminderOffset,
-      enableAdvancedReminders: enableAdvancedReminders ?? this.enableAdvancedReminders,
+      enableAdvancedReminders:
+          enableAdvancedReminders ?? this.enableAdvancedReminders,
     );
   }
 
@@ -182,15 +189,18 @@ class PrayerSettings {
     final showTahajjud = prefs.getBool('showTahajjud') ?? true;
     final timezoneId = prefs.getString('timezoneId');
     final use24Hour = prefs.getBool('use24Hour') ?? true;
-    final enablePrayerNotifications = prefs.getBool('enablePrayerNotifications') ?? true;
+    final enablePrayerNotifications =
+        prefs.getBool('enablePrayerNotifications') ?? true;
     final customRingtonePath = prefs.getString('customRingtonePath');
     final customRingtoneName = prefs.getString('customRingtoneName');
     final isProUser = prefs.getBool('isProUser') ?? false;
-    final defaultLaunchScreen = prefs.getString('defaultLaunchScreen') ?? 'compass';
+    final defaultLaunchScreen =
+        prefs.getString('defaultLaunchScreen') ?? 'compass';
     final compassTheme = prefs.getString('compassTheme') ?? 'gold';
     final displayMode = prefs.getString('displayMode') ?? 'light';
     final reminderOffset = prefs.getInt('reminderOffset') ?? -10;
-    final enableAdvancedReminders = prefs.getBool('enableAdvancedReminders') ?? false;
+    final enableAdvancedReminders =
+        prefs.getBool('enableAdvancedReminders') ?? false;
 
     return PrayerSettings(
       madhab: madhab,

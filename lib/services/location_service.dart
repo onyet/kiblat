@@ -11,6 +11,8 @@ import 'telemetry_service.dart';
 import 'geonames_service.dart';
 
 class LocationService {
+  static const Duration maximumLastKnownPositionAge = Duration(minutes: 5);
+
   static Future<bool> checkAndRequestPermission() async {
     try {
       LocationPermission permission = await Geolocator.checkPermission();
@@ -47,9 +49,9 @@ class LocationService {
     // 1. Try to get last known position first (fast)
     final lastKnown = await Geolocator.getLastKnownPosition();
     if (lastKnown != null) {
-      // Return last known immediately if it's fresh (less than 1 minute old)
+      // Return last known immediately when it is at most five minutes old.
       final age = DateTime.now().difference(lastKnown.timestamp);
-      if (age.inMinutes < 1) {
+      if (!age.isNegative && age <= maximumLastKnownPositionAge) {
         return lastKnown;
       }
     }
@@ -64,15 +66,23 @@ class LocationService {
       );
     } catch (e) {
       // 3. Fallback to last known if request timed out
-      if (lastKnown != null) return lastKnown;
+      if (lastKnown != null) {
+        final age = DateTime.now().difference(lastKnown.timestamp);
+        if (!age.isNegative && age <= maximumLastKnownPositionAge) {
+          return lastKnown;
+        }
+      }
       rethrow;
     }
   }
 
   static Future<String> reverseGeocode(double lat, double lon) async {
-    // 1. Try Offline GeoNames SQLite first
+    // 1. Try the local cache populated by earlier successful lookups.
     try {
-      final offlineLabel = await GeoNamesService.instance.findNearestCity(lat, lon);
+      final offlineLabel = await GeoNamesService.instance.findNearestCity(
+        lat,
+        lon,
+      );
       if (offlineLabel != null && offlineLabel.isNotEmpty) {
         return offlineLabel;
       }
@@ -82,7 +92,10 @@ class LocationService {
 
     // 2. If offline fails (no data), try GeoNames API and cache result
     try {
-      final apiLabel = await GeoNamesService.instance.fetchFromApiAndCache(lat, lon);
+      final apiLabel = await GeoNamesService.instance.fetchFromApiAndCache(
+        lat,
+        lon,
+      );
       if (apiLabel != null && apiLabel.isNotEmpty) {
         return apiLabel;
       }
@@ -148,17 +161,23 @@ class LocationService {
     return events.map<double?>((CompassEvent e) => e.heading);
   }
 
-  /// Persist last successful location label and coordinates for offline fallback
+  /// Persist a recent location label and coordinates for local cache fallback.
   static Future<void> saveLastLocation(
     String label,
     double lat,
-    double lon,
-  ) async {
+    double lon, {
+    bool isManual = false,
+  }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('last_loc_label', label);
       await prefs.setDouble('last_loc_lat', lat);
       await prefs.setDouble('last_loc_lon', lon);
+      await prefs.setInt(
+        'last_loc_saved_at',
+        DateTime.now().millisecondsSinceEpoch,
+      );
+      await prefs.setBool('last_loc_is_manual', isManual);
     } catch (e) {
       TelemetryService.instance.logEvent('save_last_location_error', {
         'error': e.toString(),
@@ -167,13 +186,24 @@ class LocationService {
   }
 
   /// Returns a cached last location as a map {label, lat, lon} or null if none
-  static Future<Map<String, dynamic>?> getLastLocation() async {
+  static Future<Map<String, dynamic>?> getLastLocation({
+    bool allowExpired = false,
+  }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final label = prefs.getString('last_loc_label');
       final lat = prefs.getDouble('last_loc_lat');
       final lon = prefs.getDouble('last_loc_lon');
       if (label != null && lat != null && lon != null) {
+        final isManual = prefs.getBool('last_loc_is_manual') ?? false;
+        final savedAt = prefs.getInt('last_loc_saved_at');
+        if (!allowExpired && !isManual) {
+          if (savedAt == null) return null;
+          final age = DateTime.now().difference(
+            DateTime.fromMillisecondsSinceEpoch(savedAt),
+          );
+          if (age.isNegative || age > maximumLastKnownPositionAge) return null;
+        }
         return {'label': label, 'lat': lat, 'lon': lon};
       }
     } catch (e) {
@@ -238,8 +268,15 @@ class LocationService {
       });
     }
 
-    final cached = await getLastLocation();
-    if (cached != null) {
+    final cached = await getLastLocation(allowExpired: true);
+    if (cached != null &&
+        Geolocator.distanceBetween(
+              lat,
+              lon,
+              cached['lat'] as double,
+              cached['lon'] as double,
+            ) <=
+            10000) {
       TelemetryService.instance.logEvent('reverse_geocode_used_cache', {
         'cached_label': cached['label'],
       });
@@ -256,9 +293,14 @@ class LocationService {
 
   /// Checks if heading data is "stale" (hasn't changed despite accelerometer movement).
   /// This is a heuristic. Returns true if we suspect the sensor is stuck.
-  static bool isCompassStale(double lastHeading, double newHeading, double movementMagnitude) {
+  static bool isCompassStale(
+    double lastHeading,
+    double newHeading,
+    double movementMagnitude,
+  ) {
+    final delta = (newHeading - lastHeading + 540) % 360 - 180;
     // If heading hasn't changed at all but device is moving significantly
-    if (lastHeading == newHeading && movementMagnitude > 0.5) {
+    if (delta.abs() < 1e-9 && movementMagnitude > 0.5) {
       return true;
     }
     return false;

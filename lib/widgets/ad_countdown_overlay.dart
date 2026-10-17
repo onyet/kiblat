@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kiblat/services/ad_service.dart';
 import 'package:kiblat/services/settings_service.dart';
 
@@ -21,9 +22,6 @@ class AdCountdownOverlay extends StatefulWidget {
 }
 
 class _AdCountdownOverlayState extends State<AdCountdownOverlay> {
-  bool _showingCountdown = false;
-  int _secondsRemaining = 5;
-  Timer? _timer;
 
   @override
   void initState() {
@@ -33,7 +31,6 @@ class _AdCountdownOverlayState extends State<AdCountdownOverlay> {
 
   @override
   void dispose() {
-    _timer?.cancel();
     super.dispose();
   }
 
@@ -41,95 +38,34 @@ class _AdCountdownOverlayState extends State<AdCountdownOverlay> {
     final settings = SettingsService.instance.notifier.value;
     if (settings.isProUser) return;
 
+    // Check if this is the first launch after install
+    final prefs = await SharedPreferences.getInstance();
+    final bool adSkippedOnFirstLaunch = prefs.getBool('first_launch_ad_skipped') ?? false;
+
+    if (!adSkippedOnFirstLaunch) {
+      debugPrint('[AdOverlay] First launch detected, skipping ad to improve UX');
+      await prefs.setBool('first_launch_ad_skipped', true);
+      return;
+    }
+
     // Logic: 25% chance to show an ad when opening the screen
     // but only if an ad is actually ready.
     final bool shouldShow = AdService.instance.isInterstitialAdReady && 
                            (DateTime.now().millisecond % 4 == 0);
 
     if (shouldShow) {
-      // Small delay to let screen transition finish
-      await Future.delayed(const Duration(milliseconds: 800));
+      // Defer slightly to ensure smooth transition, but NO countdown
+      await Future.delayed(const Duration(milliseconds: 1500));
       if (!mounted) return;
 
-      setState(() {
-        _showingCountdown = true;
-        _secondsRemaining = 5;
-      });
-
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-        if (!mounted) {
-          timer.cancel();
-          return;
-        }
-
-        if (_secondsRemaining > 1) {
-          setState(() => _secondsRemaining--);
-        } else {
-          timer.cancel();
-          setState(() => _showingCountdown = false);
-          // Show the ad
-          await AdService.instance.showInterstitialAd();
-        }
-      });
+      // Show the ad directly or log for future triggering
+      // We remove the blocking 5-second countdown entirely.
+      await AdService.instance.showInterstitialAd();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        widget.child,
-        if (_showingCountdown)
-          Container(
-            color: Colors.black.withValues(alpha: 0.8),
-            child: Center(
-              child: Card(
-                color: const Color(0xFF1A1A1A),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: const BorderSide(color: Color(0xFFD4AF37), width: 1),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.ads_click, color: Color(0xFFD4AF37), size: 48),
-                      const SizedBox(height: 16),
-                      Text(
-                        tr('ad_starting_soon'),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        tr('ad_countdown_fmt', namedArgs: {'sec': '$_secondsRemaining'}),
-                        style: const TextStyle(
-                          color: Color(0xFFD4AF37),
-                          fontWeight: FontWeight.w900,
-                          fontSize: 24,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        tr('ad_support_note'),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
+    return widget.child;
   }
 }

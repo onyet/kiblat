@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
+import 'package:in_app_purchase_storekit/in_app_purchase_storekit.dart';
 import 'package:kiblat/services/settings_service.dart';
 import 'package:kiblat/services/ad_service.dart';
 
@@ -29,7 +31,9 @@ class BillingService {
   final ValueNotifier<bool> isStoreAvailable = ValueNotifier(false);
 
   /// Loaded products from Google Play
-  final ValueNotifier<List<ProductDetails>> productsNotifier = ValueNotifier([]);
+  final ValueNotifier<List<ProductDetails>> productsNotifier = ValueNotifier(
+    [],
+  );
 
   /// Whether a purchase is currently pending
   final ValueNotifier<bool> isPendingPurchase = ValueNotifier(false);
@@ -68,17 +72,153 @@ class BillingService {
       );
 
       // Query product details from Google Play
-      final ProductDetailsResponse response = await _iap.queryProductDetails({proProductId});
+      final ProductDetailsResponse response = await _iap.queryProductDetails({
+        proProductId,
+      });
       if (response.notFoundIDs.isNotEmpty) {
-        debugPrint('[BillingService] Products not found: ${response.notFoundIDs}');
+        debugPrint(
+          '[BillingService] Products not found: ${response.notFoundIDs}',
+        );
       }
       productsNotifier.value = response.productDetails;
-      debugPrint('[BillingService] Successfully loaded ${response.productDetails.length} products.');
+      debugPrint(
+        '[BillingService] Successfully loaded ${response.productDetails.length} products.',
+      );
+
+      // --- Bidirectional Entitlement Sync ---
+      // This ensures Pro status is both Granted (on purchase/restore)
+      // AND Revoked (on refund/voided transaction).
+      await _syncEntitlements();
     } catch (e) {
       debugPrint('[BillingService] Initialization failed: $e');
       isStoreAvailable.value = false;
       billingError.value = e.toString();
     }
+  }
+
+  /// Silently queries the store to verify if the user still owns "Pro".
+  /// If the purchase is missing (refunded/revoked), the app reverts to Free.
+  Future<void> _syncEntitlements() async {
+    try {
+      debugPrint('[BillingService] Syncing entitlements...');
+
+      List<PurchaseDetails> pastPurchases = [];
+
+      if (Platform.isAndroid) {
+        final addition = _iap
+            .getPlatformAddition<InAppPurchaseAndroidPlatformAddition>();
+        final QueryPurchaseDetailsResponse response = await addition
+            .queryPastPurchases();
+
+        // If there's an error (e.g., network), we DO NOT downgrade.
+        // We only act if the store returns a successful but empty/different list.
+        if (response.error != null) {
+          debugPrint(
+            '[BillingService] Sync failed (Store Error): ${response.error}',
+          );
+          return;
+        }
+        pastPurchases = response.pastPurchases;
+      } else {
+        // Fallback for other platforms (logic can be extended for iOS StoreKit 2)
+        // For now, we rely on the persistent stream or a manual restore trigger.
+        return;
+      }
+
+      var hasProEntitlement = false;
+      for (final purchase in pastPurchases) {
+        if (purchase.productID == proProductId &&
+            (purchase.status == PurchaseStatus.purchased ||
+                purchase.status == PurchaseStatus.restored) &&
+            await _verifyStorePurchase(purchase)) {
+          hasProEntitlement = true;
+          break;
+        }
+      }
+
+      final settings = SettingsService.instance.notifier.value;
+
+      if (hasProEntitlement && !settings.isProUser) {
+        debugPrint(
+          '[BillingService] Sync: Found missing entitlement. Upgrading to Pro.',
+        );
+        await _updateProStatus(true);
+      } else if (!hasProEntitlement && settings.isProUser) {
+        debugPrint(
+          '[BillingService] Sync: Entitlement not found (Refunded?). Downgrading to Free.',
+        );
+        await _updateProStatus(false);
+      } else {
+        debugPrint(
+          '[BillingService] Sync: Local state matches Store (${hasProEntitlement ? 'Pro' : 'Free'}).',
+        );
+      }
+    } catch (e) {
+      debugPrint('[BillingService] Entitlement sync failed: $e');
+    }
+  }
+
+  Future<void> _updateProStatus(bool isPro) async {
+    final settings = SettingsService.instance.notifier.value;
+    final updated = settings.copyWith(isProUser: isPro);
+    await SettingsService.instance.update(updated);
+
+    if (isPro) {
+      AdService.instance.dispose();
+      if (onPurchaseSuccess != null) onPurchaseSuccess!();
+    } else {
+      // Re-initialize ads if user was downgraded
+      await AdService.initialize();
+    }
+  }
+
+  /// Verify that a terminal store transaction belongs to the Pro product.
+  /// Android purchase data is checked cryptographically and against the app's
+  /// package/product IDs. StoreKit 2 emits only locally verified transactions;
+  /// StoreKit 1 transactions are matched back to Apple's transaction object.
+  Future<bool> _verifyStorePurchase(PurchaseDetails purchase) async {
+    if (purchase.productID != proProductId) return false;
+
+    if (Platform.isAndroid) {
+      if (purchase is! GooglePlayPurchaseDetails) return false;
+      try {
+        final signedData = purchase.billingClientPurchase.originalJson;
+        final signature = purchase.billingClientPurchase.signature;
+        final decoded = json.decode(signedData);
+        if (decoded is! Map<String, dynamic> ||
+            decoded['productId'] != proProductId ||
+            decoded['packageName'] != 'id.onyet.app.kiblat' ||
+            decoded['purchaseState'] != 0) {
+          return false;
+        }
+
+        return await _platformChannel.invokeMethod<bool>('verifySignature', {
+              'signedData': signedData,
+              'signature': signature,
+              'publicKey': _playStorePublicKey,
+            }) ??
+            false;
+      } catch (e) {
+        debugPrint('[BillingService] Purchase verification failed: $e');
+        return false;
+      }
+    }
+
+    if (Platform.isIOS) {
+      if (purchase is SK2PurchaseDetails) {
+        // The StoreKit 2 plugin only maps verified Transaction results to
+        // SK2PurchaseDetails. Require Apple's signed transaction payload too.
+        return purchase.verificationData.serverVerificationData.isNotEmpty;
+      }
+      if (purchase is AppStorePurchaseDetails) {
+        return purchase.skPaymentTransaction.payment.productIdentifier ==
+                proProductId &&
+            purchase.verificationData.localVerificationData.isNotEmpty &&
+            purchase.transactionDate != null;
+      }
+    }
+
+    return false;
   }
 
   /// Dispose listeners
@@ -131,86 +271,49 @@ class BillingService {
   /// Process raw purchase updates
   Future<void> _handlePurchaseUpdates(List<PurchaseDetails> purchases) async {
     for (final purchaseDetails in purchases) {
-      debugPrint('[BillingService] Handling purchase: ${purchaseDetails.productID}, status: ${purchaseDetails.status}');
+      debugPrint(
+        '[BillingService] Handling purchase: ${purchaseDetails.productID}, status: ${purchaseDetails.status}',
+      );
 
       if (purchaseDetails.status == PurchaseStatus.pending) {
         isPendingPurchase.value = true;
       } else {
         isPendingPurchase.value = false;
-
-        bool isValid = true;
-
-        if (purchaseDetails.status == PurchaseStatus.purchased ||
-            purchaseDetails.status == PurchaseStatus.restored) {
-          // Verify purchase (100% offline local validation to respect user privacy)
-          if (Platform.isAndroid) {
+        try {
+          if (purchaseDetails.status == PurchaseStatus.purchased ||
+              purchaseDetails.status == PurchaseStatus.restored) {
+            final isValid = await _verifyStorePurchase(purchaseDetails);
+            if (isValid) {
+              await _updateProStatus(true);
+              debugPrint('[BillingService] Purchase successful / restored!');
+            } else {
+              debugPrint('[BillingService] Purchase verification failed.');
+              billingError.value = 'Purchase verification failed';
+            }
+          } else if (purchaseDetails.status == PurchaseStatus.error) {
+            debugPrint(
+              '[BillingService] Purchase error: ${purchaseDetails.error}',
+            );
+            billingError.value =
+                purchaseDetails.error?.message ?? 'Transaction failed';
+          } else if (purchaseDetails.status == PurchaseStatus.canceled) {
+            debugPrint('[BillingService] Purchase canceled by user.');
+            billingError.value = 'Purchase canceled';
+          }
+        } catch (e) {
+          debugPrint('[BillingService] Purchase processing failed: $e');
+          billingError.value = 'Purchase processing failed';
+        } finally {
+          // Complete terminal transactions even when validation fails, so the
+          // store does not keep redelivering an invalid or unrelated purchase.
+          if (purchaseDetails.pendingCompletePurchase) {
             try {
-              if (purchaseDetails is GooglePlayPurchaseDetails) {
-                final signedData = purchaseDetails.billingClientPurchase.originalJson;
-                final signature = purchaseDetails.billingClientPurchase.signature;
-
-                final bool? result = await _platformChannel.invokeMethod<bool>(
-                  'verifySignature',
-                  {
-                    'signedData': signedData,
-                    'signature': signature,
-                    'publicKey': _playStorePublicKey,
-                  },
-                );
-                isValid = result ?? false;
-              } else {
-                debugPrint('[BillingService] Warning: Purchase is not GooglePlayPurchaseDetails on Android!');
-                isValid = false;
-              }
+              await _iap.completePurchase(purchaseDetails);
             } catch (e) {
-              debugPrint('[BillingService] Local signature verification failed with exception: $e');
-              isValid = false;
+              debugPrint('[BillingService] Could not complete purchase: $e');
             }
           }
-
-          if (isValid) {
-            final settings = SettingsService.instance.notifier.value;
-            final updated = settings.copyWith(isProUser: true);
-            await SettingsService.instance.update(updated);
-
-            // Pro is active, dispose AdMob immediately to remove all banner and tracking ads
-            AdService.instance.dispose();
-
-            if (onPurchaseSuccess != null) {
-              onPurchaseSuccess!();
-            }
-
-            debugPrint('[BillingService] Purchase successful / restored!');
-          } else {
-            debugPrint('[BillingService] Purchase signature verification failed!');
-            billingError.value = 'Purchase verification failed: invalid signature';
-          }
-        } else if (purchaseDetails.status == PurchaseStatus.error) {
-          debugPrint('[BillingService] Purchase error: ${purchaseDetails.error}');
-          billingError.value = purchaseDetails.error?.message ?? 'Transaction failed';
-        } else if (purchaseDetails.status == PurchaseStatus.canceled) {
-          debugPrint('[BillingService] Purchase canceled by user.');
-          billingError.value = 'Purchase canceled';
         }
-
-        // Complete the purchase with the platform store (critical for Google Play)
-        if (isValid && purchaseDetails.pendingCompletePurchase) {
-          await _iap.completePurchase(purchaseDetails);
-        }
-      }
-    }
-  }
-
-  /// Switch app icon dynamically (only supported on Android via activity-alias)
-  Future<void> updateAppIcon(bool isPro) async {
-    if (Platform.isAndroid) {
-      try {
-        await _platformChannel.invokeMethod('changeIcon', {
-          'iconName': isPro ? 'pro' : 'default',
-        });
-        debugPrint('[BillingService] App icon update requested: ${isPro ? 'pro' : 'default'}');
-      } catch (e) {
-        debugPrint('[BillingService] Failed to update app icon: $e');
       }
     }
   }

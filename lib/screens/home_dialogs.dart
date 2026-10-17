@@ -117,11 +117,9 @@ Future<bool> showEnterCoordinatesDialog(BuildContext context) async {
               'Manual: ${lat.toStringAsFixed(3)}, ${lon.toStringAsFixed(3)}',
               lat,
               lon,
+              isManual: true,
             );
-            TelemetryService.instance.logEvent('manual_coords_saved', {
-              'lat': lat,
-              'lon': lon,
-            });
+            TelemetryService.instance.logEvent('manual_coords_saved');
           },
           child: Text(tr('apply')),
         ),

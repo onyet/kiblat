@@ -24,19 +24,8 @@ class AdService {
 
   /// AdMob App ID: ca-app-pub-7967860040352202~1740407670
   /// Interstitial Ad Unit ID untuk close app
-  static bool _testMode = false;
-
-  static bool get testMode => kDebugMode && _testMode;
-
-  static void setTestMode(bool enabled) {
-    _testMode = enabled;
-    debugPrint('[AdService] testMode set: $_testMode (effective: $testMode)');
-  }
-
-  static bool get bypassRewardedGate => kDebugMode && testMode;
-
   static String get interstitialAdUnitId {
-    if (testMode) {
+    if (kDebugMode) {
       if (Platform.isAndroid) return 'ca-app-pub-3940256099942544/1033173712';
       if (Platform.isIOS) return 'ca-app-pub-3940256099942544/4411468910';
     }
@@ -50,7 +39,7 @@ class AdService {
   }
 
   static String get rewardedAdUnitId {
-    if (testMode) {
+    if (kDebugMode) {
       if (Platform.isAndroid) return 'ca-app-pub-3940256099942544/5224354917';
       if (Platform.isIOS) return 'ca-app-pub-3940256099942544/1712485313';
     }
@@ -64,21 +53,21 @@ class AdService {
   }
 
   static String get prayerLogBannerUnitId {
-    if (testMode) {
+    if (kDebugMode) {
       return Platform.isAndroid ? 'ca-app-pub-3940256099942544/6300978111' : 'ca-app-pub-3940256099942544/2934735716';
     }
     return 'ca-app-pub-7967860040352202/4176479928';
   }
 
   static String get settingsBannerUnitId {
-    if (testMode) {
+    if (kDebugMode) {
       return Platform.isAndroid ? 'ca-app-pub-3940256099942544/6300978111' : 'ca-app-pub-3940256099942544/2934735716';
     }
     return 'ca-app-pub-7967860040352202/6716003030';
   }
 
   static String get prayerTimesBannerUnitId {
-    if (testMode) {
+    if (kDebugMode) {
       return Platform.isAndroid ? 'ca-app-pub-3940256099942544/6300978111' : 'ca-app-pub-3940256099942544/2934735716';
     }
     return 'ca-app-pub-7967860040352202/3192103683';
@@ -89,8 +78,18 @@ class AdService {
   /// Inisialisasi Mobile Ads SDK
   static Future<void> initialize() async {
     if (_isInitialized) return;
-    debugPrint('[AdService] Initializing MobileAds (testMode=$testMode)');
+    debugPrint('[AdService] Initializing MobileAds (G-Rating/Family Policy)');
     instance._isDisposed = false;
+
+    // Apply Family Policy & Rating constraints (All User 3+)
+    await MobileAds.instance.updateRequestConfiguration(
+      RequestConfiguration(
+        maxAdContentRating: MaxAdContentRating.g,
+        tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes,
+        tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes,
+      ),
+    );
+
     await MobileAds.instance.initialize();
     _isInitialized = true;
     // Note: loadInterstitialAd and loadRewardedAd are now called lazily
@@ -375,7 +374,6 @@ class AdService {
   Future<bool> waitForRewardedAdReady({
     Duration timeout = const Duration(seconds: 10),
   }) async {
-    if (bypassRewardedGate) return true;
     if (_isRewardedAdReady && _rewardedAd != null) return true;
 
     loadRewardedAd();

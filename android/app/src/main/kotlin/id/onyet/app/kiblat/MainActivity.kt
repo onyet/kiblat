@@ -26,18 +26,6 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         Log.d("MainActivity", "Configuring Flutter Engine")
 
-        // Safety: Ensure the target activity itself is always enabled. 
-        // Disabling it (which happened in previous versions) breaks all aliases.
-        val pm = packageManager
-        val mainActivity = ComponentName(this, "$packageName.MainActivity")
-        if (pm.getComponentEnabledSetting(mainActivity) == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) {
-            pm.setComponentEnabledSetting(
-                mainActivity,
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                PackageManager.DONT_KILL_APP
-            )
-        }
-
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             "id.onyet.app.kiblat/platform"
@@ -56,77 +44,8 @@ class MainActivity : FlutterActivity() {
                         result.success(isValid)
                     }
                 }
-                "changeIcon" -> {
-                    val iconName = call.argument<String>("iconName")
-                    if (iconName == null) {
-                        result.error("invalid_arguments", "iconName cannot be null", null)
-                    } else {
-                        // Delay icon change until app is minimized to prevent immediate process kill
-                        pendingIconChange = iconName
-                        Log.d("MainActivity", "Icon change pended: $iconName")
-                        result.success(true)
-                    }
-                }
                 else -> result.notImplemented()
             }
-        }
-    }
-
-    private var pendingIconChange: String? = null
-
-    override fun onPause() {
-        super.onPause()
-        pendingIconChange?.let {
-            changeAppIcon(it)
-            pendingIconChange = null
-        }
-    }
-
-    private fun changeAppIcon(iconName: String) {
-        val pm = packageManager
-        val packageName = packageName
-        val defaultAlias = ComponentName(this, "$packageName.MainActivityDefault")
-        val proAlias = ComponentName(this, "$packageName.MainActivityPro")
-
-        val currentProState = pm.getComponentEnabledSetting(proAlias)
-        val isCurrentlyPro = currentProState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-
-        if (iconName == "pro") {
-            if (isCurrentlyPro) {
-                Log.d("MainActivity", "App icon is already PRO, skipping update to prevent process kill")
-                return
-            }
-            // Enable Pro, disable Default
-            pm.setComponentEnabledSetting(
-                proAlias,
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                PackageManager.DONT_KILL_APP
-            )
-            pm.setComponentEnabledSetting(
-                defaultAlias,
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                PackageManager.DONT_KILL_APP
-            )
-            Log.d("MainActivity", "Switched app icon to PRO")
-        } else {
-            // Check if it's already default. 
-            // Default is either DEFAULT or ENABLED (if we set it before)
-            if (!isCurrentlyPro && pm.getComponentEnabledSetting(defaultAlias) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED) {
-                Log.d("MainActivity", "App icon is already DEFAULT, skipping update to prevent process kill")
-                return
-            }
-            // Enable Default, disable Pro
-            pm.setComponentEnabledSetting(
-                defaultAlias,
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                PackageManager.DONT_KILL_APP
-            )
-            pm.setComponentEnabledSetting(
-                proAlias,
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                PackageManager.DONT_KILL_APP
-            )
-            Log.d("MainActivity", "Switched app icon to DEFAULT")
         }
     }
 

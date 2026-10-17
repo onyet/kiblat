@@ -10,7 +10,7 @@ class TelemetryService {
 
   void logEvent(String name, [Map<String, dynamic>? params]) {
     final settings = SettingsService.instance.notifier.value;
-    if (settings.isProUser) return; // Zero telemetry for Pro
+    if (settings.isProUser || !kDebugMode) return;
     debugPrint('[Telemetry] $name ${params ?? {}}');
   }
 

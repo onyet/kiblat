@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart' as p;
 
-/// A utility script to populate geonames.db
+/// Creates a developer-only sample database. The app does not bundle this file;
+/// its runtime database is a cache populated by successful lookups.
 /// Run this with: dart tools/import_geonames.dart
 void main() async {
   // Init sqflite for desktop

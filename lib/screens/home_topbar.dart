@@ -57,19 +57,6 @@ class HomeTopBar extends StatelessWidget {
                       alignment: Alignment.center,
                       children: [
                         Icon(Icons.view_in_ar, color: accentColor, size: 22),
-                        if (!settings.isProUser)
-                          Positioned(
-                            top: 6,
-                            right: 6,
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: Colors.amber,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
                       ],
                     ),
                   ),

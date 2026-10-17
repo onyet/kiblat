@@ -135,19 +135,31 @@ class HomeWidgetService {
         final prefs = await SharedPreferences.getInstance();
         final lat = prefs.getDouble('last_loc_lat');
         final lon = prefs.getDouble('last_loc_lon');
-        if (lat != null && lon != null) {
+        final manualLocation = prefs.getBool('last_loc_is_manual') ?? false;
+        final savedAt = prefs.getInt('last_loc_saved_at');
+        final savedAge = savedAt == null
+            ? null
+            : DateTime.now().difference(
+                DateTime.fromMillisecondsSinceEpoch(savedAt),
+              );
+        final locationIsUsable =
+            manualLocation ||
+            (savedAge != null &&
+                !savedAge.isNegative &&
+                savedAge <= LocationService.maximumLastKnownPositionAge);
+        if (lat != null && lon != null && locationIsUsable) {
           final locationName = prefs.getString('last_loc_label') ?? 'Unknown';
           final qiblaDeg = LocationService.qiblaBearing(lat, lon);
           final qiblaDirection = _getCardinalDirectionStatic(qiblaDeg);
 
           final settings = await PrayerSettings.load();
-          final now = DateTime.now();
           final dailyPrayers = await ps.PrayerService.calculatePrayerTimes(
             latitude: lat,
             longitude: lon,
-            date: now,
+            date: ps.PrayerService.nowForSettings(settings),
             settings: settings,
           );
+          final now = ps.PrayerService.nowForSettings(settings);
 
           final fardPrayers = dailyPrayers.prayers
               .where((p) => !p.isSunnah)
@@ -178,7 +190,10 @@ class HomeWidgetService {
             await Future.wait([
               HomeWidget.saveWidgetData<double>('qibla_degree', 0.0),
               HomeWidget.saveWidgetData<String>('qibla_direction', "PRO"),
-              HomeWidget.saveWidgetData<String>('location_name', "Aktifkan Kiblat Pro"),
+              HomeWidget.saveWidgetData<String>(
+                'location_name',
+                "Aktifkan Kiblat Pro",
+              ),
               HomeWidget.saveWidgetData<String>('current_prayer', "🔒"),
               HomeWidget.saveWidgetData<String>('current_prayer_time', "Pro"),
               HomeWidget.saveWidgetData<String>('next_prayer', "🔒"),
@@ -196,7 +211,10 @@ class HomeWidgetService {
                 qiblaDirection,
               ),
               HomeWidget.saveWidgetData<String>('location_name', locationName),
-              HomeWidget.saveWidgetData<String>('current_prayer', currentPrayer),
+              HomeWidget.saveWidgetData<String>(
+                'current_prayer',
+                currentPrayer,
+              ),
               HomeWidget.saveWidgetData<String>(
                 'current_prayer_time',
                 currentPrayerTime,
@@ -212,6 +230,26 @@ class HomeWidgetService {
               ),
             ]);
           }
+          await HomeWidget.updateWidget(
+            name: androidWidgetName,
+            androidName: androidWidgetName,
+            iOSName: iOSWidgetName,
+          );
+        } else {
+          await Future.wait([
+            HomeWidget.saveWidgetData<String>(keyLocationName, defaultLocation),
+            HomeWidget.saveWidgetData<String>(keyCurrentPrayer, defaultPrayer),
+            HomeWidget.saveWidgetData<String>(
+              keyCurrentPrayerTime,
+              defaultTime,
+            ),
+            HomeWidget.saveWidgetData<String>(keyNextPrayer, defaultPrayer),
+            HomeWidget.saveWidgetData<String>(keyNextPrayerTime, defaultTime),
+            HomeWidget.saveWidgetData<String>(
+              keyLastUpdated,
+              '${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')}',
+            ),
+          ]);
           await HomeWidget.updateWidget(
             name: androidWidgetName,
             androidName: androidWidgetName,
@@ -243,15 +281,19 @@ class HomeWidgetService {
   /// Update all widget data from current location and prayer times
   Future<void> updateWidgetData() async {
     try {
-      // Get last known location from preferences
-      final prefs = await SharedPreferences.getInstance();
-      double? lat = prefs.getDouble('last_loc_lat');
-      double? lon = prefs.getDouble('last_loc_lon');
-      String locationName = prefs.getString('last_loc_label') ?? 'Unknown';
+      // Use only a fresh device location cache or a user-selected manual one.
+      final cached = await LocationService.getLastLocation();
+      double? lat = cached?['lat'] as double?;
+      double? lon = cached?['lon'] as double?;
+      String locationName = cached?['label'] as String? ?? 'Unknown';
 
-      // Try to get current position if no cached location
+      // Try GPS only when no usable cached/manual location exists.
       if (lat == null || lon == null) {
         try {
+          if (!await LocationService.isPermissionGranted()) {
+            await _saveUnavailableWidgetData();
+            return;
+          }
           final position = await LocationService.getCurrentPosition().timeout(
             const Duration(seconds: 10),
           );
@@ -282,7 +324,7 @@ class HomeWidgetService {
 
       // Get prayer times
       final settings = await PrayerSettings.load();
-      final now = DateTime.now();
+      final now = ps.PrayerService.nowForSettings(settings);
       final dailyPrayers = await ps.PrayerService.calculatePrayerTimes(
         latitude: lat,
         longitude: lon,
@@ -342,7 +384,10 @@ class HomeWidgetService {
         await Future.wait([
           HomeWidget.saveWidgetData<double>(keyQiblaDegree, 0.0),
           HomeWidget.saveWidgetData<String>(keyQiblaDirection, "PRO"),
-          HomeWidget.saveWidgetData<String>(keyLocationName, "Aktifkan Kiblat Pro"),
+          HomeWidget.saveWidgetData<String>(
+            keyLocationName,
+            "Aktifkan Kiblat Pro",
+          ),
           HomeWidget.saveWidgetData<String>(keyCurrentPrayer, "🔒"),
           HomeWidget.saveWidgetData<String>(keyCurrentPrayerTime, "Pro"),
           HomeWidget.saveWidgetData<String>(keyNextPrayer, "🔒"),

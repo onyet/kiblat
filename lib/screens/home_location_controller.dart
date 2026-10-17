@@ -39,6 +39,7 @@ class HomeLocationController {
   Future<LocationResult> fetchLocation() async {
     final pos = await _fetchPos();
     final label = await _reverseGeo(pos.latitude, pos.longitude);
+    await LocationService.saveLastLocation(label, pos.latitude, pos.longitude);
     final qibla = LocationService.qiblaBearing(pos.latitude, pos.longitude);
     final dist = LocationService.distanceToKaabaKm(pos.latitude, pos.longitude);
     return LocationResult(
@@ -47,7 +48,8 @@ class HomeLocationController {
       label: label,
       lat: pos.latitude,
       lon: pos.longitude,
-      fromCache: false, // simplified as we don't need to distinguish visually anymore
+      fromCache:
+          false, // simplified as we don't need to distinguish visually anymore
     );
   }
 
@@ -56,10 +58,7 @@ class HomeLocationController {
     double lat,
     double lon,
   ) async {
-    await LocationService.saveLastLocation(label, lat, lon);
-    TelemetryService.instance.logEvent('manual_coords_saved', {
-      'lat': lat,
-      'lon': lon,
-    });
+    await LocationService.saveLastLocation(label, lat, lon, isManual: true);
+    TelemetryService.instance.logEvent('manual_coords_saved');
   }
 }

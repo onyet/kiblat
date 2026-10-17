@@ -43,11 +43,6 @@ Future<void> main() async {
 
   await EasyLocalization.ensureInitialized();
 
-  // Enable test mode in debug for easier ad testing
-  if (kDebugMode) {
-    AdService.setTestMode(true);
-  }
-
   // AdMob initialization moved to `MainApp.initState` to avoid blocking startup
   // (initialization now happens when the app's UI is ready)
 
@@ -63,7 +58,7 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final isPro = prefs.getBool('isProUser') ?? false;
   if (!isPro) {
-    unawaited(AdService.initialize());
+    debugPrint('[Main] AdMob initialization deferred to _runInitialization');
   }
 
   runApp(
@@ -114,37 +109,38 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   }
 
   Future<void> _runInitialization() async {
+    debugPrint('[Startup] Background initialization started');
     try {
-      // Initialize offline geocoding database
+      // Initialize the local place-label cache
+      debugPrint('[Startup] Initializing GeoNamesService');
       await GeoNamesService.instance.initialize();
 
       // Load persisted settings into the global SettingsService so listeners can react
+      debugPrint('[Startup] Loading Settings');
       await SettingsService.instance.load();
+
+      debugPrint('[Startup] Initializing BillingService');
       await BillingService.instance.initialize();
 
       final prayerSettings = SettingsService.instance.notifier.value;
+      debugPrint(
+        '[Startup] Settings loaded. isPro: ${prayerSettings.isProUser}',
+      );
 
-      // Note: App icon sync on startup removed because it triggers Android process termination 
-      // to refresh launcher cache. Icon is now only updated upon explicit Pro status change.
-
-      // Listen for settings changes to update app icon dynamically (only when changed)
-      bool lastProState = prayerSettings.isProUser;
-      SettingsService.instance.notifier.addListener(() {
-        final settings = SettingsService.instance.notifier.value;
-        if (settings.isProUser != lastProState) {
-          lastProState = settings.isProUser;
-          unawaited(BillingService.instance.updateAppIcon(settings.isProUser));
-        }
-      });
+      // Note: App icon sync on startup removed because it triggers Android process termination
+      // to refresh launcher cache.
 
       // Only initialize AdMob for non-pro users (Privacy First)
       if (!prayerSettings.isProUser) {
+        debugPrint('[Startup] Initializing AdService');
         await AdService.initialize();
       }
 
+      debugPrint('[Startup] Initializing NotificationService');
       await NotificationService.instance.initialize(_navigatorKey);
 
       if (prayerSettings.enablePrayerNotifications) {
+        debugPrint('[Startup] Scheduling Notifications');
         unawaited(
           NotificationService.instance
               .schedulePrayerNotificationsForCurrentLocation(prayerSettings),
@@ -152,9 +148,12 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       }
 
       // Initialize home widget service
+      debugPrint('[Startup] Initializing HomeWidgetService');
       unawaited(HomeWidgetService.instance.initialize());
+
+      debugPrint('[Startup] Background initialization completed');
     } catch (e) {
-      debugPrint('Initialization error: $e');
+      debugPrint('[Startup] Initialization error: $e');
     }
   }
 
@@ -174,7 +173,7 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     // When app resumes, refresh/load interstitial so it's ready when user closes later
     if (state == AppLifecycleState.resumed) {
       AdService.instance.reloadInterstitialAd();
-      
+
       final prayerSettings = SettingsService.instance.notifier.value;
       if (prayerSettings.enablePrayerNotifications) {
         unawaited(
@@ -195,11 +194,16 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         return MaterialApp(
           navigatorKey: _navigatorKey,
           debugShowCheckedModeBanner: false,
-          title: EasyLocalization.of(context) != null ? tr('app_title') : 'Kiblat',
+          title: EasyLocalization.of(context) != null
+              ? tr('app_title')
+              : 'Kiblat',
           theme: ThemeData(
             brightness: isLight ? Brightness.light : Brightness.dark,
             primaryColor: AppTheme.getAccentColor(prayerSettings),
-            scaffoldBackgroundColor: AppTheme.getBackgroundColor(prayerSettings, context),
+            scaffoldBackgroundColor: AppTheme.getBackgroundColor(
+              prayerSettings,
+              context,
+            ),
             cardColor: AppTheme.getCardColor(prayerSettings, context),
             useMaterial3: true,
             // ── Component themes so ALL widgets inherit the active accent ──
@@ -216,7 +220,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             ),
             progressIndicatorTheme: ProgressIndicatorThemeData(
               color: AppTheme.getAccentColor(prayerSettings),
-              linearTrackColor: AppTheme.getAccentColor(prayerSettings).withValues(alpha: 0.1),
+              linearTrackColor: AppTheme.getAccentColor(
+                prayerSettings,
+              ).withValues(alpha: 0.1),
             ),
             iconTheme: IconThemeData(
               color: AppTheme.getAccentColor(prayerSettings),
@@ -225,7 +231,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.getAccentColor(prayerSettings),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 elevation: 0,
               ),
             ),
@@ -237,8 +245,12 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
             outlinedButtonTheme: OutlinedButtonThemeData(
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.getAccentColor(prayerSettings),
-                side: BorderSide(color: AppTheme.getAccentColor(prayerSettings)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                side: BorderSide(
+                  color: AppTheme.getAccentColor(prayerSettings),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             cardTheme: CardThemeData(
@@ -246,13 +258,19 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: AppTheme.getBorderColor(prayerSettings, context)),
+                side: BorderSide(
+                  color: AppTheme.getBorderColor(prayerSettings, context),
+                ),
               ),
             ),
             chipTheme: ChipThemeData(
               backgroundColor: AppTheme.getCardColor(prayerSettings, context),
-              labelStyle: TextStyle(color: AppTheme.getTextColor(prayerSettings, context)),
-              side: BorderSide(color: AppTheme.getBorderColor(prayerSettings, context)),
+              labelStyle: TextStyle(
+                color: AppTheme.getTextColor(prayerSettings, context),
+              ),
+              side: BorderSide(
+                color: AppTheme.getBorderColor(prayerSettings, context),
+              ),
             ),
             switchTheme: SwitchThemeData(
               thumbColor: WidgetStateProperty.resolveWith((states) {
@@ -263,7 +281,9 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
               }),
               trackColor: WidgetStateProperty.resolveWith((states) {
                 if (states.contains(WidgetState.selected)) {
-                  return AppTheme.getAccentColor(prayerSettings).withValues(alpha: 0.4);
+                  return AppTheme.getAccentColor(
+                    prayerSettings,
+                  ).withValues(alpha: 0.4);
                 }
                 return null;
               }),
@@ -355,21 +375,23 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _startTransitionTimer() async {
-    // 1. Wait for MainApp's background services initialization to complete (ignore errors)
+    // 1. Wait for MainApp's background services initialization to complete
+    // Added a safety timeout of 5 seconds to prevent hanging on splash
     try {
-      await MainApp.initFuture;
+      await MainApp.initFuture.timeout(const Duration(seconds: 5));
     } catch (e) {
-      debugPrint('Error in background init: $e');
+      debugPrint('[SplashScreen] Initialization timed out or failed: $e');
     }
-    
+
     // 2. Wait for the progress bar animation to complete (min 1500ms for visual polish)
     try {
       await _progressTicker;
     } catch (e) {
-      debugPrint('Error in progress ticker: $e');
+      debugPrint('[SplashScreen] Progress ticker error: $e');
     }
 
     if (mounted) {
+      debugPrint('[SplashScreen] Transitioning to next screen');
       _navigateAfterSplash();
     }
   }
@@ -396,7 +418,7 @@ class _SplashScreenState extends State<SplashScreen>
       builder: (context, settings, child) {
         final isLight = AppTheme.isLight(settings, context);
         final bgColor = isLight ? Colors.white : const Color(0xFF0F0F0F);
-        
+
         return Scaffold(
           backgroundColor: bgColor,
           body: Stack(
@@ -417,7 +439,9 @@ class _SplashScreenState extends State<SplashScreen>
                     decoration: BoxDecoration(
                       gradient: RadialGradient(
                         colors: [
-                          const Color(0xFFD4AF37).withValues(alpha: isLight ? 0.05 : 0.02),
+                          const Color(
+                            0xFFD4AF37,
+                          ).withValues(alpha: isLight ? 0.05 : 0.02),
                           Colors.transparent,
                         ],
                         radius: 1.2,
@@ -436,7 +460,9 @@ class _SplashScreenState extends State<SplashScreen>
   Widget _buildLogo(PrayerSettings settings) {
     final accentColor = AppTheme.getAccentColor(settings, context);
     final isLight = AppTheme.isLight(settings, context);
-    final titleColor = isLight ? const Color(0xFFB58A0D) : const Color(0xFFD4AF37);
+    final titleColor = isLight
+        ? const Color(0xFFB58A0D)
+        : const Color(0xFFD4AF37);
 
     return Column(
       mainAxisSize: MainAxisSize.min,

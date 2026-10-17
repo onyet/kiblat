@@ -1,5 +1,6 @@
 import 'package:adhan/adhan.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:kiblat/models/prayer_settings_model.dart';
 
 /// Prayer time data for a single prayer
@@ -319,7 +320,9 @@ class PrayerService {
           }
           final nightDuration = fajrLocal.difference(ishaLocal);
           // Use half of the night duration (in minutes) for midpoint
-          tahajjudTime = ishaLocal.add(Duration(minutes: nightDuration.inMinutes ~/ 2));
+          tahajjudTime = ishaLocal.add(
+            Duration(minutes: nightDuration.inMinutes ~/ 2),
+          );
         } else {
           tahajjudTime = ishaFallback!.subtract(
             const Duration(hours: 6),
@@ -380,17 +383,43 @@ class PrayerService {
   ) async {
     try {
       if (timezoneId != null && timezoneId.isNotEmpty) {
-        // Use specified timezone
+        tzdata.initializeTimeZones();
         final location = tz.getLocation(timezoneId);
-        final tzDate = tz.TZDateTime.from(date, location);
+        // Use the requested calendar date in the selected zone. `date` may be
+        // a UTC or device-local DateTime; converting it as an instant can land
+        // on the previous/next calendar day in another timezone.
+        final tzDate = tz.TZDateTime(location, date.year, date.month, date.day);
         return tzDate.timeZoneOffset;
       } else {
-        // Use device timezone (default)
-        return DateTime.now().timeZoneOffset;
+        // Resolve the offset for the target date, including device DST changes.
+        return DateTime(date.year, date.month, date.day).timeZoneOffset;
       }
     } catch (e) {
       // Fallback to device timezone if specified timezone is invalid
-      return DateTime.now().timeZoneOffset;
+      return DateTime(date.year, date.month, date.day).timeZoneOffset;
+    }
+  }
+
+  /// A wall-clock value in the selected prayer timezone, represented as a
+  /// device-local DateTime so it compares consistently with calculated times.
+  static DateTime nowForSettings(PrayerSettings settings) {
+    final timezoneId = settings.timezoneId;
+    if (timezoneId == null || timezoneId.isEmpty) return DateTime.now();
+
+    try {
+      tzdata.initializeTimeZones();
+      final zoneNow = tz.TZDateTime.now(tz.getLocation(timezoneId));
+      return DateTime(
+        zoneNow.year,
+        zoneNow.month,
+        zoneNow.day,
+        zoneNow.hour,
+        zoneNow.minute,
+        zoneNow.second,
+        zoneNow.millisecond,
+      );
+    } catch (_) {
+      return DateTime.now();
     }
   }
 
@@ -419,7 +448,7 @@ class PrayerService {
     required double longitude,
     required PrayerSettings settings,
   }) async {
-    final now = DateTime.now();
+    final now = nowForSettings(settings);
     final today = DateTime(now.year, now.month, now.day);
 
     // Try to find next prayer today
@@ -462,7 +491,7 @@ class PrayerService {
     required double longitude,
     required PrayerSettings settings,
   }) async {
-    final now = DateTime.now();
+    final now = nowForSettings(settings);
     final today = DateTime(now.year, now.month, now.day);
 
     // Try to find last prayer today

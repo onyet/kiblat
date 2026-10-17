@@ -1,7 +1,7 @@
 name: kiblat
 description: "App to find the Qibla direction"
 publish_to: 'none'
-version: 2.2.0+20
+version: 2.2.3+23
 
 environment:
   sdk: ^3.10.4
@@ -12,32 +12,35 @@ dependencies:
   easy_localization: ^3.0.7
   flutter_localizations:
     sdk: flutter
-  geolocator: ^13.0.1
+  geolocator: ^13.0.4
   geocoding: ^3.0.0
   flutter_compass: ^0.8.1
-  google_maps_flutter: ^2.10.0
-  google_mobile_ads: ^5.3.0
+  google_maps_flutter: ^2.14.0
+  google_mobile_ads: ^5.3.1
   in_app_purchase: ^3.3.0
   in_app_purchase_android: 0.5.1
-  url_launcher: ^6.3.1
-  shared_preferences: ^2.3.5
-  sqflite: ^2.4.1
+  in_app_purchase_storekit: ^0.4.10
+  url_launcher: ^6.3.2
+  shared_preferences: ^2.5.4
+  sqflite: ^2.4.3
   path: ^1.9.1
-  permission_handler: ^11.3.1
-  http: ^1.3.0
-  camera: ^0.11.0+2
-  sensors_plus: ^6.1.1
-  sqflite_common_ffi: ^2.3.3
+  permission_handler: ^11.4.0
+  http: ^1.6.0
+  camera: ^0.11.4
+  sensors_plus: ^6.1.2
+  sqflite_common_ffi: ^2.3.7+1
   flutter_native_splash: ^2.3.5
-  adhan: ^2.0.0
-  intl: ^0.20.0
+  adhan: ^2.0.0+1
+  intl: ^0.20.2
   hijri: ^3.0.0
   timezone: ^0.10.1
   flutter_local_notifications: ^19.5.0
-  home_widget: ^0.7.0
-  file_picker: ^8.0.0+1
-  path_provider: ^2.1.0
-  audioplayers: ^6.0.0
+  home_widget: ^0.7.0+1
+  file_picker: ^8.3.7
+  path_provider: ^2.1.5
+  audioplayers: ^6.7.1
+  firebase_core: ^3.1.1
+  firebase_crashlytics: ^4.0.1
 
 dev_dependencies:
   flutter_test:
