@@ -9,9 +9,29 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'telemetry_service.dart';
 import 'geonames_service.dart';
+import 'location_profile_service.dart';
+import 'settings_service.dart';
 
 class LocationService {
   static const Duration maximumLastKnownPositionAge = Duration(minutes: 5);
+
+  /// Effective lat/lon for prayer calc: Pro location profile override, else GPS/cache.
+  static Future<Map<String, dynamic>?> resolveEffectiveLocation() async {
+    final settings = SettingsService.instance.notifier.value;
+    if (settings.isProUser) {
+      final override =
+          await LocationProfileService.instance.overrideCoordinates();
+      if (override != null) {
+        return {
+          'lat': override.lat,
+          'lon': override.lon,
+          'label': override.label,
+          'is_manual': true,
+        };
+      }
+    }
+    return getLastLocation(allowExpired: true);
+  }
 
   static Future<bool> checkAndRequestPermission() async {
     try {

@@ -4,4 +4,7 @@
     <string name="widget_description">Shows Qibla direction and prayer times</string>
     <string name="widget_now">Now</string>
     <string name="widget_next">Next</string>
+    <string name="countdown_widget_name">Kiblat Next Prayer</string>
+    <string name="countdown_widget_description">Shows the next prayer name and time</string>
+    <string name="countdown_widget_next">Next prayer</string>
 </resources>

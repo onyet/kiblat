@@ -15,6 +15,7 @@ import 'package:kiblat/models/prayer_settings_model.dart';
 class HomeWidgetService {
   static const String appGroupId = 'group.id.onyet.app.kiblat';
   static const String androidWidgetName = 'KiblatWidgetProvider';
+  static const String androidCountdownWidgetName = 'KiblatCountdownWidgetProvider';
   static const String iOSWidgetName = 'KiblatWidget';
 
   // Widget data keys
@@ -235,6 +236,12 @@ class HomeWidgetService {
             androidName: androidWidgetName,
             iOSName: iOSWidgetName,
           );
+          try {
+            await HomeWidget.updateWidget(
+              name: androidCountdownWidgetName,
+              androidName: androidCountdownWidgetName,
+            );
+          } catch (_) {}
         } else {
           await Future.wait([
             HomeWidget.saveWidgetData<String>(keyLocationName, defaultLocation),
@@ -255,6 +262,12 @@ class HomeWidgetService {
             androidName: androidWidgetName,
             iOSName: iOSWidgetName,
           );
+          try {
+            await HomeWidget.updateWidget(
+              name: androidCountdownWidgetName,
+              androidName: androidCountdownWidgetName,
+            );
+          } catch (_) {}
         }
       }
     } catch (_) {
@@ -281,11 +294,28 @@ class HomeWidgetService {
   /// Update all widget data from current location and prayer times
   Future<void> updateWidgetData() async {
     try {
+      double? lat;
+      double? lon;
+      String locationName = 'Unknown';
+
+      // Pro location-profile override (offline travel)
+      final effective = await LocationService.resolveEffectiveLocation();
+      final settingsPeek = await PrayerSettings.load();
+      if (settingsPeek.isProUser &&
+          effective != null &&
+          effective['is_manual'] == true) {
+        lat = effective['lat'] as double?;
+        lon = effective['lon'] as double?;
+        locationName = effective['label'] as String? ?? locationName;
+      }
+
       // Use only a fresh device location cache or a user-selected manual one.
-      final cached = await LocationService.getLastLocation();
-      double? lat = cached?['lat'] as double?;
-      double? lon = cached?['lon'] as double?;
-      String locationName = cached?['label'] as String? ?? 'Unknown';
+      if (lat == null || lon == null) {
+        final cached = await LocationService.getLastLocation();
+        lat = cached?['lat'] as double?;
+        lon = cached?['lon'] as double?;
+        locationName = cached?['label'] as String? ?? locationName;
+      }
 
       // Try GPS only when no usable cached/manual location exists.
       if (lat == null || lon == null) {
@@ -501,7 +531,7 @@ class HomeWidgetService {
     }
   }
 
-  /// Request native widget update
+  /// Request native widget update (main + countdown variants).
   Future<void> _updateWidget() async {
     try {
       await HomeWidget.updateWidget(
@@ -511,6 +541,14 @@ class HomeWidgetService {
       );
     } catch (e) {
       // Widget might not exist yet
+    }
+    try {
+      await HomeWidget.updateWidget(
+        name: androidCountdownWidgetName,
+        androidName: androidCountdownWidgetName,
+      );
+    } catch (e) {
+      // Countdown widget might not be installed
     }
   }
 

@@ -13,6 +13,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:kiblat/services/ad_service.dart';
 import 'package:kiblat/widgets/ad_countdown_overlay.dart';
 import 'package:kiblat/screens/main_shell.dart';
+import 'package:kiblat/services/location_profile_service.dart';
+import 'package:kiblat/services/ics_export_service.dart';
 
 class PrayerTimesScreen extends StatefulWidget {
   const PrayerTimesScreen({super.key});
@@ -82,6 +84,23 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     return s[0].toUpperCase() + s.substring(1);
   }
 
+  Future<void> _exportIcs(PrayerSettings settings) async {
+    if (_latitude == null || _longitude == null) return;
+    try {
+      await IcsExportService.instance.exportAndShare(
+        latitude: _latitude!,
+        longitude: _longitude!,
+        settings: settings,
+        days: 60,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${tr('export_ics_failed')}: $e')),
+      );
+    }
+  }
+
   Future<void> _loadAll() async {
     if (!mounted) return;
     setState(() {
@@ -90,33 +109,44 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
     });
 
     try {
-      // 1. Try to get position with a short timeout and fallback to cached
-      dynamic pos;
-      try {
-        pos = await LocationService.getCurrentPosition().timeout(
-          const Duration(seconds: 12),
-        );
-      } catch (e) {
-        debugPrint(
-          'PrayerTimes: GPS fetch failed or timed out, trying cached: $e',
-        );
-        final cached = await LocationService.getLastLocation();
-        if (cached != null) {
-          // Construct map-like or generic object if Position class is not visible here
-          // though geolocator is imported, let's just use what we have access to
-          _latitude = cached['lat'];
-          _longitude = cached['lon'];
+      final settingsNow = SettingsService.instance.notifier.value;
+      final useProfile = settingsNow.isProUser &&
+          !LocationProfileService.instance.followGpsNotifier.value;
+      if (useProfile) {
+        final override =
+            await LocationProfileService.instance.overrideCoordinates();
+        if (override != null) {
+          _latitude = override.lat;
+          _longitude = override.lon;
+          _locationLabel = override.label;
         }
       }
 
-      if (pos != null) {
-        _latitude = (pos as dynamic).latitude;
-        _longitude = (pos as dynamic).longitude;
+      if (_latitude == null || _longitude == null) {
+        dynamic pos;
+        try {
+          pos = await LocationService.getCurrentPosition().timeout(
+            const Duration(seconds: 12),
+          );
+        } catch (e) {
+          debugPrint(
+            'PrayerTimes: GPS fetch failed or timed out, trying cached: $e',
+          );
+          final cached = await LocationService.getLastLocation();
+          if (cached != null) {
+            _latitude = cached['lat'];
+            _longitude = cached['lon'];
+          }
+        }
+
+        if (pos != null) {
+          _latitude = (pos as dynamic).latitude;
+          _longitude = (pos as dynamic).longitude;
+        }
       }
 
       if (_latitude == null || _longitude == null) {
-        // Last resort: check if we have ANY location saved, even if old
-        final cached = await LocationService.getLastLocation();
+        final cached = await LocationService.getLastLocation(allowExpired: true);
         if (cached != null) {
           _latitude = cached['lat'];
           _longitude = cached['lon'];
@@ -374,7 +404,23 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
                         children: [
                           _buildDateHeader(),
-                          const SizedBox(height: 20),
+                          if (settings.isProUser &&
+                              _latitude != null &&
+                              _longitude != null) ...[
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton.icon(
+                                onPressed: () => _exportIcs(settings),
+                                icon: Icon(Icons.calendar_month, color: accentColor, size: 18),
+                                label: Text(
+                                  tr('export_ics'),
+                                  style: TextStyle(color: accentColor),
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 12),
                           if (_loading)
                             _buildLoadingIndicator(accentColor, settings)
                           else if (_error.isNotEmpty)

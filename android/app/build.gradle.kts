@@ -25,8 +25,9 @@ val envVars = loadEnvFile()
 val googleApiKey = envVars["GOOGLE_API_KEY"] ?: ""
 
 // Load keystore properties for release signing (optional).
-// Place `keystore.jks` in `android/app/` (path relative to this module).
-val keystorePropertiesFile = file("../key.properties")
+// - key.properties lives at android/key.properties (Gradle rootProject)
+// - keystore.jks lives at android/app/ (this module's projectDir)
+val keystorePropertiesFile = rootProject.file("key.properties")
 val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(keystorePropertiesFile.inputStream())
@@ -66,7 +67,10 @@ android {
             create("release") {
                 keyAlias = keystoreProperties.getProperty("keyAlias", "")
                 keyPassword = keystoreProperties.getProperty("keyPassword", "")
-                storeFile = file(keystoreProperties.getProperty("storeFile", "keystore.jks"))
+                // Explicit: storeFile is relative to this module (android/app/), not repo root.
+                val storeFileName =
+                    keystoreProperties.getProperty("storeFile", "keystore.jks")
+                storeFile = layout.projectDirectory.file(storeFileName).asFile
                 storePassword = keystoreProperties.getProperty("storePassword", "")
             }
         }

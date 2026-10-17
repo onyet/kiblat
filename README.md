@@ -24,6 +24,7 @@ Hey! Kiblat is a tiny, chill Flutter app that points you to the Kaaba and now al
 - **Prayer Heatmap:** Visualize your prayer consistency over the last year.
 - **Location History:** (Pro) Keep track of where you've performed your prayers.
 - **Theme Engine:** Dynamic switching based on time and new Cyber/Dark themes.
+- **Pro+:** Per-prayer reminders, log import, .ics calendar export, location profiles, calculation presets, qada tracker, tasbih wirid library, Next Prayer widget.
 
 ---
 
@@ -78,7 +79,10 @@ Place labels use the local cache first. When no nearby cached place is available
 
 ## Build release (Android AAB) 🔒
 
-1. Put your keystore in `android/app/` (e.g. `android/app/keystore.jks`) and create `android/key.properties` with local secrets (DO NOT commit):
+1. Set up release signing (two separate paths — do not mix them):
+
+- Place the keystore at **`android/app/keystore.jks`**
+- Create **`android/key.properties`** (next to `android/settings.gradle.kts`, NOT inside `android/app/`) with local secrets (DO NOT commit):
 
 ```text
 storePassword=YOUR_STORE_PASSWORD
@@ -87,7 +91,7 @@ keyAlias=YOUR_KEY_ALIAS
 storeFile=keystore.jks
 ```
 
-`storeFile` is resolved relative to the `android/app` Gradle module.
+`storeFile` is resolved relative to the **`android/app`** module directory (so `keystore.jks` → `android/app/keystore.jks`).
 
 1. Restrict `GOOGLE_API_KEY` in Google Cloud Console to Android apps: package `id.onyet.app.kiblat` plus your upload key SHA-1 and the Play App Signing SHA-1.
 

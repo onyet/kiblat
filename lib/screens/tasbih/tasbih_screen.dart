@@ -5,6 +5,7 @@ import 'package:kiblat/utils/theme_util.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:kiblat/services/ad_service.dart';
+import 'package:kiblat/services/tasbih_pro_service.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -19,6 +20,7 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
   int _counter = 0;
   int _target = 33;
   int _totalCount = 0;
+  String? _activeWiridId;
 
   late final AnimationController _animController;
   late final Animation<double> _scaleAnimation;
@@ -110,10 +112,25 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
   void _increment() {
     HapticFeedback.lightImpact();
     _animController.forward(from: 0);
+    final settings = SettingsService.instance.notifier.value;
     setState(() {
       _counter++;
       _totalCount++;
       if (_counter >= _target) {
+        if (settings.isProUser) {
+          final wirids = TasbihProService.instance.wiridsNotifier.value;
+          TasbihWirid? wirid;
+          try {
+            wirid = wirids.firstWhere((w) => w.id == _activeWiridId);
+          } catch (_) {
+            wirid = wirids.isNotEmpty ? wirids.first : null;
+          }
+          if (wirid != null) {
+            unawaited(TasbihProService.instance.recordSession(wirid, _target));
+          } else {
+            unawaited(TasbihProService.instance.addCount(_target));
+          }
+        }
         _counter = 0;
         HapticFeedback.vibrate();
       }
@@ -126,6 +143,126 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
       _counter = 0;
       _totalCount = 0;
     });
+  }
+
+  Future<void> _showWiridLibrary(dynamic settings) async {
+    await TasbihProService.instance.load();
+    if (!mounted) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return ValueListenableBuilder(
+          valueListenable: TasbihProService.instance.wiridsNotifier,
+          builder: (ctx, wirids, _) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      tr('tasbih_library'),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ...wirids.map(
+                      (w) => ListTile(
+                        title: Text(w.name),
+                        subtitle: Text('${tr('target')}: ${w.target}'),
+                        onTap: () {
+                          setState(() {
+                            _target = w.target;
+                            _activeWiridId = w.id;
+                            _counter = 0;
+                          });
+                          Navigator.pop(ctx);
+                        },
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          onPressed: () =>
+                              TasbihProService.instance.removeWirid(w.id),
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () async {
+                        final nameCtrl = TextEditingController();
+                        final targetCtrl = TextEditingController(text: '33');
+                        final ok = await showDialog<bool>(
+                          context: ctx,
+                          builder: (c2) => AlertDialog(
+                            title: Text(tr('add_wirid')),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                TextField(
+                                  controller: nameCtrl,
+                                  decoration: InputDecoration(
+                                    labelText: tr('wirid_name'),
+                                  ),
+                                ),
+                                TextField(
+                                  controller: targetCtrl,
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                    labelText: tr('target'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(c2, false),
+                                child: Text(tr('cancel')),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(c2, true),
+                                child: Text(tr('save')),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (ok == true && nameCtrl.text.trim().isNotEmpty) {
+                          await TasbihProService.instance.addWirid(
+                            TasbihWirid(
+                              id: DateTime.now().millisecondsSinceEpoch
+                                  .toString(),
+                              name: nameCtrl.text.trim(),
+                              target: int.tryParse(targetCtrl.text) ?? 33,
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.add),
+                      label: Text(tr('add_wirid')),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      tr('recent_sessions'),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    ...TasbihProService.instance.sessionsNotifier.value
+                        .take(5)
+                        .map(
+                          (s) => ListTile(
+                            dense: true,
+                            title: Text(s.wiridName),
+                            subtitle: Text('${s.count} · ${s.completedAt}'),
+                          ),
+                        ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -149,6 +286,12 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
             ),
             centerTitle: true,
             actions: [
+              if (settings.isProUser)
+                IconButton(
+                  icon: Icon(Icons.library_books_outlined, color: textColor),
+                  tooltip: tr('tasbih_library'),
+                  onPressed: () => _showWiridLibrary(settings),
+                ),
               IconButton(
                 icon: Icon(Icons.refresh, color: textColor),
                 onPressed: _reset,
@@ -158,8 +301,26 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
           body: SafeArea(
             child: Column(
               children: [
+                if (settings.isProUser)
+                  ValueListenableBuilder(
+                    valueListenable: TasbihProService.instance.dailyCountNotifier,
+                    builder: (context, daily, _) {
+                      final target =
+                          TasbihProService.instance.dailyTargetNotifier.value;
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                        child: Text(
+                          '${tr('daily_dhikr')}: $daily / $target',
+                          style: TextStyle(
+                            color: textColor.withValues(alpha: 0.7),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 const Spacer(),
-                
+
                 // Target selector
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -171,7 +332,10 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
                       onSelected: (selected) {
                         if (selected) {
                           HapticFeedback.selectionClick();
-                          setState(() => _target = t);
+                          setState(() {
+                            _target = t;
+                            _activeWiridId = null;
+                          });
                         }
                       },
                       selectedColor: accentColor,

@@ -12,6 +12,9 @@ import 'package:kiblat/models/prayer_settings_model.dart';
 import 'package:kiblat/widgets/prayer_heatmap.dart';
 import 'package:kiblat/services/location_service.dart';
 import 'package:kiblat/widgets/ad_countdown_overlay.dart';
+import 'package:kiblat/services/qada_service.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 
 class PrayerTrackerScreen extends StatefulWidget {
   const PrayerTrackerScreen({super.key});
@@ -199,6 +202,8 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen> {
                           if (settings.isProUser) ...[
                             _buildProInsightSection(accent, card, text, border, settings),
                             const SizedBox(height: 24),
+                            _buildQadaSection(accent, card, text, border, settings),
+                            const SizedBox(height: 24),
                           ],
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -326,10 +331,20 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen> {
                   style: TextStyle(color: text, fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 1)),
               ],
             ),
-            IconButton(
-              icon: Icon(Icons.ios_share, size: 20, color: accent),
-              onPressed: () => _exportLogs(settings),
-              tooltip: tr('export_logs'),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.file_upload_outlined, size: 20, color: accent),
+                  onPressed: () => _importLogs(settings),
+                  tooltip: tr('import_logs'),
+                ),
+                IconButton(
+                  icon: Icon(Icons.ios_share, size: 20, color: accent),
+                  onPressed: () => _exportLogs(settings),
+                  tooltip: tr('export_logs'),
+                ),
+              ],
             ),
           ],
         ),
@@ -387,6 +402,205 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen> {
       total += list.length;
     }
     return total;
+  }
+
+  Widget _buildQadaSection(
+    Color accent,
+    Color card,
+    Color text,
+    Color border,
+    PrayerSettings settings,
+  ) {
+    return ValueListenableBuilder(
+      valueListenable: QadaService.instance.entriesNotifier,
+      builder: (context, entries, _) {
+        final pending = entries.where((e) => !e.completed).toList();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  tr('qada_tracker').toUpperCase(),
+                  style: TextStyle(
+                    color: text,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () => _addQadaDialog(settings),
+                  icon: Icon(Icons.add, size: 18, color: accent),
+                  label: Text(tr('add_qada'), style: TextStyle(color: accent)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (pending.isEmpty)
+              Text(
+                tr('qada_empty'),
+                style: TextStyle(color: text.withValues(alpha: 0.5), fontSize: 13),
+              )
+            else
+              ...pending.take(10).map(
+                (e) => Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: card,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: border),
+                  ),
+                  child: ListTile(
+                    title: Text(tr(e.prayerKey), style: TextStyle(color: text)),
+                    subtitle: Text(e.missedDate, style: TextStyle(color: text.withValues(alpha: 0.5))),
+                    trailing: IconButton(
+                      icon: Icon(Icons.check_circle_outline, color: accent),
+                      onPressed: () => QadaService.instance.markCompleted(e.id),
+                      tooltip: tr('mark_qada_done'),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _addQadaDialog(PrayerSettings settings) async {
+    String prayer = 'fajr';
+    final date = _formatDateKey(DateTime.now().subtract(const Duration(days: 1)));
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('add_qada')),
+        content: StatefulBuilder(
+          builder: (ctx, setLocal) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                value: prayer,
+                items: ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
+                    .map((k) => DropdownMenuItem(value: k, child: Text(tr(k))))
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) setLocal(() => prayer = v);
+                },
+                decoration: InputDecoration(labelText: tr('prayer')),
+              ),
+              const SizedBox(height: 8),
+              Text('${tr('missed_date')}: $date'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('cancel'))),
+          TextButton(
+            onPressed: () async {
+              await QadaService.instance.addMissed(
+                prayerKey: prayer,
+                missedDate: date,
+              );
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: Text(tr('save')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _importLogs(PrayerSettings settings) async {
+    if (!settings.isProUser) return;
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    String? raw = file.bytes != null
+        ? utf8.decode(file.bytes!)
+        : (file.path != null ? await File(file.path!).readAsString() : null);
+    if (raw == null || raw.isEmpty) return;
+
+    Map<String, dynamic> decoded;
+    try {
+      final obj = jsonDecode(raw);
+      if (obj is! Map<String, dynamic>) {
+        throw const FormatException('Root must be object');
+      }
+      decoded = obj;
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('import_logs_invalid'))),
+      );
+      return;
+    }
+
+    final mode = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('import_logs')),
+        content: Text(tr('import_logs_mode_msg')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('cancel'))),
+          TextButton(onPressed: () => Navigator.pop(ctx, 'merge'), child: Text(tr('merge'))),
+          TextButton(onPressed: () => Navigator.pop(ctx, 'replace'), child: Text(tr('replace'))),
+        ],
+      ),
+    );
+    if (mode == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final todayKey = _formatDateKey(DateTime.now());
+
+    if (mode == 'replace') {
+      // Clear known history keys we track (today + last 365)
+      for (int i = 0; i <= 365; i++) {
+        final key = _formatDateKey(DateTime.now().subtract(Duration(days: i)));
+        await prefs.remove('prayer_tracker_$key');
+      }
+    }
+
+    final today = decoded['today'];
+    if (today is Map && today['completed'] is List) {
+      final list = (today['completed'] as List).map((e) => e.toString()).toList();
+      final date = today['date']?.toString() ?? todayKey;
+      final existing = prefs.getStringList('prayer_tracker_$date') ?? [];
+      final merged = mode == 'merge'
+          ? {...existing, ...list}.toList()
+          : list;
+      await prefs.setStringList('prayer_tracker_$date', merged);
+    }
+
+    final history = decoded['history'];
+    if (history is Map) {
+      for (final entry in history.entries) {
+        final date = entry.key.toString();
+        final list = (entry.value is List)
+            ? (entry.value as List).map((e) => e.toString()).toList()
+            : <String>[];
+        if (mode == 'merge') {
+          final existing = prefs.getStringList('prayer_tracker_$date') ?? [];
+          await prefs.setStringList(
+            'prayer_tracker_$date',
+            {...existing, ...list}.toList(),
+          );
+        } else {
+          await prefs.setStringList('prayer_tracker_$date', list);
+        }
+      }
+    }
+
+    await _loadData();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(tr('import_logs_success'))),
+    );
   }
 
   Future<void> _exportLogs(PrayerSettings settings) async {

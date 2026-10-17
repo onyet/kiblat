@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:adhan/adhan.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -51,11 +53,25 @@ class PrayerSettings {
   /// Mode tampilan ('dark', 'light', 'system')
   final String displayMode;
 
-  /// Advanced Reminders (Pro): offset in minutes before/after adzan (negative for before)
+  /// Advanced Reminders (Pro): global offset in minutes before/after adzan (negative for before)
   final int reminderOffset;
 
   /// Whether to enable advanced reminders
   final bool enableAdvancedReminders;
+
+  /// When true, use [reminderOffsetsByPrayer] per fard prayer instead of [reminderOffset].
+  final bool usePerPrayerReminders;
+
+  /// Per-prayer offsets (keys: Fajr, Dhuhr, Asr, Maghrib, Isha). Negative = before.
+  final Map<String, int> reminderOffsetsByPrayer;
+
+  static const List<String> reminderPrayerNames = [
+    'Fajr',
+    'Dhuhr',
+    'Asr',
+    'Maghrib',
+    'Isha',
+  ];
 
   PrayerSettings({
     this.madhab = Madhab.shafi,
@@ -76,7 +92,22 @@ class PrayerSettings {
     this.displayMode = 'light',
     this.reminderOffset = -10, // Default 10 min before
     this.enableAdvancedReminders = false,
-  });
+    this.usePerPrayerReminders = false,
+    Map<String, int>? reminderOffsetsByPrayer,
+  }) : reminderOffsetsByPrayer =
+            reminderOffsetsByPrayer ?? defaultReminderOffsets();
+
+  static Map<String, int> defaultReminderOffsets([int fallback = -10]) => {
+        for (final n in reminderPrayerNames) n: fallback,
+      };
+
+  /// Effective offset for a prayer name (e.g. Fajr).
+  int offsetForPrayer(String prayerName) {
+    if (usePerPrayerReminders) {
+      return reminderOffsetsByPrayer[prayerName] ?? reminderOffset;
+    }
+    return reminderOffset;
+  }
 
   /// Create a copy of this settings with optional modifications
   PrayerSettings copyWith({
@@ -100,6 +131,8 @@ class PrayerSettings {
     String? displayMode,
     int? reminderOffset,
     bool? enableAdvancedReminders,
+    bool? usePerPrayerReminders,
+    Map<String, int>? reminderOffsetsByPrayer,
   }) {
     return PrayerSettings(
       madhab: madhab ?? this.madhab,
@@ -126,6 +159,10 @@ class PrayerSettings {
       reminderOffset: reminderOffset ?? this.reminderOffset,
       enableAdvancedReminders:
           enableAdvancedReminders ?? this.enableAdvancedReminders,
+      usePerPrayerReminders:
+          usePerPrayerReminders ?? this.usePerPrayerReminders,
+      reminderOffsetsByPrayer:
+          reminderOffsetsByPrayer ?? this.reminderOffsetsByPrayer,
     );
   }
 
@@ -162,6 +199,11 @@ class PrayerSettings {
     await prefs.setString('displayMode', displayMode);
     await prefs.setInt('reminderOffset', reminderOffset);
     await prefs.setBool('enableAdvancedReminders', enableAdvancedReminders);
+    await prefs.setBool('usePerPrayerReminders', usePerPrayerReminders);
+    await prefs.setString(
+      'reminderOffsetsByPrayer',
+      jsonEncode(reminderOffsetsByPrayer),
+    );
   }
 
   /// Load settings from SharedPreferences
@@ -201,6 +243,22 @@ class PrayerSettings {
     final reminderOffset = prefs.getInt('reminderOffset') ?? -10;
     final enableAdvancedReminders =
         prefs.getBool('enableAdvancedReminders') ?? false;
+    final usePerPrayerReminders =
+        prefs.getBool('usePerPrayerReminders') ?? false;
+    Map<String, int> reminderOffsetsByPrayer =
+        defaultReminderOffsets(reminderOffset);
+    final offsetsRaw = prefs.getString('reminderOffsetsByPrayer');
+    if (offsetsRaw != null && offsetsRaw.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(offsetsRaw);
+        if (decoded is Map) {
+          reminderOffsetsByPrayer = {
+            for (final n in reminderPrayerNames)
+              n: (decoded[n] as num?)?.toInt() ?? reminderOffset,
+          };
+        }
+      } catch (_) {}
+    }
 
     return PrayerSettings(
       madhab: madhab,
@@ -221,6 +279,8 @@ class PrayerSettings {
       displayMode: displayMode,
       reminderOffset: reminderOffset,
       enableAdvancedReminders: enableAdvancedReminders,
+      usePerPrayerReminders: usePerPrayerReminders,
+      reminderOffsetsByPrayer: reminderOffsetsByPrayer,
     );
   }
 

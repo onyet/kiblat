@@ -1,6 +1,10 @@
 # Example key.properties (DO NOT COMMIT real secrets)
-# Place this file at android/key.properties
-# Place the keystore at android/app/keystore.jks (storeFile is relative to android/app/)
+#
+# File locations (keep these distinct):
+#   this file     → android/key.properties
+#   keystore file → android/app/keystore.jks
+#
+# storeFile below is relative to the android/app module directory.
 storePassword=CHANGE_ME
 keyPassword=CHANGE_ME
 keyAlias=upload

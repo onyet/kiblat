@@ -243,6 +243,15 @@ class NotificationService {
       if (!await areNotificationsEnabled() && !await requestPermissions())
         return;
       await _ensureNotificationChannels(settings.customRingtonePath);
+      final effective = await LocationService.resolveEffectiveLocation();
+      if (effective != null) {
+        await schedulePrayerNotificationsForLocation(
+          effective['lat'] as double,
+          effective['lon'] as double,
+          settings,
+        );
+        return;
+      }
       final pos = await LocationService.getCurrentPosition();
       await schedulePrayerNotificationsForLocation(
         pos.latitude,
@@ -250,7 +259,7 @@ class NotificationService {
         settings,
       );
     } catch (e) {
-      final cached = await LocationService.getLastLocation();
+      final cached = await LocationService.getLastLocation(allowExpired: true);
       if (cached != null) {
         await schedulePrayerNotificationsForLocation(
           cached['lat'] as double,
@@ -350,10 +359,11 @@ class NotificationService {
           );
         }
 
-        // 2. ADVANCED REMINDER (PRO)
+        // 2. ADVANCED REMINDER (PRO) — global or per-prayer offset
         if (settings.isProUser && settings.enableAdvancedReminders) {
+          final offsetMinutes = settings.offsetForPrayer(prayer.name);
           final reminderTime = prayer.time.add(
-            Duration(minutes: settings.reminderOffset),
+            Duration(minutes: offsetMinutes),
           );
           final scheduledReminder = tz.TZDateTime(
             localLocation,
@@ -369,8 +379,8 @@ class NotificationService {
             final reminderId =
                 _prayerIds[prayer.name]! + (dayOffset * 100) + 1000;
             final prayerLabel = tr(prayer.name.toLowerCase());
-            final minutes = settings.reminderOffset.abs();
-            final isBefore = settings.reminderOffset < 0;
+            final minutes = offsetMinutes.abs();
+            final isBefore = offsetMinutes < 0;
 
             final body = isBefore
                 ? tr(
@@ -393,7 +403,7 @@ class NotificationService {
                   'Reminders',
                   importance: Importance.high,
                   priority: Priority.high,
-                ), // Standard sound
+                ),
                 iOS: const DarwinNotificationDetails(presentSound: true),
               ),
               androidScheduleMode: androidScheduleMode,

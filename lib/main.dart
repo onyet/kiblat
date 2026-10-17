@@ -17,6 +17,10 @@ import 'package:kiblat/services/home_widget_service.dart';
 import 'package:kiblat/services/billing_service.dart';
 import 'package:kiblat/services/geonames_service.dart';
 import 'package:kiblat/services/location_service.dart';
+import 'package:kiblat/services/location_profile_service.dart';
+import 'package:kiblat/services/calc_preset_service.dart';
+import 'package:kiblat/services/qada_service.dart';
+import 'package:kiblat/services/tasbih_pro_service.dart';
 import 'package:kiblat/models/prayer_settings_model.dart';
 import 'package:kiblat/utils/theme_util.dart';
 
@@ -116,6 +120,10 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       await Future.wait([
         GeoNamesService.instance.initialize(),
         SettingsService.instance.load(),
+        LocationProfileService.instance.load(),
+        CalcPresetService.instance.load(),
+        QadaService.instance.load(),
+        TasbihProService.instance.load(),
       ]);
 
       final prayerSettings = SettingsService.instance.notifier.value;

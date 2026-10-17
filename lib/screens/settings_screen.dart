@@ -23,6 +23,9 @@ import 'package:kiblat/services/billing_service.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:kiblat/utils/theme_util.dart';
 import 'package:kiblat/services/ad_service.dart';
+import 'package:kiblat/models/location_profile.dart';
+import 'package:kiblat/services/location_profile_service.dart';
+import 'package:kiblat/services/calc_preset_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -369,6 +372,40 @@ class _SettingsScreenState extends State<SettingsScreen>
                   ),
                   const SizedBox(height: 8),
 
+                  _sectionHeader(tr('pro_travel_tools')),
+                  _buildActionButton(
+                    title: tr('location_profiles'),
+                    subtitle: tr('location_profiles_desc'),
+                    icon: Icons.place_outlined,
+                    onTap: () {
+                      if (!settings.isProUser) {
+                        _showProPromptDialog(
+                          feature: tr('location_profiles'),
+                          description: tr('pro_location_profiles_desc'),
+                        );
+                      } else {
+                        _showLocationProfilesDialog();
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _buildActionButton(
+                    title: tr('calc_presets'),
+                    subtitle: tr('calc_presets_desc'),
+                    icon: Icons.bookmark_outline,
+                    onTap: () {
+                      if (!settings.isProUser) {
+                        _showProPromptDialog(
+                          feature: tr('calc_presets'),
+                          description: tr('pro_calc_presets_desc'),
+                        );
+                      } else {
+                        _showCalcPresetsDialog();
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 18),
+
                   _sectionHeader(tr('prayer_schedule')),
                   if (_loadingPrayerSettings)
                     const Center(
@@ -679,16 +716,110 @@ class _SettingsScreenState extends State<SettingsScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(tr('select_reminder_time')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _offsetOption(settings, -15, "15 ${tr('minutes')} ${tr('before')}"),
-            _offsetOption(settings, -10, "10 ${tr('minutes')} ${tr('before')}"),
-            _offsetOption(settings, -5, "5 ${tr('minutes')} ${tr('before')}"),
-            _offsetOption(settings, 5, "5 ${tr('minutes')} ${tr('after')}"),
-            _offsetOption(settings, 10, "10 ${tr('minutes')} ${tr('after')}"),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SwitchListTile(
+                title: Text(tr('per_prayer_reminders')),
+                subtitle: Text(tr('per_prayer_reminders_desc')),
+                value: settings.usePerPrayerReminders,
+                onChanged: (v) {
+                  Navigator.pop(ctx);
+                  _updatePrayerSettings(
+                    settings.copyWith(usePerPrayerReminders: v),
+                  );
+                  if (v) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        _showPerPrayerReminderDialog(
+                          SettingsService.instance.notifier.value,
+                        );
+                      }
+                    });
+                  }
+                },
+              ),
+              const Divider(),
+              if (!settings.usePerPrayerReminders) ...[
+                _offsetOption(settings, -15, "15 ${tr('minutes')} ${tr('before')}"),
+                _offsetOption(settings, -10, "10 ${tr('minutes')} ${tr('before')}"),
+                _offsetOption(settings, -5, "5 ${tr('minutes')} ${tr('before')}"),
+                _offsetOption(settings, 5, "5 ${tr('minutes')} ${tr('after')}"),
+                _offsetOption(settings, 10, "10 ${tr('minutes')} ${tr('after')}"),
+              ] else
+                ListTile(
+                  title: Text(tr('edit_per_prayer_offsets')),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _showPerPrayerReminderDialog(settings);
+                  },
+                ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  void _showPerPrayerReminderDialog(PrayerSettings settings) {
+    final offsets = Map<String, int>.from(settings.reminderOffsetsByPrayer);
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          return AlertDialog(
+            title: Text(tr('per_prayer_reminders')),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView(
+                shrinkWrap: true,
+                children: PrayerSettings.reminderPrayerNames.map((name) {
+                  final val = offsets[name] ?? settings.reminderOffset;
+                  return ListTile(
+                    title: Text(tr(name.toLowerCase())),
+                    subtitle: Text(
+                      '${val.abs()} ${tr('minutes')} ${val < 0 ? tr('before') : tr('after')}',
+                    ),
+                    trailing: DropdownButton<int>(
+                      value: [-15, -10, -5, 5, 10].contains(val) ? val : -10,
+                      items: [
+                        DropdownMenuItem(value: -15, child: Text('15 ${tr('before')}')),
+                        DropdownMenuItem(value: -10, child: Text('10 ${tr('before')}')),
+                        DropdownMenuItem(value: -5, child: Text('5 ${tr('before')}')),
+                        DropdownMenuItem(value: 5, child: Text('5 ${tr('after')}')),
+                        DropdownMenuItem(value: 10, child: Text('10 ${tr('after')}')),
+                      ],
+                      onChanged: (v) {
+                        if (v == null) return;
+                        setLocal(() => offsets[name] = v);
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(tr('cancel')),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _updatePrayerSettings(
+                    settings.copyWith(
+                      usePerPrayerReminders: true,
+                      reminderOffsetsByPrayer: offsets,
+                    ),
+                  );
+                },
+                child: Text(tr('save')),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -701,13 +832,226 @@ class _SettingsScreenState extends State<SettingsScreen>
             : null,
         onTap: () {
           Navigator.pop(context);
-          _updatePrayerSettings(settings.copyWith(reminderOffset: val));
+          _updatePrayerSettings(
+            settings.copyWith(
+              reminderOffset: val,
+              usePerPrayerReminders: false,
+            ),
+          );
         },
       );
 
   Future<void> _updatePrayerSettings(PrayerSettings ns) async {
     await SettingsService.instance.update(ns);
     if (mounted) setState(() => _prayerSettings = ns);
+  }
+
+  Future<void> _showLocationProfilesDialog() async {
+    final svc = LocationProfileService.instance;
+    await svc.load();
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          final profiles = svc.profilesNotifier.value;
+          final followGps = svc.followGpsNotifier.value;
+          final activeId = svc.activeProfileIdNotifier.value;
+          return AlertDialog(
+            title: Text(tr('location_profiles')),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SwitchListTile(
+                    title: Text(tr('follow_gps')),
+                    value: followGps,
+                    onChanged: (v) async {
+                      await svc.setFollowGps(v);
+                      setLocal(() {});
+                    },
+                  ),
+                  ...profiles.map(
+                    (p) => ListTile(
+                      title: Text(p.name),
+                      subtitle: Text(
+                        '${p.latitude.toStringAsFixed(3)}, ${p.longitude.toStringAsFixed(3)}',
+                      ),
+                      selected: activeId == p.id && !followGps,
+                      onTap: () async {
+                        await svc.setActiveProfile(p.id);
+                        setLocal(() {});
+                      },
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () async {
+                          await svc.removeProfile(p.id);
+                          setLocal(() {});
+                        },
+                      ),
+                    ),
+                  ),
+                  if (profiles.length < LocationProfileService.maxProfiles)
+                    TextButton.icon(
+                      onPressed: () async {
+                        final loc = await LocationService.getLastLocation(
+                          allowExpired: true,
+                        );
+                        if (loc == null) return;
+                        final nameCtrl = TextEditingController(
+                          text: loc['label'] as String? ?? 'Saved',
+                        );
+                        if (!ctx.mounted) return;
+                        final ok = await showDialog<bool>(
+                          context: ctx,
+                          builder: (c2) => AlertDialog(
+                            title: Text(tr('save_current_location')),
+                            content: TextField(
+                              controller: nameCtrl,
+                              decoration: InputDecoration(
+                                labelText: tr('profile_name'),
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(c2, false),
+                                child: Text(tr('cancel')),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(c2, true),
+                                child: Text(tr('save')),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (ok == true) {
+                          await svc.addProfile(
+                            LocationProfile(
+                              id: DateTime.now().millisecondsSinceEpoch
+                                  .toString(),
+                              name: nameCtrl.text.trim().isEmpty
+                                  ? 'Saved'
+                                  : nameCtrl.text.trim(),
+                              latitude: loc['lat'] as double,
+                              longitude: loc['lon'] as double,
+                            ),
+                          );
+                          setLocal(() {});
+                        }
+                      },
+                      icon: const Icon(Icons.add),
+                      label: Text(tr('add_location_profile')),
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(tr('close')),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _showCalcPresetsDialog() async {
+    final svc = CalcPresetService.instance;
+    await svc.load();
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          final presets = svc.presetsNotifier.value;
+          return AlertDialog(
+            title: Text(tr('calc_presets')),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ...presets.map(
+                    (p) => ListTile(
+                      title: Text(p.name),
+                      subtitle: Text(
+                        PrayerSettings.calculationMethodDisplay(
+                          p.calculationMethod,
+                        ),
+                      ),
+                      onTap: () async {
+                        await svc.applyPreset(p);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(tr('preset_applied'))),
+                          );
+                        }
+                      },
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () async {
+                          await svc.removePreset(p.id);
+                          setLocal(() {});
+                        },
+                      ),
+                    ),
+                  ),
+                  if (presets.length < CalcPresetService.maxPresets)
+                    TextButton.icon(
+                      onPressed: () async {
+                        final nameCtrl = TextEditingController();
+                        final ok = await showDialog<bool>(
+                          context: ctx,
+                          builder: (c2) => AlertDialog(
+                            title: Text(tr('save_calc_preset')),
+                            content: TextField(
+                              controller: nameCtrl,
+                              decoration: InputDecoration(
+                                labelText: tr('preset_name'),
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(c2, false),
+                                child: Text(tr('cancel')),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(c2, true),
+                                child: Text(tr('save')),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (ok == true && nameCtrl.text.trim().isNotEmpty) {
+                          await svc.addPreset(
+                            svc.fromCurrentSettings(
+                              DateTime.now().millisecondsSinceEpoch.toString(),
+                              nameCtrl.text.trim(),
+                            ),
+                          );
+                          setLocal(() {});
+                        }
+                      },
+                      icon: const Icon(Icons.add),
+                      label: Text(tr('add_calc_preset')),
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(tr('close')),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   Widget _buildStatusTile({
