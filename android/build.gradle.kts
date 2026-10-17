@@ -15,6 +15,19 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
+
+// Plugins pinned below compileSdk 36 fail AAR metadata checks (e.g. file_picker → lifecycle).
+// Register afterEvaluate before evaluationDependsOn so callbacks still run.
+subprojects {
+    afterEvaluate {
+        extensions.findByType(com.android.build.gradle.LibraryExtension::class.java)?.apply {
+            if ((compileSdk ?: 0) < 37) {
+                compileSdk = 37
+            }
+        }
+    }
+}
+
 subprojects {
     project.evaluationDependsOn(":app")
 }

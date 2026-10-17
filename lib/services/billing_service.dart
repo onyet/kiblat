@@ -257,15 +257,41 @@ class BillingService {
     }
   }
 
-  /// Restore purchases
+  /// Restore purchases.
+  ///
+  /// Always clears [isPendingPurchase] when finished. Previously, Android could
+  /// return an empty purchase stream (common on debug/sideload builds), leaving
+  /// the Settings spinner stuck forever.
   Future<void> restorePurchases() async {
     isPendingPurchase.value = true;
     billingError.value = null;
     try {
+      if (!isStoreAvailable.value) {
+        final available = await _iap.isAvailable();
+        isStoreAvailable.value = available;
+        if (!available) {
+          billingError.value = kDebugMode
+              ? 'Play Billing unavailable on this install. Debug/sideload APKs usually cannot restore — install from Play (internal testing) with a license-tester account.'
+              : 'Store unavailable. Please try again later.';
+          return;
+        }
+      }
+
+      // Triggers purchaseStream for any owned items (iOS + Android).
       await _iap.restorePurchases();
+      // Android: also query past purchases directly (more reliable than stream-only).
+      await _syncEntitlements();
+
+      final isPro = SettingsService.instance.notifier.value.isProUser;
+      if (!isPro) {
+        billingError.value = kDebugMode
+            ? 'No Pro purchase found. Debug builds signed with the debug key often cannot see Play purchases — use a Play Console test build.'
+            : 'No Pro purchase found for this Google account.';
+      }
     } catch (e) {
       debugPrint('[BillingService] Restore purchases error: $e');
       billingError.value = e.toString();
+    } finally {
       isPendingPurchase.value = false;
     }
   }

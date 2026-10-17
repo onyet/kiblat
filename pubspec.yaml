@@ -27,7 +27,8 @@ dependencies:
   path: ^1.9.1
   permission_handler: ^11.4.0
   http: ^1.6.0
-  camera: ^0.11.4
+  # 0.12+ pulls camera_android_camerax with camera-core ≥1.6.2 (Gradle 9 javac fix)
+  camera: ^0.12.1
   sensors_plus: ^6.1.2
   sqflite_common_ffi: ^2.3.7+1
   flutter_native_splash: ^2.3.5
