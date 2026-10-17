@@ -58,7 +58,7 @@ class KiblatCountdownWidgetProvider : HomeWidgetProvider() {
         }
         val pending = PendingIntent.getActivity(
             context,
-            1,
+            widgetId,
             openAppIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

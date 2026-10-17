@@ -79,7 +79,7 @@ Place labels use the local cache first. When no nearby cached place is available
 
 ## Build release (Android AAB) 🔒
 
-1. Set up release signing (two separate paths — do not mix them):
+1. Set up release signing (**required** for release AAB/APK — debug builds do not need this):
 
 - Place the keystore at **`android/app/keystore.jks`**
 - Create **`android/key.properties`** (next to `android/settings.gradle.kts`, NOT inside `android/app/`) with local secrets (DO NOT commit):
@@ -130,13 +130,13 @@ Add `--dart-define=GEONAMES_USERNAME=your_geonames_username` if GeoNames reverse
 
 ---
 
-## QA & Test Ad Mode 🧪
+## QA & Test ads 🧪
 
-- Debug builds auto-enable Test Ad Mode.
-- In production you can toggle **Settings → Test Ad Mode** (saved via `SharedPreferences` key: `ad_test_mode`).
-- Test mode uses Google’s test interstitial ad IDs and preloads ads for quick testing.
+- **Debug builds only:** `AdService` automatically uses Google’s official test ad unit IDs (`kDebugMode`).
+- **Release builds** always use production AdMob units — there is no in-app Test Ad Mode toggle.
+- Watch logs for `[AdService]` and exercise exit / interstitial flows on a debug build.
 
-QA tips: watch logs for `[AdService]` and test exit flow to confirm interstitial behavior.
+Release signing is **required** for `flutter build appbundle --release` / `assembleRelease` (`android/key.properties` + keystore under `android/app/`). Debug/profile builds do not need the keystore.
 
 ---
 
@@ -149,7 +149,7 @@ QA tips: watch logs for `[AdService]` and test exit flow to confirm interstitial
 
 ## Testing checklist ✔️
 
-- Enable **Test Ad Mode** and confirm test interstitials load.
+- Run a **debug** build and confirm test interstitials load (Google test units).
 - Verify welcome/reset flows and interstitial behavior on exit.
 
 ---

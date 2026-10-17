@@ -24,13 +24,26 @@ fun loadEnvFile(): Map<String, String> {
 val envVars = loadEnvFile()
 val googleApiKey = envVars["GOOGLE_API_KEY"] ?: ""
 
-// Load keystore properties for release signing (optional).
+// Load keystore properties for release signing.
 // - key.properties lives at android/key.properties (Gradle rootProject)
 // - keystore.jks lives at android/app/ (this module's projectDir)
+// Required only when assembling/bundling a Release variant (debug stays unsigned).
 val keystorePropertiesFile = rootProject.file("key.properties")
 val keystoreProperties = Properties()
+val isReleaseTaskRequested =
+    gradle.startParameter.taskNames.any { name ->
+        name.contains("Release", ignoreCase = true)
+    }
+
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(keystorePropertiesFile.inputStream())
+} else if (isReleaseTaskRequested) {
+    throw GradleException(
+        "Release signing required: missing ${keystorePropertiesFile.path}. " +
+            "Copy android/key.properties.example → android/key.properties and point " +
+            "storeFile at your keystore under android/app/ (e.g. keystore.jks). " +
+            "Debug/profile builds do not need this file.",
+    )
 }
 
 android {
@@ -63,21 +76,42 @@ android {
     }
 
     if (keystorePropertiesFile.exists()) {
+        val storeFileName =
+            keystoreProperties.getProperty("storeFile", "keystore.jks")
+        val releaseStoreFile = layout.projectDirectory.file(storeFileName).asFile
+        val keyAlias = keystoreProperties.getProperty("keyAlias", "")
+        val keyPassword = keystoreProperties.getProperty("keyPassword", "")
+        val storePassword = keystoreProperties.getProperty("storePassword", "")
+
+        if (isReleaseTaskRequested) {
+            if (!releaseStoreFile.exists()) {
+                throw GradleException(
+                    "Release signing required: keystore not found at ${releaseStoreFile.path} " +
+                        "(storeFile=$storeFileName in android/key.properties).",
+                )
+            }
+            if (keyAlias.isBlank() || keyPassword.isBlank() || storePassword.isBlank()) {
+                throw GradleException(
+                    "Release signing required: keyAlias/keyPassword/storePassword " +
+                        "must be set in android/key.properties.",
+                )
+            }
+        }
+
         signingConfigs {
             create("release") {
-                keyAlias = keystoreProperties.getProperty("keyAlias", "")
-                keyPassword = keystoreProperties.getProperty("keyPassword", "")
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
                 // Explicit: storeFile is relative to this module (android/app/), not repo root.
-                val storeFileName =
-                    keystoreProperties.getProperty("storeFile", "keystore.jks")
-                storeFile = layout.projectDirectory.file(storeFileName).asFile
-                storePassword = keystoreProperties.getProperty("storePassword", "")
+                storeFile = releaseStoreFile
+                this.storePassword = storePassword
             }
         }
     }
 
     buildTypes {
         release {
+            // Always sign release when key.properties is present (required for Release tasks).
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }

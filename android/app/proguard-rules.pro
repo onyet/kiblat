@@ -27,6 +27,7 @@
 # Home widget
 -keep class es.antonborri.home_widget.** { *; }
 -keep class id.onyet.app.kiblat.KiblatWidgetProvider { *; }
+-keep class id.onyet.app.kiblat.KiblatCountdownWidgetProvider { *; }
 
 # Keep native methods
 -keepclasseswithmembernames class * {

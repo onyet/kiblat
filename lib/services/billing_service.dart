@@ -167,8 +167,10 @@ class BillingService {
       AdService.instance.dispose();
       if (onPurchaseSuccess != null) onPurchaseSuccess!();
     } else {
-      // Re-initialize ads if user was downgraded
+      // Re-initialize ads if user was downgraded (dispose clears _isInitialized).
       await AdService.initialize();
+      AdService.instance.loadInterstitialAd();
+      AdService.instance.loadRewardedAd();
     }
   }
 

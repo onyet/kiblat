@@ -495,10 +495,11 @@ class AdService {
     loadRewardedAd();
   }
 
-  /// Dispose resources
+  /// Dispose resources and allow [initialize] to run again (e.g. Pro → Free).
   void dispose() {
     debugPrint('[AdService] Disposing ads');
     _isDisposed = true;
+    _isInitialized = false;
     _interstitialAd?.dispose();
     _interstitialAd = null;
     _isInterstitialAdReady = false;
