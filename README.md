@@ -78,7 +78,7 @@ Place labels use the local cache first. When no nearby cached place is available
 
 ## Build release (Android AAB) 🔒
 
-1. Put your keystore (e.g., `keystore.jks`) in `android/` and create `android/key.properties` with local secrets (DO NOT commit):
+1. Put your keystore in `android/app/` (e.g. `android/app/keystore.jks`) and create `android/key.properties` with local secrets (DO NOT commit):
 
 ```text
 storePassword=YOUR_STORE_PASSWORD
@@ -87,15 +87,21 @@ keyAlias=YOUR_KEY_ALIAS
 storeFile=keystore.jks
 ```
 
-1. Build AAB:
+`storeFile` is resolved relative to the `android/app` Gradle module.
+
+1. Restrict `GOOGLE_API_KEY` in Google Cloud Console to Android apps: package `id.onyet.app.kiblat` plus your upload key SHA-1 and the Play App Signing SHA-1.
+
+1. Build AAB (R8 minify + resource shrink are enabled in release):
 
 ```bash
-flutter build appbundle --release
+flutter build appbundle --release \
+  --obfuscate \
+  --split-debug-info=build/app/symbols
 ```
 
 Add `--dart-define=GEONAMES_USERNAME=your_geonames_username` if GeoNames reverse geocoding should be enabled in the release build.
 
-1. Upload `build/app/outputs/bundle/release/app-release.aab` to Play Console.
+1. Upload `build/app/outputs/bundle/release/app-release.aab` to Play Console. Keep `build/app/symbols` for Crashlytics/deobfuscation if you add crash reporting later.
 
 > Keep `android/key.properties` out of source control. Use CI secrets for automated builds.
 
