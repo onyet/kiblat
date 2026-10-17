@@ -75,7 +75,10 @@ class CompassHeadingController {
       if (!_out.isClosed) _out.add(smoothed);
     });
 
-    _accelSub = accelerometerEventStream().listen((event) {
+    // Slower than default normalInterval (200ms): stale detection does not need high rate.
+    _accelSub = accelerometerEventStream(
+      samplingPeriod: const Duration(milliseconds: 500),
+    ).listen((event) {
       // Calculate magnitude of movement (excluding gravity which is approx 9.8)
       double mag = math.sqrt(
         event.x * event.x + event.y * event.y + event.z * event.z,

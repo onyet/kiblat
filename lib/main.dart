@@ -111,33 +111,27 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
   Future<void> _runInitialization() async {
     debugPrint('[Startup] Background initialization started');
     try {
-      // Initialize the local place-label cache
-      debugPrint('[Startup] Initializing GeoNamesService');
-      await GeoNamesService.instance.initialize();
-
-      // Load persisted settings into the global SettingsService so listeners can react
-      debugPrint('[Startup] Loading Settings');
-      await SettingsService.instance.load();
-
-      debugPrint('[Startup] Initializing BillingService');
-      await BillingService.instance.initialize();
+      // Independent I/O in parallel to shorten time-to-interactive.
+      debugPrint('[Startup] Initializing GeoNamesService + Settings');
+      await Future.wait([
+        GeoNamesService.instance.initialize(),
+        SettingsService.instance.load(),
+      ]);
 
       final prayerSettings = SettingsService.instance.notifier.value;
       debugPrint(
         '[Startup] Settings loaded. isPro: ${prayerSettings.isProUser}',
       );
 
-      // Note: App icon sync on startup removed because it triggers Android process termination
-      // to refresh launcher cache.
-
-      // Only initialize AdMob for non-pro users (Privacy First)
-      if (!prayerSettings.isProUser) {
-        debugPrint('[Startup] Initializing AdService');
-        await AdService.initialize();
-      }
-
-      debugPrint('[Startup] Initializing NotificationService');
-      await NotificationService.instance.initialize(_navigatorKey);
+      // Billing, notifications, and (when needed) ads are independent after settings.
+      // AdMob init path/config is unchanged — only scheduled in parallel with peers.
+      debugPrint('[Startup] Initializing Billing + Notifications'
+          '${prayerSettings.isProUser ? '' : ' + Ads'}');
+      await Future.wait([
+        BillingService.instance.initialize(),
+        NotificationService.instance.initialize(_navigatorKey),
+        if (!prayerSettings.isProUser) AdService.initialize(),
+      ]);
 
       if (prayerSettings.enablePrayerNotifications) {
         debugPrint('[Startup] Scheduling Notifications');
@@ -147,7 +141,6 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
         );
       }
 
-      // Initialize home widget service
       debugPrint('[Startup] Initializing HomeWidgetService');
       unawaited(HomeWidgetService.instance.initialize());
 

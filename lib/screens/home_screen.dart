@@ -37,7 +37,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final AnimationController _controller;
   final ValueNotifier<double> _headingNotifier = ValueNotifier(125.0);
   double qiblaDeg = 0.0;
@@ -67,10 +67,13 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isCompassStale = false;
 
   ValueNotifier<int>? _tabNotifier;
+  bool _isHomeTabActive = true;
+  bool _isAppForeground = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -133,17 +136,49 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _handleTabChange() {
-    if (_tabNotifier == null || _compassController == null) return;
+    if (_tabNotifier == null) return;
     // HomeScreen is at index 0
-    if (_tabNotifier!.value == 0) {
-      _compassController!.resume();
-    } else {
-      _compassController!.pause();
+    _isHomeTabActive = _tabNotifier!.value == 0;
+    _syncSensorsAndTimers();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _isAppForeground = state == AppLifecycleState.resumed;
+    _syncSensorsAndTimers();
+  }
+
+  bool get _shouldRunLiveWork => _isHomeTabActive && _isAppForeground;
+
+  void _syncSensorsAndTimers() {
+    if (_compassController != null) {
+      if (_shouldRunLiveWork) {
+        _compassController!.resume();
+      } else {
+        _compassController!.pause();
+      }
     }
+    if (_shouldRunLiveWork) {
+      _ensurePrayerTimer();
+    } else {
+      _prayerTimer?.cancel();
+      _prayerTimer = null;
+    }
+  }
+
+  void _ensurePrayerTimer() {
+    if (!_shouldRunLiveWork || _nextPrayer == null) return;
+    if (_prayerTimer != null) return;
+    _updateTimeToNextNotifier();
+    _prayerTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      _updateTimeToNextNotifier();
+    });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _prayerTimer?.cancel();
     _promoTimer?.cancel();
     _headingSub?.cancel();
@@ -273,10 +308,8 @@ class _HomeScreenState extends State<HomeScreen>
 
       _updateTimeToNextNotifier();
       _prayerTimer?.cancel();
-      _prayerTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-        if (!mounted) return;
-        _updateTimeToNextNotifier();
-      });
+      _prayerTimer = null;
+      _ensurePrayerTimer();
     } catch (_) {}
   }
 

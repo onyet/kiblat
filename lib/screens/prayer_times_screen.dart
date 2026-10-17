@@ -12,6 +12,7 @@ import 'package:kiblat/screens/home_topbar.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:kiblat/services/ad_service.dart';
 import 'package:kiblat/widgets/ad_countdown_overlay.dart';
+import 'package:kiblat/screens/main_shell.dart';
 
 class PrayerTimesScreen extends StatefulWidget {
   const PrayerTimesScreen({super.key});
@@ -21,7 +22,7 @@ class PrayerTimesScreen extends StatefulWidget {
 }
 
 class _PrayerTimesScreenState extends State<PrayerTimesScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   int _selectedTabIndex = 0; // 0: Today, 1: This Week
 
   // Live data
@@ -50,6 +51,10 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
   BannerAd? _bannerAd;
   bool _bannerLoaded = false;
+
+  ValueNotifier<int>? _shellTabNotifier;
+  bool _isPrayerTabActive = false;
+  bool _isAppForeground = true;
 
   DateTime get _todayDate => ps.PrayerService.nowForSettings(
     _settings ?? SettingsService.instance.notifier.value,
@@ -202,9 +207,76 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadAll();
     _loadBannerAd();
     SettingsService.instance.notifier.addListener(_onSettingsChanged);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final tabNotifier = MainShell.activeTabOf(context);
+    if (_shellTabNotifier != tabNotifier) {
+      _shellTabNotifier?.removeListener(_onShellTabChanged);
+      _shellTabNotifier = tabNotifier;
+      _shellTabNotifier?.addListener(_onShellTabChanged);
+      _onShellTabChanged();
+    }
+  }
+
+  void _onShellTabChanged() {
+    // PrayerTimesScreen is at index 1 in MainShell
+    _isPrayerTabActive = _shellTabNotifier?.value == 1;
+    _syncCountdownTimer();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _isAppForeground = state == AppLifecycleState.resumed;
+    _syncCountdownTimer();
+  }
+
+  bool get _shouldRunCountdown => _isPrayerTabActive && _isAppForeground;
+
+  void _syncCountdownTimer() {
+    if (_shouldRunCountdown) {
+      _ensureCountdownTimer();
+    } else {
+      _countdownTimer?.cancel();
+      _countdownTimer = null;
+    }
+  }
+
+  void _ensureCountdownTimer() {
+    if (!_shouldRunCountdown || _nextPrayer == null) return;
+    if (_countdownTimer != null) return;
+    // Refresh once when becoming visible again (tab/app resume).
+    final now = ps.PrayerService.nowForSettings(
+      _settings ?? SettingsService.instance.notifier.value,
+    );
+    if (_nextPrayer != null && !now.isAfter(_nextPrayer!.time)) {
+      _timeToNextNotifier.value = _nextPrayer!.time.difference(now);
+    }
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (t) async {
+      if (!mounted || !_shouldRunCountdown) return;
+      final now = ps.PrayerService.nowForSettings(
+        _settings ?? SettingsService.instance.notifier.value,
+      );
+      if (_nextPrayer == null) return;
+      if (now.isAfter(_nextPrayer!.time)) {
+        await _updatePrevNext();
+        return;
+      }
+      _timeToNextNotifier.value = _nextPrayer!.time.difference(now);
+      if (_activePrayer != null) {
+        _progressToNextNotifier.value = ps.PrayerService.progressBetween(
+          _activePrayer!.time,
+          _nextPrayer!.time,
+          now,
+        );
+      }
+    });
   }
 
   void _loadBannerAd() async {
@@ -706,6 +778,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _shellTabNotifier?.removeListener(_onShellTabChanged);
     SettingsService.instance.notifier.removeListener(_onSettingsChanged);
     _countdownTimer?.cancel();
     _timeToNextNotifier.dispose();
@@ -753,25 +827,8 @@ class _PrayerTimesScreenState extends State<PrayerTimesScreen>
 
   void _startCountdownUpdater() {
     _countdownTimer?.cancel();
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (t) async {
-      if (!mounted) return;
-      final now = ps.PrayerService.nowForSettings(
-        _settings ?? SettingsService.instance.notifier.value,
-      );
-      if (_nextPrayer == null) return;
-      if (now.isAfter(_nextPrayer!.time)) {
-        await _updatePrevNext();
-        return;
-      }
-      _timeToNextNotifier.value = _nextPrayer!.time.difference(now);
-      if (_activePrayer != null) {
-        _progressToNextNotifier.value = ps.PrayerService.progressBetween(
-          _activePrayer!.time,
-          _nextPrayer!.time,
-          now,
-        );
-      }
-    });
+    _countdownTimer = null;
+    _syncCountdownTimer();
   }
 
   String _formatDuration(Duration d) {

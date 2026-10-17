@@ -105,6 +105,8 @@ Add `--dart-define=GEONAMES_USERNAME=your_geonames_username` if GeoNames reverse
 
 > Keep `android/key.properties` out of source control. Use CI secrets for automated builds.
 
+**Size / runtime notes:** bundled adzan audio is compressed (~64 kbps mono). Startup initializes independent services in parallel. Compass/accelerometer and 1s countdown timers pause when the tab is inactive or the app is backgrounded.
+
 ---
 
 ## Where to look in the code 🧭
