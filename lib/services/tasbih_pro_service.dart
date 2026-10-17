@@ -75,7 +75,29 @@ class TasbihProService {
   final ValueNotifier<int> dailyTargetNotifier = ValueNotifier(100);
   final ValueNotifier<int> dailyCountNotifier = ValueNotifier(0);
 
-  Future<void> load() async {
+  Future<void>? _loadFuture;
+  bool _loaded = false;
+
+  /// Loads prefs once; concurrent callers share the same future so a late
+  /// `load()` cannot overwrite wirids added while the first load was in flight.
+  /// Mutations ([addWirid], etc.) always `await load()` first.
+  Future<void> load() {
+    if (_loaded) return Future.value();
+    final existing = _loadFuture;
+    if (existing != null) return existing;
+    final future = _loadInternal();
+    _loadFuture = future;
+    future.catchError((Object error, StackTrace stack) {
+      debugPrint('[TasbihProService] load failed: $error\n$stack');
+      if (identical(_loadFuture, future)) {
+        _loadFuture = null;
+      }
+    });
+    return future;
+  }
+
+  Future<void> _loadInternal() async {
+    if (_loaded) return;
     final prefs = await SharedPreferences.getInstance();
     final wiridRaw = prefs.getString(_wiridKey);
     var seededDefaults = false;
@@ -125,6 +147,7 @@ class TasbihProService {
       await prefs.setString(_dailyDateKey, today);
       await prefs.setInt(_dailyCountKey, 0);
     }
+    _loaded = true;
   }
 
   TasbihWirid _withBuiltinNameKey(TasbihWirid w) {
@@ -187,12 +210,14 @@ class TasbihProService {
   }
 
   Future<void> setDailyTarget(int target) async {
+    await load();
     dailyTargetNotifier.value = target;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_dailyTargetKey, target);
   }
 
   Future<void> addCount(int delta) async {
+    await load();
     dailyCountNotifier.value += delta;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_dailyDateKey, _todayKey());
@@ -200,17 +225,20 @@ class TasbihProService {
   }
 
   Future<void> addWirid(TasbihWirid wirid) async {
+    await load();
     wiridsNotifier.value = [...wiridsNotifier.value, wirid];
     await _persistWirids();
   }
 
   Future<void> removeWirid(String id) async {
+    await load();
     wiridsNotifier.value =
         wiridsNotifier.value.where((w) => w.id != id).toList();
     await _persistWirids();
   }
 
   Future<void> recordSession(TasbihWirid wirid, int count) async {
+    await load();
     final session = TasbihSession(
       wiridId: wirid.id,
       wiridName: wirid.name,
