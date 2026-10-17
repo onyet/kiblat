@@ -17,7 +17,8 @@ subprojects {
 }
 
 // Plugins pinned below compileSdk 36 fail AAR metadata checks (e.g. file_picker → lifecycle).
-// Register afterEvaluate before evaluationDependsOn so callbacks still run.
+// Register afterEvaluate in the same subprojects action before evaluationDependsOn,
+// so the callback is attached before any forced evaluation of :app / siblings.
 subprojects {
     afterEvaluate {
         extensions.findByType(com.android.build.gradle.LibraryExtension::class.java)?.apply {
@@ -26,9 +27,6 @@ subprojects {
             }
         }
     }
-}
-
-subprojects {
     project.evaluationDependsOn(":app")
 }
 

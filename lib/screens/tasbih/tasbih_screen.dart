@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:kiblat/services/ad_service.dart';
 import 'package:kiblat/services/tasbih_pro_service.dart';
+import 'package:kiblat/screens/dzikir/dzikir_screen.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -302,45 +303,50 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
   Future<void> _promptAddWirid(BuildContext sheetContext) async {
     final nameCtrl = TextEditingController();
     final targetCtrl = TextEditingController(text: '33');
-    final ok = await showDialog<bool>(
-      context: sheetContext,
-      builder: (c2) => AlertDialog(
-        title: Text(tr('add_wirid')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              autofocus: true,
-              decoration: InputDecoration(labelText: tr('wirid_name')),
+    try {
+      final ok = await showDialog<bool>(
+        context: sheetContext,
+        builder: (c2) => AlertDialog(
+          title: Text(tr('add_wirid')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                autofocus: true,
+                decoration: InputDecoration(labelText: tr('wirid_name')),
+              ),
+              TextField(
+                controller: targetCtrl,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: tr('target')),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(c2, false),
+              child: Text(tr('cancel')),
             ),
-            TextField(
-              controller: targetCtrl,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: tr('target')),
+            TextButton(
+              onPressed: () => Navigator.pop(c2, true),
+              child: Text(tr('save')),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c2, false),
-            child: Text(tr('cancel')),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(c2, true),
-            child: Text(tr('save')),
-          ),
-        ],
-      ),
-    );
-    if (ok == true && nameCtrl.text.trim().isNotEmpty) {
-      await TasbihProService.instance.addWirid(
-        TasbihWirid(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          name: nameCtrl.text.trim(),
-          target: int.tryParse(targetCtrl.text) ?? 33,
-        ),
       );
+      if (ok == true && nameCtrl.text.trim().isNotEmpty) {
+        await TasbihProService.instance.addWirid(
+          TasbihWirid(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            name: nameCtrl.text.trim(),
+            target: int.tryParse(targetCtrl.text) ?? 33,
+          ),
+        );
+      }
+    } finally {
+      nameCtrl.dispose();
+      targetCtrl.dispose();
     }
   }
 
@@ -365,6 +371,15 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
             ),
             centerTitle: true,
             actions: [
+              IconButton(
+                icon: Icon(Icons.menu_book_outlined, color: textColor),
+                tooltip: tr('dzikir_open'),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const DzikirScreen()),
+                  );
+                },
+              ),
               if (settings.isProUser)
                 IconButton(
                   icon: Icon(Icons.library_books_outlined, color: textColor),

@@ -34,7 +34,8 @@ class NotificationService {
   Future<void> initialize(GlobalKey<NavigatorState> navigatorKey) async {
     if (_initialized) return;
 
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    // Must be a white-on-transparent drawable (not the color launcher icon).
+    const androidInit = AndroidInitializationSettings('@drawable/ic_stat_mosque');
     const iosInit = DarwinInitializationSettings(
       requestSoundPermission: true,
       requestBadgePermission: true,
@@ -343,6 +344,7 @@ class NotificationService {
               android: AndroidNotificationDetails(
                 _currentChannelId,
                 'Adzan',
+                icon: 'ic_stat_mosque',
                 importance: Importance.high,
                 priority: Priority.high,
                 sound: hasCustomSound
@@ -401,6 +403,7 @@ class NotificationService {
                 android: const AndroidNotificationDetails(
                   _reminderChannelId,
                   'Reminders',
+                  icon: 'ic_stat_mosque',
                   importance: Importance.high,
                   priority: Priority.high,
                 ),
@@ -434,6 +437,7 @@ class NotificationService {
         android: AndroidNotificationDetails(
           _currentChannelId,
           'Adzan',
+          icon: 'ic_stat_mosque',
           importance: Importance.high,
           priority: Priority.high,
           sound: hasCustomSound && customSoundUri != null

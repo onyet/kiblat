@@ -312,5 +312,14 @@
   "wirid_name": "Nome do wirid",
   "recent_sessions": "Sessões recentes",
   "tasbih_library_empty": "Ainda não há wirid. Adicione um para começar uma contagem personalizada.",
-  "tasbih_no_sessions": "Ainda não há sessões concluídas."
+  "tasbih_no_sessions": "Ainda não há sessões concluídas.",
+  "dzikir_title": "Dhikr manhã e tarde",
+  "dzikir_morning": "Manhã",
+  "dzikir_evening": "Tarde",
+  "dzikir_progress_fmt": "Concluído {done} / {total}",
+  "dzikir_reps_fmt": "Repetições {done} / {total}",
+  "dzikir_tap_hint": "Toque para contar · pressione para reiniciar este item",
+  "dzikir_reset_period": "Reiniciar esta lista",
+  "dzikir_reset_confirm": "Limpar o progresso de hoje desta lista?",
+  "dzikir_open": "Dhikr manhã e tarde"
 }

@@ -312,5 +312,14 @@
   "wirid_name": "齐克尔名称",
   "recent_sessions": "最近会话",
   "tasbih_library_empty": "暂无齐克尔。添加一个以开始自定义计数。",
-  "tasbih_no_sessions": "暂无已完成的会话。"
+  "tasbih_no_sessions": "暂无已完成的会话。",
+  "dzikir_title": "早晚齐克尔",
+  "dzikir_morning": "早晨",
+  "dzikir_evening": "傍晚",
+  "dzikir_progress_fmt": "已完成 {done} / {total}",
+  "dzikir_reps_fmt": "次数 {done} / {total}",
+  "dzikir_tap_hint": "点按计数 · 长按重置此项",
+  "dzikir_reset_period": "重置此列表",
+  "dzikir_reset_confirm": "清除今天此列表的进度？",
+  "dzikir_open": "早晚齐克尔"
 }

@@ -312,5 +312,14 @@
   "wirid_name": "اسم الورد",
   "recent_sessions": "الجلسات الأخيرة",
   "tasbih_library_empty": "لا يوجد ورد بعد. أضف وردًا لبدء عدّ مخصص.",
-  "tasbih_no_sessions": "لا توجد جلسات مكتملة بعد."
+  "tasbih_no_sessions": "لا توجد جلسات مكتملة بعد.",
+  "dzikir_title": "أذكار الصباح والمساء",
+  "dzikir_morning": "الصباح",
+  "dzikir_evening": "المساء",
+  "dzikir_progress_fmt": "أُنجز {done} / {total}",
+  "dzikir_reps_fmt": "التكرار {done} / {total}",
+  "dzikir_tap_hint": "انقر للعد · اضغط مطولاً لإعادة هذا العنصر",
+  "dzikir_reset_period": "إعادة تعيين القائمة",
+  "dzikir_reset_confirm": "مسح تقدم اليوم لهذه القائمة؟",
+  "dzikir_open": "أذكار الصباح والمساء"
 }

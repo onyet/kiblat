@@ -312,5 +312,14 @@
   "wirid_name": "Nama wirid",
   "recent_sessions": "Sesi terakhir",
   "tasbih_library_empty": "Belum ada wirid. Tambahkan untuk mulai hitungan khusus.",
-  "tasbih_no_sessions": "Belum ada sesi yang selesai."
+  "tasbih_no_sessions": "Belum ada sesi yang selesai.",
+  "dzikir_title": "Dzikir pagi & petang",
+  "dzikir_morning": "Pagi",
+  "dzikir_evening": "Petang",
+  "dzikir_progress_fmt": "Selesai {done} / {total}",
+  "dzikir_reps_fmt": "Hitungan {done} / {total}",
+  "dzikir_tap_hint": "Ketuk untuk menghitung · tahan untuk reset item ini",
+  "dzikir_reset_period": "Reset daftar ini",
+  "dzikir_reset_confirm": "Hapus progres hari ini untuk daftar ini?",
+  "dzikir_open": "Dzikir pagi & petang"
 }

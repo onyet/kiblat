@@ -312,5 +312,14 @@
   "wirid_name": "Wird-Name",
   "recent_sessions": "Letzte Sitzungen",
   "tasbih_library_empty": "Noch kein Wird. Fügen Sie einen hinzu, um eine eigene Zählung zu starten.",
-  "tasbih_no_sessions": "Noch keine abgeschlossenen Sitzungen."
+  "tasbih_no_sessions": "Noch keine abgeschlossenen Sitzungen.",
+  "dzikir_title": "Morgen- & Abend-Dhikr",
+  "dzikir_morning": "Morgen",
+  "dzikir_evening": "Abend",
+  "dzikir_progress_fmt": "Erledigt {done} / {total}",
+  "dzikir_reps_fmt": "Wiederholungen {done} / {total}",
+  "dzikir_tap_hint": "Tippen zum Zählen · lang drücken zum Zurücksetzen",
+  "dzikir_reset_period": "Liste zurücksetzen",
+  "dzikir_reset_confirm": "Heutigen Fortschritt für diese Liste löschen?",
+  "dzikir_open": "Morgen- & Abend-Dhikr"
 }

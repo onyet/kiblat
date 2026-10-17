@@ -312,5 +312,14 @@
   "wirid_name": "ズィクル名",
   "recent_sessions": "最近のセッション",
   "tasbih_library_empty": "ズィクルがまだありません。追加してカスタムカウントを始めましょう。",
-  "tasbih_no_sessions": "完了したセッションはまだありません。"
+  "tasbih_no_sessions": "完了したセッションはまだありません。",
+  "dzikir_title": "朝夕のズィクル",
+  "dzikir_morning": "朝",
+  "dzikir_evening": "夕",
+  "dzikir_progress_fmt": "完了 {done} / {total}",
+  "dzikir_reps_fmt": "回数 {done} / {total}",
+  "dzikir_tap_hint": "タップでカウント · 長押しでこの項目をリセット",
+  "dzikir_reset_period": "このリストをリセット",
+  "dzikir_reset_confirm": "今日のこのリストの進捗を消去しますか？",
+  "dzikir_open": "朝夕のズィクル"
 }

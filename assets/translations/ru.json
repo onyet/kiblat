@@ -312,5 +312,14 @@
   "wirid_name": "Название вирда",
   "recent_sessions": "Недавние сессии",
   "tasbih_library_empty": "Пока нет вирдов. Добавьте вирд, чтобы начать свой счёт.",
-  "tasbih_no_sessions": "Пока нет завершённых сессий."
+  "tasbih_no_sessions": "Пока нет завершённых сессий.",
+  "dzikir_title": "Утренний и вечерний зикр",
+  "dzikir_morning": "Утро",
+  "dzikir_evening": "Вечер",
+  "dzikir_progress_fmt": "Готово {done} / {total}",
+  "dzikir_reps_fmt": "Повторы {done} / {total}",
+  "dzikir_tap_hint": "Нажмите, чтобы считать · удерживайте, чтобы сбросить",
+  "dzikir_reset_period": "Сбросить список",
+  "dzikir_reset_confirm": "Очистить сегодняшний прогресс по этому списку?",
+  "dzikir_open": "Утренний и вечерний зикр"
 }

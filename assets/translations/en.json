@@ -312,5 +312,14 @@
   "wirid_name": "Wirid name",
   "recent_sessions": "Recent sessions",
   "tasbih_library_empty": "No wirid yet. Add one to start a custom count.",
-  "tasbih_no_sessions": "No completed sessions yet."
+  "tasbih_no_sessions": "No completed sessions yet.",
+  "dzikir_title": "Morning & evening dhikr",
+  "dzikir_morning": "Morning",
+  "dzikir_evening": "Evening",
+  "dzikir_progress_fmt": "Completed {done} / {total}",
+  "dzikir_reps_fmt": "Repetitions {done} / {total}",
+  "dzikir_tap_hint": "Tap to count · long-press to reset this item",
+  "dzikir_reset_period": "Reset this list",
+  "dzikir_reset_confirm": "Clear today’s progress for this list?",
+  "dzikir_open": "Morning & evening dhikr"
 }
