@@ -148,121 +148,200 @@ class _TasbihScreenState extends State<TasbihScreen> with SingleTickerProviderSt
   Future<void> _showWiridLibrary(dynamic settings) async {
     await TasbihProService.instance.load();
     if (!mounted) return;
-    showModalBottomSheet(
+
+    final sheetBg = AppTheme.getCardColor(settings, context);
+    final sheetText = AppTheme.getTextColor(settings, context);
+    final accent = AppTheme.getAccentColor(settings, context);
+
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: sheetBg,
       builder: (ctx) {
-        return ValueListenableBuilder(
+        final maxHeight = MediaQuery.sizeOf(ctx).height * 0.75;
+        return ValueListenableBuilder<List<TasbihWirid>>(
           valueListenable: TasbihProService.instance.wiridsNotifier,
           builder: (ctx, wirids, _) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
+            final sessions =
+                TasbihProService.instance.sessionsNotifier.value.take(5).toList();
+            return SizedBox(
+              height: maxHeight,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                    child: Text(
                       tr('tasbih_library'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: sheetText,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    ...wirids.map(
-                      (w) => ListTile(
-                        title: Text(w.name),
-                        subtitle: Text('${tr('target')}: ${w.target}'),
-                        onTap: () {
-                          setState(() {
-                            _target = w.target;
-                            _activeWiridId = w.id;
-                            _counter = 0;
-                          });
-                          Navigator.pop(ctx);
-                        },
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: () =>
-                              TasbihProService.instance.removeWirid(w.id),
-                        ),
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: () async {
-                        final nameCtrl = TextEditingController();
-                        final targetCtrl = TextEditingController(text: '33');
-                        final ok = await showDialog<bool>(
-                          context: ctx,
-                          builder: (c2) => AlertDialog(
-                            title: Text(tr('add_wirid')),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                TextField(
-                                  controller: nameCtrl,
-                                  decoration: InputDecoration(
-                                    labelText: tr('wirid_name'),
-                                  ),
-                                ),
-                                TextField(
-                                  controller: targetCtrl,
-                                  keyboardType: TextInputType.number,
-                                  decoration: InputDecoration(
-                                    labelText: tr('target'),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(c2, false),
-                                child: Text(tr('cancel')),
+                  ),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      children: [
+                        if (wirids.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Text(
+                              tr('tasbih_library_empty'),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: sheetText.withValues(alpha: 0.7),
                               ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(c2, true),
-                                child: Text(tr('save')),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (ok == true && nameCtrl.text.trim().isNotEmpty) {
-                          await TasbihProService.instance.addWirid(
-                            TasbihWirid(
-                              id: DateTime.now().millisecondsSinceEpoch
-                                  .toString(),
-                              name: nameCtrl.text.trim(),
-                              target: int.tryParse(targetCtrl.text) ?? 33,
                             ),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.add),
-                      label: Text(tr('add_wirid')),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      tr('recent_sessions'),
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    ...TasbihProService.instance.sessionsNotifier.value
-                        .take(5)
-                        .map(
-                          (s) => ListTile(
-                            dense: true,
-                            title: Text(s.wiridName),
-                            subtitle: Text('${s.count} · ${s.completedAt}'),
+                          )
+                        else
+                          ...wirids.map((w) {
+                            final selected = _activeWiridId == w.id;
+                            return ListTile(
+                              selected: selected,
+                              selectedTileColor:
+                                  accent.withValues(alpha: 0.12),
+                              leading: Icon(
+                                selected
+                                    ? Icons.check_circle
+                                    : Icons.spa_outlined,
+                                color: selected ? accent : sheetText,
+                              ),
+                              title: Text(
+                                w.name,
+                                style: TextStyle(
+                                  color: sheetText,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              subtitle: Text(
+                                '${tr('target')}: ${w.target}',
+                                style: TextStyle(
+                                  color: sheetText.withValues(alpha: 0.65),
+                                ),
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  _target = w.target;
+                                  _activeWiridId = w.id;
+                                  _counter = 0;
+                                });
+                                Navigator.pop(ctx);
+                              },
+                              trailing: IconButton(
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  color: sheetText.withValues(alpha: 0.7),
+                                ),
+                                onPressed: () => TasbihProService.instance
+                                    .removeWirid(w.id),
+                              ),
+                            );
+                          }),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: () => _promptAddWirid(ctx),
+                          icon: Icon(Icons.add, color: accent),
+                          label: Text(
+                            tr('add_wirid'),
+                            style: TextStyle(color: accent),
                           ),
                         ),
-                  ],
-                ),
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            tr('recent_sessions'),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: sheetText,
+                            ),
+                          ),
+                        ),
+                        if (sessions.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+                            child: Text(
+                              tr('tasbih_no_sessions'),
+                              style: TextStyle(
+                                color: sheetText.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          )
+                        else
+                          ...sessions.map(
+                            (s) => ListTile(
+                              dense: true,
+                              title: Text(
+                                s.wiridName,
+                                style: TextStyle(color: sheetText),
+                              ),
+                              subtitle: Text(
+                                '${s.count} · ${s.completedAt}',
+                                style: TextStyle(
+                                  color: sheetText.withValues(alpha: 0.6),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             );
           },
         );
       },
     );
+  }
+
+  Future<void> _promptAddWirid(BuildContext sheetContext) async {
+    final nameCtrl = TextEditingController();
+    final targetCtrl = TextEditingController(text: '33');
+    final ok = await showDialog<bool>(
+      context: sheetContext,
+      builder: (c2) => AlertDialog(
+        title: Text(tr('add_wirid')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameCtrl,
+              autofocus: true,
+              decoration: InputDecoration(labelText: tr('wirid_name')),
+            ),
+            TextField(
+              controller: targetCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: tr('target')),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c2, false),
+            child: Text(tr('cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(c2, true),
+            child: Text(tr('save')),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && nameCtrl.text.trim().isNotEmpty) {
+      await TasbihProService.instance.addWirid(
+        TasbihWirid(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          name: nameCtrl.text.trim(),
+          target: int.tryParse(targetCtrl.text) ?? 33,
+        ),
+      );
+    }
   }
 
   @override

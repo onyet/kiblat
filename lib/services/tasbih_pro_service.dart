@@ -69,18 +69,31 @@ class TasbihProService {
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     final wiridRaw = prefs.getString(_wiridKey);
+    var seededDefaults = false;
     if (wiridRaw != null && wiridRaw.isNotEmpty) {
       try {
         final list = jsonDecode(wiridRaw) as List;
-        wiridsNotifier.value = list
+        final parsed = list
             .whereType<Map>()
             .map((e) => TasbihWirid.fromJson(Map<String, dynamic>.from(e)))
             .toList();
+        // Empty saved list used to leave the library blank forever.
+        if (parsed.isEmpty) {
+          wiridsNotifier.value = _defaults();
+          seededDefaults = true;
+        } else {
+          wiridsNotifier.value = parsed;
+        }
       } catch (_) {
         wiridsNotifier.value = _defaults();
+        seededDefaults = true;
       }
     } else {
       wiridsNotifier.value = _defaults();
+      seededDefaults = true;
+    }
+    if (seededDefaults) {
+      await _persistWirids();
     }
 
     final sessRaw = prefs.getString(_sessionsKey);

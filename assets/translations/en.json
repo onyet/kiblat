@@ -310,5 +310,7 @@
   "daily_dhikr": "Daily dhikr",
   "add_wirid": "Add wirid",
   "wirid_name": "Wirid name",
-  "recent_sessions": "Recent sessions"
+  "recent_sessions": "Recent sessions",
+  "tasbih_library_empty": "No wirid yet. Add one to start a custom count.",
+  "tasbih_no_sessions": "No completed sessions yet."
 }

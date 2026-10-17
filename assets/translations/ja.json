@@ -310,5 +310,7 @@
   "daily_dhikr": "毎日のズィクル",
   "add_wirid": "ズィクルを追加",
   "wirid_name": "ズィクル名",
-  "recent_sessions": "最近のセッション"
+  "recent_sessions": "最近のセッション",
+  "tasbih_library_empty": "ズィクルがまだありません。追加してカスタムカウントを始めましょう。",
+  "tasbih_no_sessions": "完了したセッションはまだありません。"
 }

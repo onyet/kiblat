@@ -310,5 +310,7 @@
   "daily_dhikr": "每日齐克尔",
   "add_wirid": "添加齐克尔",
   "wirid_name": "齐克尔名称",
-  "recent_sessions": "最近会话"
+  "recent_sessions": "最近会话",
+  "tasbih_library_empty": "暂无齐克尔。添加一个以开始自定义计数。",
+  "tasbih_no_sessions": "暂无已完成的会话。"
 }

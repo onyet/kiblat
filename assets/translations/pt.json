@@ -310,5 +310,7 @@
   "daily_dhikr": "Dhikr diário",
   "add_wirid": "Adicionar wirid",
   "wirid_name": "Nome do wirid",
-  "recent_sessions": "Sessões recentes"
+  "recent_sessions": "Sessões recentes",
+  "tasbih_library_empty": "Ainda não há wirid. Adicione um para começar uma contagem personalizada.",
+  "tasbih_no_sessions": "Ainda não há sessões concluídas."
 }

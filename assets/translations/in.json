@@ -310,5 +310,7 @@
   "daily_dhikr": "Dzikir harian",
   "add_wirid": "Tambah wirid",
   "wirid_name": "Nama wirid",
-  "recent_sessions": "Sesi terakhir"
+  "recent_sessions": "Sesi terakhir",
+  "tasbih_library_empty": "Belum ada wirid. Tambahkan untuk mulai hitungan khusus.",
+  "tasbih_no_sessions": "Belum ada sesi yang selesai."
 }
