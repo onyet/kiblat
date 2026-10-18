@@ -81,17 +81,23 @@ class AdService {
     debugPrint('[AdService] Initializing MobileAds (G-Rating/Family Policy)');
     instance._isDisposed = false;
 
-    // Apply Family Policy & Rating constraints (All User 3+)
-    await MobileAds.instance.updateRequestConfiguration(
-      RequestConfiguration(
-        maxAdContentRating: MaxAdContentRating.g,
-        tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes,
-        tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes,
-      ),
-    );
+    try {
+      // Apply Family Policy & Rating constraints (All User 3+)
+      await MobileAds.instance.updateRequestConfiguration(
+        RequestConfiguration(
+          maxAdContentRating: MaxAdContentRating.g,
+          tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes,
+          tagForUnderAgeOfConsent: TagForUnderAgeOfConsent.yes,
+        ),
+      );
 
-    await MobileAds.instance.initialize();
-    _isInitialized = true;
+      await MobileAds.instance.initialize();
+      _isInitialized = true;
+    } catch (e, st) {
+      // Never let AdMob init kill cold start (Play review / offline devices).
+      debugPrint('[AdService] initialize failed: $e\n$st');
+      _isInitialized = false;
+    }
     // Note: loadInterstitialAd and loadRewardedAd are now called lazily
     // to save resources on low-end devices during startup.
   }

@@ -14,7 +14,6 @@ import 'package:kiblat/services/location_service.dart';
 import 'package:kiblat/widgets/ad_countdown_overlay.dart';
 import 'package:kiblat/services/qada_service.dart';
 import 'package:file_picker/file_picker.dart';
-import 'dart:io';
 
 class PrayerTrackerScreen extends StatefulWidget {
   const PrayerTrackerScreen({super.key});
@@ -514,17 +513,13 @@ class _PrayerTrackerScreenState extends State<PrayerTrackerScreen> {
 
   Future<void> _importLogs(PrayerSettings settings) async {
     if (!settings.isProUser) return;
-    final result = await FilePicker.platform.pickFiles(
+    final file = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: ['json'],
-      withData: true,
     );
-    if (result == null || result.files.isEmpty) return;
-    final file = result.files.first;
-    String? raw = file.bytes != null
-        ? utf8.decode(file.bytes!)
-        : (file.path != null ? await File(file.path!).readAsString() : null);
-    if (raw == null || raw.isEmpty) return;
+    if (file == null) return;
+    final String raw = utf8.decode(await file.readAsBytes());
+    if (raw.isEmpty) return;
 
     Map<String, dynamic> decoded;
     try {

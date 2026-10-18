@@ -17,6 +17,15 @@
 -keep class com.google.android.gms.ads.** { *; }
 -dontwarn com.google.android.gms.ads.**
 
+# WorkManager / Room (AdMob → work-runtime). AGP 9 R8 full mode strips
+# no-arg constructors that Room invokes via reflection → cold-start crash:
+# Unable to get provider InitializationProvider / Failed to create WorkDatabase.
+# See googleads-mobile-flutter#1444 and issuetracker 243257364.
+-keep class androidx.work.** { <init>(...); }
+-keep class * extends androidx.room.RoomDatabase {
+    <init>();
+}
+
 # Play Billing / in-app purchase
 -keep class com.android.vending.billing.** { *; }
 -keep class com.google.android.gms.common.** { *; }

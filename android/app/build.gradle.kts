@@ -6,24 +6,6 @@ plugins {
 
 import java.util.Properties
 
-// Read .env file from project root
-fun loadEnvFile(): Map<String, String> {
-    val envFile = file("../../.env")
-    val envMap = mutableMapOf<String, String>()
-    if (envFile.exists()) {
-        envFile.readLines().forEach { line ->
-            if (line.isNotBlank() && !line.startsWith("#") && line.contains("=")) {
-                val (key, value) = line.split("=", limit = 2)
-                envMap[key.trim()] = value.trim()
-            }
-        }
-    }
-    return envMap
-}
-
-val envVars = loadEnvFile()
-val googleApiKey = envVars["GOOGLE_API_KEY"] ?: ""
-
 // Load keystore properties for release signing.
 // - key.properties lives at android/key.properties (Gradle rootProject)
 // - keystore.jks lives at android/app/ (this module's projectDir)
@@ -69,10 +51,6 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
-        // Manifest placeholders for API keys from .env
-        // Restrict this key in Google Cloud Console to Android apps:
-        // package id.onyet.app.kiblat + your upload/App Signing SHA-1.
-        manifestPlaceholders["googleApiKey"] = googleApiKey
     }
 
     if (keystorePropertiesFile.exists()) {
@@ -128,6 +106,9 @@ android {
 dependencies {
     // Required for desugaring support used by some plugins (e.g., flutter_local_notifications)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // AdMob pulls work-runtime 2.7.x which crashes under AGP 9 R8 full mode.
+    // Force a newer WorkManager with correct consumer keep rules (googleads#1444).
+    implementation("androidx.work:work-runtime:2.11.2")
 }
 
 flutter {

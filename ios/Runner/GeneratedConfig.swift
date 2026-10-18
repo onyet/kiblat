@@ -1,9 +1,6 @@
 // Auto-generated file. Do not edit manually.
-// Generated from .env file during build.
-// Run the load_env.sh script to regenerate.
+// Maps SDK was removed; file kept empty for any residual Xcode script references.
 
 import Foundation
 
-struct GeneratedConfig {
-    static let googleApiKey = ""
-}
+struct GeneratedConfig {}

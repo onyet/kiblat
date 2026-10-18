@@ -89,7 +89,9 @@ Future<void> main() async {
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
 
-  static late final Future<void> initFuture;
+  /// Completes when background services finish (or fail safely).
+  /// Never throws [LateInitializationError] if Splash reads it early.
+  static Future<void> initFuture = Future.value();
 
   @override
   State<MainApp> createState() => _MainAppState();
@@ -112,18 +114,26 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
     });
   }
 
+  Future<void> _safeInit(String label, Future<void> Function() run) async {
+    try {
+      await run();
+    } catch (e, st) {
+      debugPrint('[Startup] $label failed: $e\n$st');
+    }
+  }
+
   Future<void> _runInitialization() async {
     debugPrint('[Startup] Background initialization started');
     try {
       // Independent I/O in parallel to shorten time-to-interactive.
       debugPrint('[Startup] Initializing GeoNamesService + Settings');
       await Future.wait([
-        GeoNamesService.instance.initialize(),
-        SettingsService.instance.load(),
-        LocationProfileService.instance.load(),
-        CalcPresetService.instance.load(),
-        QadaService.instance.load(),
-        TasbihProService.instance.load(),
+        _safeInit('GeoNames', () => GeoNamesService.instance.initialize()),
+        _safeInit('Settings', () => SettingsService.instance.load()),
+        _safeInit('LocationProfiles', () => LocationProfileService.instance.load()),
+        _safeInit('CalcPresets', () => CalcPresetService.instance.load()),
+        _safeInit('Qada', () => QadaService.instance.load()),
+        _safeInit('TasbihPro', () => TasbihProService.instance.load()),
       ]);
 
       final prayerSettings = SettingsService.instance.notifier.value;
@@ -132,13 +142,17 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       );
 
       // Billing, notifications, and (when needed) ads are independent after settings.
-      // AdMob init path/config is unchanged — only scheduled in parallel with peers.
+      // Failures must not crash cold start (Play review "broken functionality").
       debugPrint('[Startup] Initializing Billing + Notifications'
           '${prayerSettings.isProUser ? '' : ' + Ads'}');
       await Future.wait([
-        BillingService.instance.initialize(),
-        NotificationService.instance.initialize(_navigatorKey),
-        if (!prayerSettings.isProUser) AdService.initialize(),
+        _safeInit('Billing', () => BillingService.instance.initialize()),
+        _safeInit(
+          'Notifications',
+          () => NotificationService.instance.initialize(_navigatorKey),
+        ),
+        if (!prayerSettings.isProUser)
+          _safeInit('Ads', () => AdService.initialize()),
       ]);
 
       if (prayerSettings.enablePrayerNotifications) {
@@ -150,11 +164,13 @@ class _MainAppState extends State<MainApp> with WidgetsBindingObserver {
       }
 
       debugPrint('[Startup] Initializing HomeWidgetService');
-      unawaited(HomeWidgetService.instance.initialize());
+      unawaited(
+        _safeInit('HomeWidget', () => HomeWidgetService.instance.initialize()),
+      );
 
       debugPrint('[Startup] Background initialization completed');
-    } catch (e) {
-      debugPrint('[Startup] Initialization error: $e');
+    } catch (e, st) {
+      debugPrint('[Startup] Initialization error: $e\n$st');
     }
   }
 

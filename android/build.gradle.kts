@@ -16,16 +16,24 @@ subprojects {
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 
-// Plugins pinned below compileSdk 36 fail AAR metadata checks (e.g. file_picker → lifecycle).
-// Register afterEvaluate in the same subprojects action before evaluationDependsOn,
-// so the callback is attached before any forced evaluation of :app / siblings.
+// Plugins pinned below compileSdk 36 fail AAR metadata checks (e.g. older lifecycle AARs).
+// Prefer withPlugin so we never call afterEvaluate on an already-evaluated project
+// (federated file_picker / share_plus can reorder evaluation vs evaluationDependsOn).
 subprojects {
-    afterEvaluate {
+    fun bumpLibraryCompileSdk() {
         extensions.findByType(com.android.build.gradle.LibraryExtension::class.java)?.apply {
             if ((compileSdk ?: 0) < 37) {
                 compileSdk = 37
             }
         }
+    }
+    pluginManager.withPlugin("com.android.library") {
+        bumpLibraryCompileSdk()
+    }
+    if (!state.executed) {
+        afterEvaluate { bumpLibraryCompileSdk() }
+    } else {
+        bumpLibraryCompileSdk()
     }
     project.evaluationDependsOn(":app")
 }

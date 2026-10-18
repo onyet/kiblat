@@ -1667,13 +1667,10 @@ class _SettingsScreenState extends State<SettingsScreen>
         ).showSnackBar(SnackBar(content: Text(tr('ringtone_set_success'))));
         return;
       }
-      final result = await FilePicker.platform.pickFiles(
+      final file = await FilePicker.pickFile(
         type: FileType.audio,
-        allowMultiple: false,
       );
-      if (result == null || result.files.isEmpty) return;
-      final file = result.files.first;
-      if (file.path == null) return;
+      if (file == null || file.path == null) return;
       final appDir = await getApplicationSupportDirectory();
       final destDir = Directory('${appDir.path}/ringtones');
       if (!await destDir.exists()) await destDir.create(recursive: true);
