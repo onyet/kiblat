@@ -25,9 +25,74 @@ class _ArQiblaScreenState extends State<ArQiblaScreen> {
   void initState() {
     super.initState();
     _initCamera();
-    _compassSubscription = FlutterCompass.events?.listen((event) {
-      if (mounted) setState(() => _heading = event.heading ?? 0);
+    try {
+      _compassSubscription = FlutterCompass.events?.listen((event) {
+        if (mounted) setState(() => _heading = event.heading ?? 0);
+      });
+    } catch (e) {
+      debugPrint('Compass unavailable: $e');
+    }
+    // Family Policy: safety warning must appear immediately after AR starts.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _showSafetyWarning();
     });
+  }
+
+  Future<void> _showSafetyWarning() async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(
+            tr('ar_safety_title'),
+            style: const TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _safetyRow(Icons.family_restroom, tr('ar_safety_supervision')),
+              const SizedBox(height: 16),
+              _safetyRow(Icons.visibility, tr('ar_safety_surroundings')),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(
+                tr('ar_safety_ack'),
+                style: const TextStyle(
+                  color: Color(0xFFB58A0D),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _safetyRow(IconData icon, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: const Color(0xFFB58A0D)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(color: Colors.black87, height: 1.35),
+          ),
+        ),
+      ],
+    );
   }
 
   Future<void> _initCamera() async {

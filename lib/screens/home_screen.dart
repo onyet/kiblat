@@ -19,6 +19,7 @@ import 'package:kiblat/utils/theme_util.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:kiblat/screens/main_shell.dart';
 import 'package:kiblat/widgets/ad_countdown_overlay.dart';
+import 'package:kiblat/widgets/pro_benefit_list.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool skipPermissionCheck;
@@ -386,22 +387,24 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                tr('pro_desc'),
-                style: TextStyle(color: secText, fontSize: 13, height: 1.4),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(ctx).height * 0.5,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tr('pro_desc'),
+                    style: TextStyle(color: secText, fontSize: 13, height: 1.4),
+                  ),
+                  const SizedBox(height: 16),
+                  ProBenefitList(color: secText.withValues(alpha: 0.9)),
+                ],
               ),
-              const SizedBox(height: 16),
-              _promoFeature('✅ ${tr('pro_prompt_benefit_ads')}', secText),
-              _promoFeature('✅ ${tr('pro_prompt_benefit_themes')}', secText),
-              _promoFeature(
-                '✅ ${tr('pro_prompt_benefit_tracker_plus')}',
-                secText,
-              ),
-            ],
+            ),
           ),
           actions: [
             TextButton(
@@ -434,14 +437,6 @@ class _HomeScreenState extends State<HomeScreen>
       },
     );
   }
-
-  Widget _promoFeature(String text, Color color) => Padding(
-    padding: const EdgeInsets.only(bottom: 6),
-    child: Text(
-      text,
-      style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: 12),
-    ),
-  );
 
   void _handleArTap() async {
     final prefs = await SharedPreferences.getInstance();

@@ -26,6 +26,7 @@ import 'package:kiblat/services/ad_service.dart';
 import 'package:kiblat/models/location_profile.dart';
 import 'package:kiblat/services/location_profile_service.dart';
 import 'package:kiblat/services/calc_preset_service.dart';
+import 'package:kiblat/widgets/pro_benefit_list.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -1853,13 +1854,19 @@ class _SettingsScreenState extends State<SettingsScreen>
             ],
           ),
           Text(
-            isPro ? tr('pro_active_desc') : tr('pro_desc_detailed'),
+            isPro ? tr('pro_active_desc') : tr('pro_desc'),
             style: TextStyle(
               color: isLight ? Colors.black87 : Colors.white70,
               fontSize: 12,
               height: 1.4,
             ),
           ),
+          if (!isPro) ...[
+            const SizedBox(height: 12),
+            ProBenefitList(
+              color: isLight ? Colors.black87 : Colors.white70,
+            ),
+          ],
           const SizedBox(height: 12),
           if (!isPro) ...[
             if (BillingService.instance.isPendingPurchase.value)
@@ -1971,83 +1978,65 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                tr('pro_prompt_feature_req'),
-                style: TextStyle(
-                  color: AppTheme.getTextColor(
-                    s,
-                    context,
-                  ).withValues(alpha: 0.8),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(ctx).height * 0.5,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tr('pro_prompt_feature_req'),
+                    style: TextStyle(
+                      color: AppTheme.getTextColor(
+                        s,
+                        context,
+                      ).withValues(alpha: 0.8),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '• $feature',
+                    style: TextStyle(
+                      color: accent,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: AppTheme.getSecondaryTextColor(s, context),
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Divider(color: AppTheme.getBorderColor(s, context)),
+                  const SizedBox(height: 10),
+                  Text(
+                    tr('pro_benefit_heading'),
+                    style: TextStyle(
+                      color: AppTheme.getTextColor(
+                        s,
+                        context,
+                      ).withValues(alpha: 0.8),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ProBenefitList(
+                    color: AppTheme.getSecondaryTextColor(s, context),
+                  ),
+                ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                '• $feature',
-                style: TextStyle(
-                  color: accent,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                description,
-                style: TextStyle(
-                  color: AppTheme.getSecondaryTextColor(s, context),
-                  fontSize: 13,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Divider(color: AppTheme.getBorderColor(s, context)),
-              const SizedBox(height: 10),
-              Text(
-                tr('pro_prompt_privacy_title'),
-                style: TextStyle(
-                  color: AppTheme.getTextColor(
-                    s,
-                    context,
-                  ).withValues(alpha: 0.8),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '✅ ${tr('pro_prompt_benefit_ads')}',
-                style: TextStyle(
-                  color: AppTheme.getSecondaryTextColor(s, context),
-                  fontSize: 12,
-                ),
-              ),
-              Text(
-                '✅ ${tr('pro_prompt_benefit_telemetry')}',
-                style: TextStyle(
-                  color: AppTheme.getSecondaryTextColor(s, context),
-                  fontSize: 12,
-                ),
-              ),
-              Text(
-                '✅ ${tr('pro_prompt_benefit_adzan')}',
-                style: TextStyle(
-                  color: AppTheme.getSecondaryTextColor(s, context),
-                  fontSize: 12,
-                ),
-              ),
-              Text(
-                '✅ ${tr('pro_prompt_benefit_themes')}',
-                style: TextStyle(
-                  color: AppTheme.getSecondaryTextColor(s, context),
-                  fontSize: 12,
-                ),
-              ),
-            ],
+            ),
           ),
           actions: [
             TextButton(
